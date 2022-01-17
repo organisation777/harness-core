@@ -40,7 +40,8 @@ public class K8sRollingRollbackStepParameters extends K8sRollingRollbackBaseStep
   @Override
   @JsonIgnore
   public List<String> getCommandUnits() {
-    return Arrays.asList(
-        K8sCommandUnitConstants.Init, K8sCommandUnitConstants.Rollback, K8sCommandUnitConstants.WaitForSteadyState);
+    return Arrays.asList(K8sCommandUnitConstants.Init, K8sCommandUnitConstants.RecreatePrunedResource,
+        K8sCommandUnitConstants.DeleteFailedReleaseResources, K8sCommandUnitConstants.Rollback,
+        K8sCommandUnitConstants.WaitForSteadyState);
   }
 }
