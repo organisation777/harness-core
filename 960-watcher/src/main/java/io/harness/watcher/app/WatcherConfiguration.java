@@ -32,6 +32,8 @@ public class WatcherConfiguration {
   private boolean fileHandlesMonitoringEnabled;
   private long fileHandlesMonitoringIntervalInMinutes;
   private long fileHandlesLogsRetentionInMinutes;
+  private String clientCertificateFilePath;
+  private String clientCertificateKeyFilePath;
 
   // TODO: This method will get removed once we rolled out new delegate.
   public String getDelegateToken() {
@@ -44,5 +46,10 @@ public class WatcherConfiguration {
 
   public String getQueueFilePath() {
     return Optional.ofNullable(queueFilePath).orElse(EventPublisherConstants.DEFAULT_QUEUE_FILE_PATH);
+  }
+
+  public boolean isMtls() {
+    return StringUtils.isNotEmpty(this.clientCertificateFilePath)
+        && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath);
   }
 }

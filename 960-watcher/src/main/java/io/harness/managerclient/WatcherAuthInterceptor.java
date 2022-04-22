@@ -35,6 +35,7 @@ public class WatcherAuthInterceptor implements Interceptor {
     Request request = chain.request();
     return chain.proceed(request.newBuilder()
                              .header("Authorization", "Delegate " + token)
+                             .addHeader("accountId", tokenGenerator.getAccountId())
                              .addHeader("delegateId", DelegateAgentCommonVariables.getDelegateId())
                              .addHeader("delegateTokenName", DelegateAgentCommonVariables.getDelegateTokenName())
                              .build());

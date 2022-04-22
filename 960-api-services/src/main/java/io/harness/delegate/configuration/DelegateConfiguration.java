@@ -60,6 +60,9 @@ public class DelegateConfiguration {
   private boolean installClientToolsInBackground;
   private boolean dynamicHandlingOfRequestEnabled;
 
+  private String clientCertificateFilePath;
+  private String clientCertificateKeyFilePath;
+
   // TODO: This method will get removed once we rolled out new delegate.
   public String getDelegateToken() {
     if (StringUtils.isEmpty(delegateToken)) {
@@ -71,5 +74,10 @@ public class DelegateConfiguration {
 
   public String getQueueFilePath() {
     return Optional.ofNullable(queueFilePath).orElse(EventPublisherConstants.DEFAULT_QUEUE_FILE_PATH);
+  }
+
+  public boolean isMtls() {
+    return StringUtils.isNotEmpty(this.clientCertificateFilePath)
+        && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath);
   }
 }

@@ -259,6 +259,12 @@ if ! `grep delegateCheckLocation config-watcher.yml > /dev/null`; then
 else
   sed -i.bak "s|^delegateCheckLocation:.*$|delegateCheckLocation: $DELEGATE_STORAGE_URL/$DELEGATE_CHECK_LOCATION|" config-watcher.yml
 fi
+if [ ! -z "$CLIENT_CERTIFICATE_PATH" ] && ! `grep clientCertificateFilePath config-watcher.yml > /dev/null` ; then
+  echo "clientCertificateFilePath: $CLIENT_CERTIFICATE_PATH" >> config-watcher.yml
+fi
+if [ ! -z "$CLIENT_CERTIFICATE_KEY_PATH" ] && ! `grep clientCertificateKeyFilePath config-watcher.yml > /dev/null` ; then
+  echo "clientCertificateKeyFilePath: $CLIENT_CERTIFICATE_KEY_PATH" >> config-watcher.yml
+fi
 
 if [ ! -e config-delegate.yml ]; then
   echo "accountId: $ACCOUNT_ID" > config-delegate.yml
@@ -331,6 +337,14 @@ fi
 
 if [ ! -z "$GRPC_SERVICE_CONNECTOR_PORT" ] && ! `grep grpcServiceConnectorPort config-delegate.yml > /dev/null` ; then
   echo "grpcServiceConnectorPort: $GRPC_SERVICE_CONNECTOR_PORT" >> config-delegate.yml
+fi
+
+if [ ! -z "$CLIENT_CERTIFICATE_PATH" ] && ! `grep clientCertificateFilePath config-delegate.yml > /dev/null` ; then
+  echo "clientCertificateFilePath: $CLIENT_CERTIFICATE_PATH" >> config-delegate.yml
+fi
+
+if [ ! -z "$CLIENT_CERTIFICATE_KEY_PATH" ] && ! `grep clientCertificateKeyFilePath config-delegate.yml > /dev/null` ; then
+  echo "clientCertificateKeyFilePath: $CLIENT_CERTIFICATE_KEY_PATH" >> config-delegate.yml
 fi
 
 rm -f -- *.bak

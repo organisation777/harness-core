@@ -11,7 +11,7 @@ import static io.harness.configuration.DeployMode.DEPLOY_MODE;
 import static io.harness.configuration.DeployMode.isOnPrem;
 import static io.harness.delegate.message.MessageConstants.NEW_WATCHER;
 import static io.harness.delegate.message.MessengerType.WATCHER;
-import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractAuthority;
+import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractAndPrepareAuthority;
 import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractTarget;
 
 import static com.google.common.base.Charsets.UTF_8;
@@ -20,6 +20,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.delegate.message.MessageService;
 import io.harness.event.client.impl.tailer.TailerModule;
 import io.harness.event.client.impl.tailer.TailerModule.Config;
+import io.harness.grpc.utils.DelegateGrpcConfigExtractor;
 import io.harness.managerclient.WatcherManagerClientModule;
 import io.harness.serializer.YamlUtils;
 import io.harness.threading.ExecutorModule;
@@ -132,8 +133,8 @@ public class WatcherApplication {
       log.error("Error while reading secret");
       throw new RuntimeException("Neither delegateToken nor accountSecret present in config-watcher.yml");
     }
-    modules.add(
-        new WatcherManagerClientModule(configuration.getManagerUrl(), configuration.getAccountId(), delegateToken));
+    modules.add(new WatcherManagerClientModule(configuration.getManagerUrl(), configuration.getAccountId(),
+        delegateToken, configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
 
     modules.add(WatcherModule.getInstance());
 
@@ -146,7 +147,8 @@ public class WatcherApplication {
         publishAuthority = configuration.getPublishAuthority();
       } else if (managerHostAndPort != null) {
         publishTarget = extractTarget(managerHostAndPort);
-        publishAuthority = extractAuthority(managerHostAndPort, "events");
+        publishAuthority = DelegateGrpcConfigExtractor.extractAndPrepareAuthority(
+            managerHostAndPort, "events", configuration.isMtls());
       }
       if (publishTarget != null && publishAuthority != null) {
         modules.add(new TailerModule(Config.builder()

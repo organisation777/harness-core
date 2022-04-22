@@ -7,13 +7,14 @@
 
 package io.harness.delegate.app.modules;
 
-import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractAuthority;
+import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractAndPrepareAuthority;
 import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractScheme;
 import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractTarget;
 
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.grpc.client.AbstractManagerGrpcClientModule;
 import io.harness.grpc.client.ManagerGrpcClientModule;
+import io.harness.grpc.utils.DelegateGrpcConfigExtractor;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,14 @@ public class DelegateGrpcClientModule extends AbstractManagerGrpcClientModule {
         .target(Optional.ofNullable(configuration.getManagerTarget())
                     .orElseGet(() -> extractTarget(configuration.getManagerUrl())))
         .authority(Optional.ofNullable(configuration.getManagerAuthority())
-                       .orElseGet(() -> extractAuthority(configuration.getManagerUrl(), "manager")))
+                       .orElseGet(()
+                                      -> DelegateGrpcConfigExtractor.extractAndPrepareAuthority(
+                                          configuration.getManagerUrl(), "manager", configuration.isMtls())))
         .scheme(extractScheme(configuration.getManagerUrl()))
         .accountId(configuration.getAccountId())
         .accountSecret(configuration.getDelegateToken())
+        .clientCertificateFilePath(configuration.getClientCertificateFilePath())
+        .clientCertificateKeyFilePath(configuration.getClientCertificateKeyFilePath())
         .build();
   }
 

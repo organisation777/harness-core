@@ -53,6 +53,8 @@ echo "grpcServiceConnectorPort: ${GRPC_SERVICE_CONNECTOR_PORT:-8080}" >> config.
 echo "doUpgrade: false" >> config.yml
 
 append_config "clientToolsDownloadDisabled" $CLIENT_TOOLS_DOWNLOAD_DISABLED
+append_config "clientCertificateFilePath" $CLIENT_CERTIFICATE_PATH
+append_config "clientCertificateKeyFilePath" $CLIENT_CERTIFICATE_KEY_PATH
 
 # 3. Start the delegate
 JAVA_OPTS=${JAVA_OPTS//UseCGroupMemoryLimitForHeap/UseContainerSupport}
