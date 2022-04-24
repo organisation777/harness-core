@@ -8,6 +8,9 @@
 package io.harness.logstreaming;
 
 import io.harness.network.Http;
+import io.harness.security.X509KeyManagerBuilder;
+import io.harness.security.X509SslContextBuilder;
+import io.harness.security.X509TrustManagerBuilder;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -30,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -40,10 +44,15 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
   @Inject private KryoConverterFactory kryoConverterFactory;
 
-  private String logStreamingServiceBaseUrl;
+  private final String logStreamingServiceBaseUrl;
+  private final String clientCertificateFilePath;
+  private final String clientCertificateKeyFilePath;
 
-  public LogStreamingClientFactory(String logStreamingServiceBaseUrl) {
+  public LogStreamingClientFactory(
+      String logStreamingServiceBaseUrl, String clientCertificateFilePath, String clientCertificateKeyFilePath) {
     this.logStreamingServiceBaseUrl = logStreamingServiceBaseUrl;
+    this.clientCertificateFilePath = clientCertificateFilePath;
+    this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
   }
 
   @Override
@@ -70,15 +79,19 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
 
   private OkHttpClient getSafeOkHttpClient() {
     try {
-      KeyStore keyStore = getKeyStore();
+      X509TrustManager trustManager = new X509TrustManagerBuilder().trustDefaultTrustStore().build();
+      X509SslContextBuilder sslContextBuilder = new X509SslContextBuilder().trustManager(trustManager);
 
-      TrustManagerFactory trustManagerFactory =
-          TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init(keyStore);
-      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+      if (StringUtils.isNotEmpty(this.clientCertificateFilePath)
+          && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath)) {
+        X509KeyManager keyManager =
+            new X509KeyManagerBuilder()
+                .withClientCertificateFromFile(this.clientCertificateFilePath, this.clientCertificateKeyFilePath)
+                .build();
+        sslContextBuilder.keyManager(keyManager);
+      }
 
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustManagers, null);
+      SSLContext sslContext = sslContextBuilder.build();
 
       return Http.getOkHttpClientWithProxyAuthSetup()
           .connectionPool(new ConnectionPool())
@@ -90,30 +103,5 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private KeyStore getKeyStore() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
-    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-    keyStore.load(null, null);
-
-    // Load self-signed certificate created only for the purpose of local development
-    try (InputStream certInputStream = getClass().getClassLoader().getResourceAsStream("localhost.pem")) {
-      keyStore.setCertificateEntry(
-          "localhost", (X509Certificate) CertificateFactory.getInstance("X509").generateCertificate(certInputStream));
-    }
-
-    // Load all trusted issuers from default java trust store
-    TrustManagerFactory defaultTrustManagerFactory =
-        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    defaultTrustManagerFactory.init((KeyStore) null);
-    for (TrustManager trustManager : defaultTrustManagerFactory.getTrustManagers()) {
-      if (trustManager instanceof X509TrustManager) {
-        for (X509Certificate acceptedIssuer : ((X509TrustManager) trustManager).getAcceptedIssuers()) {
-          keyStore.setCertificateEntry(acceptedIssuer.getSubjectDN().getName(), acceptedIssuer);
-        }
-      }
-    }
-
-    return keyStore;
   }
 }

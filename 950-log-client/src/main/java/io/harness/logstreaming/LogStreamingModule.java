@@ -10,14 +10,27 @@ package io.harness.logstreaming;
 import com.google.inject.AbstractModule;
 
 public class LogStreamingModule extends AbstractModule {
-  private String logStreamingServiceBaseUrl;
+  private final String logStreamingServiceBaseUrl;
+  private final String clientCertificateFilePath;
+  private final String clientCertificateKeyFilePath;
 
   public LogStreamingModule(String logStreamingServiceBaseUrl) {
     this.logStreamingServiceBaseUrl = logStreamingServiceBaseUrl;
+    this.clientCertificateFilePath = null;
+    this.clientCertificateKeyFilePath = null;
+  }
+
+  public LogStreamingModule(
+      String logStreamingServiceBaseUrl, String clientCertificateFilePath, String clientCertificateKeyFilePath) {
+    this.logStreamingServiceBaseUrl = logStreamingServiceBaseUrl;
+    this.clientCertificateFilePath = clientCertificateFilePath;
+    this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
   }
 
   @Override
   protected void configure() {
-    bind(LogStreamingClient.class).toProvider(new LogStreamingClientFactory(logStreamingServiceBaseUrl));
+    bind(LogStreamingClient.class)
+        .toProvider(new LogStreamingClientFactory(
+            this.logStreamingServiceBaseUrl, this.clientCertificateFilePath, this.clientCertificateKeyFilePath));
   }
 }
