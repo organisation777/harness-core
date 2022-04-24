@@ -157,6 +157,8 @@ public class WatcherApplication {
                                          .queueFilePath(configuration.getQueueFilePath())
                                          .publishTarget(publishTarget)
                                          .publishAuthority(publishAuthority)
+                                         .clientCertificateFilePath(configuration.getClientCertificateFilePath())
+                                         .clientCertificateKeyFilePath(configuration.getClientCertificateKeyFilePath())
                                          .build()));
       } else {
         log.warn("Unable to configure event publisher configs. Event publisher will be disabled");

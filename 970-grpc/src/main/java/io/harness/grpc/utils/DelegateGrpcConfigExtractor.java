@@ -34,9 +34,15 @@ public class DelegateGrpcConfigExtractor {
     }
   }
 
-  public static String extractAuthority(String managerUrl, String svc) {
+  public static String extractAndPrepareAuthority(String managerUrl, String svc, boolean isMtls) {
     try {
       URI uri = new URI(managerUrl);
+
+      // for mTLS we need the original authority - metadata is used for routing
+      if (isMtls) {
+        return uri.getAuthority();
+      }
+
       if ("KUBERNETES_ONPREM".equals(System.getenv().get(DEPLOY_MODE))) {
         if ("https".equals(extractScheme(managerUrl))) {
           return uri.getAuthority();

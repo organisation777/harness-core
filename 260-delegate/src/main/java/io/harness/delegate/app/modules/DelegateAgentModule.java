@@ -57,7 +57,8 @@ public class DelegateAgentModule extends AbstractModule {
         configuration.getCvNextGenUrl(), configuration.getAccountId(), configuration.getDelegateToken(),
         configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
 
-    install(new LogStreamingModule(configuration.getLogStreamingServiceBaseUrl()));
+    install(new LogStreamingModule(configuration.getLogStreamingServiceBaseUrl(),
+        configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
     install(new DelegateGrpcClientModule(configuration));
 
     configureCcmEventPublishing();
@@ -86,12 +87,12 @@ public class DelegateAgentModule extends AbstractModule {
         log.info("Running immutable delegate, starting CCM event tailer");
         final DelegateTailerModule.Config tailerConfig =
             DelegateTailerModule.Config.builder()
-                .accountId(configuration.getAccountId())
-                .accountSecret(configuration.getDelegateToken())
                 .queueFilePath(configuration.getQueueFilePath())
                 .publishTarget(extractTarget(managerHostAndPort))
                 .publishAuthority(DelegateGrpcConfigExtractor.extractAndPrepareAuthority(
                     managerHostAndPort, "events", configuration.isMtls()))
+                .clientCertificateFilePath(configuration.getClientCertificateFilePath())
+                .clientCertificateKeyFilePath(configuration.getClientCertificateKeyFilePath())
                 .build();
         install(new DelegateTailerModule(tailerConfig));
       } else {

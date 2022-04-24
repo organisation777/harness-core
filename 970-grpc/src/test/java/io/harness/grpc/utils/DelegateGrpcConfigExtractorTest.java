@@ -41,7 +41,7 @@ public class DelegateGrpcConfigExtractorTest extends CategoryTest {
   public void shouldExtractAuthorityGivenUrlWithPrefix() throws Exception {
     // {prefix}-{svc}-{grpc}-{env}.harness.io
     String managerUrl = "https://pr.harness.io/ccm";
-    assertThat(DelegateGrpcConfigExtractor.extractAuthority(managerUrl, "events"))
+    assertThat(DelegateGrpcConfigExtractor.extractAndPrepareAuthority(managerUrl, "events", false))
         .isEqualTo("ccm-events-grpc-pr.harness.io");
   }
 
@@ -50,7 +50,16 @@ public class DelegateGrpcConfigExtractorTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldExtractAuthorityGivenUrlWithoutPrefix() throws Exception {
     String managerUrl = "https://pr.harness.io";
-    assertThat(DelegateGrpcConfigExtractor.extractAuthority(managerUrl, "events"))
+    assertThat(DelegateGrpcConfigExtractor.extractAndPrepareAuthority(managerUrl, "events", false))
         .isEqualTo("events-grpc-pr.harness.io");
+  }
+
+  @Test
+  @Owner(developers = AVMOHAN)
+  @Category(UnitTests.class)
+  public void shouldExtractOriginalAuthorityForMtls() throws Exception {
+    String managerUrl = "https://pr.harness.io";
+    assertThat(DelegateGrpcConfigExtractor.extractAndPrepareAuthority(managerUrl, "events", true))
+        .isEqualTo("pr.harness.io");
   }
 }
