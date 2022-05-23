@@ -738,7 +738,7 @@ public class CDDashboardApisTest extends CategoryTest {
         .queryCalculatorServiceTagMag(serviveTagQueryPending);
 
     DashboardExecutionStatusInfo dashboardExecutionStatusInfo =
-        cdOverviewDashboardServiceImpl.getDeploymentActiveFailedRunningInfo("acc", "orgId", "pro", 10);
+        cdOverviewDashboardServiceImpl.getDeploymentActiveFailedRunningInfo("acc", "orgId", "pro", 10, 0, 0);
 
     // failure
 
