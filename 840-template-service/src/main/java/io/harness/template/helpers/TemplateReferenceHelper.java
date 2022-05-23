@@ -189,13 +189,13 @@ public class TemplateReferenceHelper {
 
           // remove versionLabel from FQN.
           fqnList.remove(fqnList.size() - 1);
+          String fqn = FQN.builder().fqnList(fqnList).build().getExpressionFqn();
           // add linked template as reference
-          referredEntities.add(
-              getTemplateReference(templateIdentifierRef, versionLabelNode == null ? STABLE_VERSION : versionLabel));
+          referredEntities.add(getTemplateReference(
+              templateIdentifierRef, versionLabelNode == null ? STABLE_VERSION : versionLabel, fqn));
           // add runtime entities referred by linked template as references
-          referredEntities.addAll(
-              getEntitiesReferredByTemplate(accountId, orgId, projectId, templateIdentifierRef, versionLabel,
-                  fqnStringToValueMap, FQN.builder().fqnList(fqnList).build().getExpressionFqn(), shouldModifyFqn));
+          referredEntities.addAll(getEntitiesReferredByTemplate(accountId, orgId, projectId, templateIdentifierRef,
+              versionLabel, fqnStringToValueMap, fqn, shouldModifyFqn));
         }
       }
     });
@@ -269,11 +269,14 @@ public class TemplateReferenceHelper {
     }
   }
 
-  private EntityDetailProtoDTO getTemplateReference(IdentifierRef templateIdentifierRef, String versionLabel) {
+  private EntityDetailProtoDTO getTemplateReference(IdentifierRef identifierRef, String versionLabel, String fqn) {
+    Map<String, String> metadata = new HashMap<>();
+    metadata.put("fqn", fqn);
     return EntityDetailProtoDTO.newBuilder()
         .setType(EntityTypeProtoEnum.TEMPLATE)
-        .setTemplateRef(TemplateReferenceProtoUtils.createTemplateReferenceProtoFromIdentifierRef(
-            templateIdentifierRef, versionLabel))
+        .setTemplateRef(TemplateReferenceProtoUtils.createTemplateReferenceProto(identifierRef.getAccountIdentifier(),
+            identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(),
+            identifierRef.getScope(), versionLabel, metadata))
         .build();
   }
 
