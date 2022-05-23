@@ -24,6 +24,7 @@ import io.harness.ng.core.template.RefreshRequestDTO;
 import io.harness.ng.core.template.RefreshResponseDTO;
 import io.harness.ng.core.template.TemplateApplyRequestDTO;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
+import io.harness.ng.core.template.TemplateReferenceRequestDTO;
 import io.harness.ng.core.template.exception.NGTemplateResolveException;
 import io.harness.pms.helpers.PmsFeatureFlagHelper;
 import io.harness.pms.pipeline.PipelineEntity;
@@ -120,11 +121,11 @@ public class PMSPipelineTemplateHelper {
       if (gitEntityInfo != null) {
         return NGRestUtils.getResponse(templateResourceClient.getTemplateReferenceForGivenYaml(accountId, orgId,
             projectId, gitEntityInfo.isNewBranch() ? gitEntityInfo.getBaseBranch() : gitEntityInfo.getBranch(),
-            gitEntityInfo.getYamlGitConfigId(), true, yaml));
+            gitEntityInfo.getYamlGitConfigId(), true, TemplateReferenceRequestDTO.builder().yaml(yaml).build()));
       }
 
-      return NGRestUtils.getResponse(
-          templateResourceClient.getTemplateReferenceForGivenYaml(accountId, orgId, projectId, null, null, null, yaml));
+      return NGRestUtils.getResponse(templateResourceClient.getTemplateReferenceForGivenYaml(
+          accountId, orgId, projectId, null, null, null, TemplateReferenceRequestDTO.builder().yaml(yaml).build()));
     }
     return new ArrayList<>();
   }

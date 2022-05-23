@@ -39,6 +39,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.template.TemplateApplyRequestDTO;
 import io.harness.ng.core.template.TemplateListType;
 import io.harness.ng.core.template.TemplateMergeResponseDTO;
+import io.harness.ng.core.template.TemplateReferenceRequestDTO;
 import io.harness.ng.core.template.TemplateReferenceSummary;
 import io.harness.ng.core.template.TemplateSummaryResponseDTO;
 import io.harness.pms.contracts.service.VariableMergeResponseProto;
@@ -624,7 +625,7 @@ public class NGTemplateResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull String yaml) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull TemplateReferenceRequestDTO yaml) {
     return ResponseDTO.newResponse(
         templateReferenceHelper.getNestedTemplateReferences(accountId, orgId, projectId, yaml, false));
   }
