@@ -91,6 +91,11 @@ public class CommonStepInfo {
           .setType("Barrier")
           .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Barrier").build())
           .build();
+  StepInfo lockStepInfo = StepInfo.newBuilder()
+          .setName("Lock")
+          .setType("Lock")
+          .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Lock").build())
+          .build();
   StepInfo serviceNowApprovalStepInfo =
       StepInfo.newBuilder()
           .setName("ServiceNow Approval")
@@ -146,6 +151,7 @@ public class CommonStepInfo {
     stepInfos.add(jiraCreateStepInfo);
     stepInfos.add(jiraUpdateStepInfo);
     stepInfos.add(barrierStepInfo);
+    stepInfos.add(lockStepInfo);
     stepInfos.add(serviceNowApprovalStepInfo);
     stepInfos.add(policyStepInfo);
     stepInfos.add(serviceNowCreateStepInfo);

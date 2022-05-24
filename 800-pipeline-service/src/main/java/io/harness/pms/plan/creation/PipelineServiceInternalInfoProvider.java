@@ -31,6 +31,7 @@ import io.harness.plancreator.steps.internal.FlagConfigurationStepPlanCreator;
 import io.harness.plancreator.steps.internal.PMSStepPlanCreator;
 import io.harness.plancreator.steps.internal.PmsStepFilterJsonCreator;
 import io.harness.plancreator.steps.internal.PmsStepFilterJsonCreatorV2;
+import io.harness.plancreator.steps.resourceconstraint.LockStepPlanCreator;
 import io.harness.plancreator.steps.resourceconstraint.ResourceConstraintStepPlanCreator;
 import io.harness.plancreator.strategy.StrategyConfigPlanCreator;
 import io.harness.pms.contracts.steps.StepInfo;
@@ -94,6 +95,7 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     planCreators.add(new ExecutionPmsPlanCreator());
     planCreators.add(new StepGroupPMSPlanCreator());
     planCreators.add(new ResourceConstraintStepPlanCreator());
+    planCreators.add(new LockStepPlanCreator());
     planCreators.add(new FeatureFlagStagePlanCreator());
     planCreators.add(new CfExecutionPMSPlanCreator());
     planCreators.add(new ServiceNowApprovalStepPlanCreator());
