@@ -92,10 +92,10 @@ public class CommonStepInfo {
           .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Barrier").build())
           .build();
   StepInfo lockStepInfo = StepInfo.newBuilder()
-          .setName("Lock")
-          .setType("Lock")
-          .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Lock").build())
-          .build();
+                              .setName("Lock")
+                              .setType("Lock")
+                              .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Lock").build())
+                              .build();
   StepInfo serviceNowApprovalStepInfo =
       StepInfo.newBuilder()
           .setName("ServiceNow Approval")
