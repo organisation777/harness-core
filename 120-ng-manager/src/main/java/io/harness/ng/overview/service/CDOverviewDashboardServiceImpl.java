@@ -1234,6 +1234,7 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
   @Override
   public DashboardExecutionStatusInfo getDeploymentActiveFailedRunningInfo(
       String accountId, String orgId, String projectId, long days, long startInterval, long endInterval) {
+    endInterval = endInterval + getTimeUnitToGroupBy(DAY);
     // failed
     String queryFailed = queryBuilderStatus(
         accountId, orgId, projectId, days, CDDashboardServiceHelper.failedStatusList, startInterval, endInterval);
