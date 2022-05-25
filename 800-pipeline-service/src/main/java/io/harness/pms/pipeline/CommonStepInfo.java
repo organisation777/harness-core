@@ -137,6 +137,14 @@ public class CommonStepInfo {
           .setFeatureFlag(FeatureName.SERVICENOW_CREATE_UPDATE_NG.name())
           .build();
 
+  StepInfo jenkinsBuildStepInfo =
+      StepInfo.newBuilder()
+          .setName("Jenkins Build")
+          .setType(StepSpecTypeConstants.JENKINS_BUILD)
+          .setStepMetaData(StepMetaData.newBuilder().addCategory("JenkinsBuild").addFolderPaths("JenkinsBuild").build())
+          .setFeatureRestrictionName(FeatureRestrictionName.JENKINS_BUILD.name())
+          .build();
+
   public List<StepInfo> getCommonSteps(String category) {
     List<StepInfo> stepInfos = new ArrayList<>();
     stepInfos.add(shellScriptStepInfo);
@@ -150,6 +158,7 @@ public class CommonStepInfo {
     stepInfos.add(policyStepInfo);
     stepInfos.add(serviceNowCreateStepInfo);
     stepInfos.add(serviceNowUpdateStepInfo);
+    stepInfos.add(jenkinsBuildStepInfo);
     return stepInfos;
   }
 }

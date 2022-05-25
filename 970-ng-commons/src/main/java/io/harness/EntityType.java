@@ -241,7 +241,10 @@ public enum EntityType {
       IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_ROLLBACK_STACK_STEP),
   @JsonProperty(EntityTypeConstants.INFRASTRUCTURE)
   INFRASTRUCTURE(
-      ModuleType.CORE, EntityTypeConstants.INFRASTRUCTURE, IdentifierRef.class, EntityYamlRootNames.INFRASTRUCTURE);
+      ModuleType.CORE, EntityTypeConstants.INFRASTRUCTURE, IdentifierRef.class, EntityYamlRootNames.INFRASTRUCTURE),
+  @JsonProperty(EntityTypeConstants.JENKINS_BUILD)
+  JENKINS_BUILD(
+      ModuleType.PMS, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD);
 
   private final ModuleType moduleType;
   String yamlName;
