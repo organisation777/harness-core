@@ -24,8 +24,10 @@ import io.harness.azure.client.AzureAuthorizationClient;
 import io.harness.azure.client.AzureComputeClient;
 import io.harness.azure.client.AzureContainerRegistryClient;
 import io.harness.azure.client.AzureKubernetesClient;
+import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.kube.AzureKubeConfig;
+import io.harness.azure.model.tag.TagDetails;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
@@ -36,7 +38,6 @@ import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
-import io.harness.delegate.beans.azure.response.AzureWebAppNamesResponse;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.task.artifacts.mappers.AcrRequestResponseMapper;
 import io.harness.exception.AzureAKSException;
@@ -75,6 +76,7 @@ public class AzureAsyncTaskHelper {
   @Inject private AzureComputeClient azureComputeClient;
   @Inject private AzureContainerRegistryClient azureContainerRegistryClient;
   @Inject private AzureKubernetesClient azureKubernetesClient;
+  @Inject private AzureManagementClient azureManagementClient;
 
   private final String TAG_LABEL = "Tag#";
 
@@ -219,6 +221,21 @@ public class AzureAsyncTaskHelper {
             .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
             .build();
     return response;
+  }
+
+  public AzureTagsResponse listTags(
+      List<EncryptedDataDetail> encryptionDetails, AzureConnectorDTO azureConnector, String subscriptionId) {
+    AzureConfig azureConfig = AcrRequestResponseMapper.toAzureInternalConfig(azureConnector.getCredential(),
+        encryptionDetails, azureConnector.getCredential().getAzureCredentialType(),
+        azureConnector.getAzureEnvironmentType(), secretDecryptionService);
+
+    return AzureTagsResponse.builder()
+        .tags(azureManagementClient.listTags(azureConfig, subscriptionId)
+                  .stream()
+                  .map(TagDetails::getTagName)
+                  .collect(Collectors.toList()))
+        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+        .build();
   }
 
   public KubernetesConfig getClusterConfig(AzureConnectorDTO azureConnector, String subscriptionId,

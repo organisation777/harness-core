@@ -115,6 +115,11 @@ public class AzureTask extends AbstractDelegateRunnableTask {
             azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.CONTAINER_REGISTRY),
             azureTaskParams.getEncryptionDetails(), azureTaskParams.getAzureConnector());
       }
+      case LIST_TAGS:
+        validateSubscriptionIdExist(azureTaskParams, "Could not retrieve any tags because of invalid parameter(s)");
+        return azureAsyncTaskHelper.listTags(azureTaskParams.getEncryptionDetails(),
+            azureTaskParams.getAzureConnector(),
+            azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.SUBSCRIPTION_ID));
       default:
         throw new InvalidRequestException("Task type not identified");
     }

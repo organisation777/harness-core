@@ -14,6 +14,7 @@ import io.harness.cdng.k8s.resources.azure.dtos.AzureClustersDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureDeploymentSlotsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionsDTO;
+import io.harness.cdng.k8s.resources.azure.dtos.AzureTagsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureWebAppNamesDTO;
 
 @OwnedBy(HarnessTeam.CDP)
@@ -31,4 +32,7 @@ public interface AzureResourceService {
 
   AzureDeploymentSlotsDTO getAppServiceDeploymentSlots(IdentifierRef connectorRef, String orgIdentifier,
       String projectIdentifier, String subscriptionId, String resourceGroup, String webAppName);
+
+  AzureTagsDTO getTags(
+      IdentifierRef connectorRef, String orgIdentifier, String projectIdentifier, String subscriptionId);
 }

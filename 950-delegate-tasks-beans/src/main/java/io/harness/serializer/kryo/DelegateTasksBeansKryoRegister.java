@@ -81,6 +81,7 @@ import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
+import io.harness.delegate.beans.azure.response.AzureTagsResponse;
 import io.harness.delegate.beans.azure.response.AzureValidateTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureWebAppNamesResponse;
 import io.harness.delegate.beans.ccm.K8sClusterInfo;
@@ -1404,6 +1405,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsContainerInfo.class, 5166);
     kryo.register(KubernetesContainerInfo.class, 5165);
     kryo.register(S3FileRequest.class, 8067);
+    kryo.register(AzureTagsResponse.class, 543521);
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
     kryo.register(WinRmAuthScheme.class, 600002);
