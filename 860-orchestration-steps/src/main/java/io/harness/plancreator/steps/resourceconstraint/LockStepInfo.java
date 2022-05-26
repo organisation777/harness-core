@@ -13,12 +13,15 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.SwaggerConstants;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
-import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.utils.PmsConstants;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.StepSpecTypeConstants;
-import io.harness.steps.resourcerestraint.LockSpecParameters;
+import io.harness.steps.resourcerestraint.LockStep;
 import io.harness.steps.resourcerestraint.ResourceRestraintFacilitator;
+import io.harness.steps.resourcerestraint.ResourceRestraintSpecParameters;
+import io.harness.steps.resourcerestraint.beans.AcquireMode;
+import io.harness.steps.resourcerestraint.beans.HoldingScope;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -36,11 +39,12 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class LockStepInfo implements PMSStepInfo {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> key;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> scope;
 
   @JsonIgnore
   @Override
   public StepType getStepType() {
-    return StepType.newBuilder().setType(StepSpecTypeConstants.LOCK).setStepCategory(StepCategory.STEP).build();
+    return LockStep.STEP_TYPE;
   }
 
   @JsonIgnore
@@ -49,8 +53,23 @@ public class LockStepInfo implements PMSStepInfo {
     return ResourceRestraintFacilitator.FACILITATOR_TYPE.getType();
   }
 
+  /**
+   * Create the parameters using a fixed name, permits, and acquire mode.
+   *
+   * <ul>
+   *     <li>name: {@link PmsConstants#QUEUING_RC_NAME}</li>
+   *     <li>permits: {@link PmsConstants#QUEUING_RC_PERMITS}</li>
+   *     <li>acquireMode: {@link AcquireMode#ENSURE} (FIFO)</li>
+   * </ul>
+   */
   @Override
   public SpecParameters getSpecParameters() {
-    return LockSpecParameters.builder().key(key).build();
+    return ResourceRestraintSpecParameters.builder()
+        .resourceUnit(key.getValue())
+        .holdingScope(HoldingScope.builder().scope("PLAN").build()) // COME FROM UI
+        .name(PmsConstants.QUEUING_RC_NAME)
+        .permits(PmsConstants.QUEUING_RC_PERMITS)
+        .acquireMode(AcquireMode.ENSURE)
+        .build();
   }
 }
