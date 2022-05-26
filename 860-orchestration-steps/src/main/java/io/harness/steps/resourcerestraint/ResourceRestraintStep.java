@@ -22,6 +22,7 @@ import io.harness.pms.sdk.core.steps.executables.SyncExecutable;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.resourcerestraint.beans.HoldingScope;
 import io.harness.steps.resourcerestraint.beans.ResourceRestraint;
@@ -62,7 +63,7 @@ public class ResourceRestraintStep
 
     return StepResponse.builder()
         .stepOutcome(StepResponse.StepOutcome.builder()
-                         .name(STEP_TYPE.getType())
+                         .name(YAMLFieldNameConstants.OUTPUT)
                          .outcome(ResourceRestraintOutcome.builder()
                                       .name(specParameters.getName())
                                       .capacity(data.getCapacity())
@@ -94,7 +95,7 @@ public class ResourceRestraintStep
     return StepResponse.builder()
         .stepOutcome(
             StepResponse.StepOutcome.builder()
-                .name(STEP_TYPE.getType())
+                .name(YAMLFieldNameConstants.OUTPUT)
                 .outcome(ResourceRestraintOutcome.builder()
                              .name(resourceRestraint.getName())
                              .capacity(resourceRestraint.getCapacity())
