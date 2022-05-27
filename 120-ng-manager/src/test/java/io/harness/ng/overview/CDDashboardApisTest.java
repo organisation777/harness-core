@@ -674,18 +674,20 @@ public class CDDashboardApisTest extends CategoryTest {
                                                                    .triggerType(triggerTypeList)
                                                                    .build();
 
-    String queryFailed = cdOverviewDashboardServiceImpl.queryBuilderStatus("acc", "orgId", "pro", 10, failedStatusList);
+    String queryFailed = cdOverviewDashboardServiceImpl.queryBuilderStatus(
+        "acc", "orgId", "pro", 10, failedStatusList, 1619626802003L, 1622564032003L);
     String queryIdFailed = cdOverviewDashboardServiceImpl.queryBuilderSelectIdLimitTimeCdTable(
-        "acc", "orgId", "pro", 10, failedStatusList);
+        "acc", "orgId", "pro", 10, failedStatusList, 1619626802003L, 1622564032003L);
 
-    String queryActive = cdOverviewDashboardServiceImpl.queryBuilderStatus("acc", "orgId", "pro", 10, activeStatusList);
+    String queryActive = cdOverviewDashboardServiceImpl.queryBuilderStatus(
+        "acc", "orgId", "pro", 10, activeStatusList, 1619626802002L, 1622564032002L);
     String queryIdActive = cdOverviewDashboardServiceImpl.queryBuilderSelectIdLimitTimeCdTable(
-        "acc", "orgId", "pro", 10, activeStatusList);
+        "acc", "orgId", "pro", 10, activeStatusList, 16196268020002L, 16225640320002L);
 
-    String queryPending =
-        cdOverviewDashboardServiceImpl.queryBuilderStatus("acc", "orgId", "pro", 10, pendingStatusList);
+    String queryPending = cdOverviewDashboardServiceImpl.queryBuilderStatus(
+        "acc", "orgId", "pro", 10, pendingStatusList, 1619626802001L, 1622564032001L);
     String queryIdPending = cdOverviewDashboardServiceImpl.queryBuilderSelectIdLimitTimeCdTable(
-        "acc", "orgId", "pro", 10, pendingStatusList);
+        "acc", "orgId", "pro", 10, pendingStatusList, 16196268020001L, 16225640320001L);
 
     // failure
     doReturn(deploymentStatusInfoListFailure)
@@ -738,7 +740,8 @@ public class CDDashboardApisTest extends CategoryTest {
         .queryCalculatorServiceTagMag(serviveTagQueryPending);
 
     DashboardExecutionStatusInfo dashboardExecutionStatusInfo =
-        cdOverviewDashboardServiceImpl.getDeploymentActiveFailedRunningInfo("acc", "orgId", "pro", 10, 0, 0);
+        cdOverviewDashboardServiceImpl.getDeploymentActiveFailedRunningInfo(
+            "acc", "orgId", "pro", 10, 1619626802000L, 1622564032000L);
 
     // failure
 

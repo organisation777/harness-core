@@ -194,36 +194,6 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     return totalBuildSqlBuilder.toString();
   }
 
-  public String queryBuilderSelectIdLimitTimeCdTable(
-      String accountId, String orgId, String projectId, long days, List<String> statusList) {
-    String selectStatusQuery = "select id from " + tableNameCD + " where ";
-    StringBuilder totalBuildSqlBuilder = new StringBuilder();
-    totalBuildSqlBuilder.append(selectStatusQuery);
-
-    if (accountId != null) {
-      totalBuildSqlBuilder.append(String.format("accountid='%s' and ", accountId));
-    }
-
-    if (orgId != null) {
-      totalBuildSqlBuilder.append(String.format("orgidentifier='%s' and ", orgId));
-    }
-
-    if (projectId != null) {
-      totalBuildSqlBuilder.append(String.format("projectidentifier='%s' and ", projectId));
-    }
-
-    totalBuildSqlBuilder.append("status in (");
-    for (String status : statusList) {
-      totalBuildSqlBuilder.append(String.format("'%s',", status));
-    }
-
-    totalBuildSqlBuilder.deleteCharAt(totalBuildSqlBuilder.length() - 1);
-
-    totalBuildSqlBuilder.append(String.format(") and startts is not null ORDER BY startts DESC LIMIT %s;", days));
-
-    return totalBuildSqlBuilder.toString();
-  }
-
   public String queryBuilderSelectIdLimitTimeCdTable(String accountId, String orgId, String projectId, long days,
       List<String> statusList, long startInterval, long endInterval) {
     String selectStatusQuery = "select id from " + tableNameCD + " where ";
@@ -251,6 +221,8 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
 
     if (startInterval > 0 && endInterval > 0) {
       totalBuildSqlBuilder.append(String.format(") and startts>=%s and startts<%s", startInterval, endInterval));
+    } else {
+      totalBuildSqlBuilder.append(String.format(")"));
     }
 
     totalBuildSqlBuilder.append(String.format(" and startts is not null ORDER BY startts DESC LIMIT %s", days));
@@ -282,36 +254,6 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     return rate;
   }
 
-  public String queryBuilderStatus(
-      String accountId, String orgId, String projectId, long days, List<String> statusList) {
-    String selectStatusQuery = "select " + executionStatusCdTimeScaleColumns() + " from " + tableNameCD + " where ";
-    StringBuilder totalBuildSqlBuilder = new StringBuilder();
-    totalBuildSqlBuilder.append(selectStatusQuery);
-
-    if (accountId != null) {
-      totalBuildSqlBuilder.append(String.format("accountid='%s' and ", accountId));
-    }
-
-    if (orgId != null) {
-      totalBuildSqlBuilder.append(String.format("orgidentifier='%s' and ", orgId));
-    }
-
-    if (projectId != null) {
-      totalBuildSqlBuilder.append(String.format("projectidentifier='%s' and ", projectId));
-    }
-
-    totalBuildSqlBuilder.append("status in (");
-    for (String status : statusList) {
-      totalBuildSqlBuilder.append(String.format("'%s',", status));
-    }
-
-    totalBuildSqlBuilder.deleteCharAt(totalBuildSqlBuilder.length() - 1);
-
-    totalBuildSqlBuilder.append(String.format(") and startts is not null ORDER BY startts DESC LIMIT %s;", days));
-
-    return totalBuildSqlBuilder.toString();
-  }
-
   public String queryBuilderStatus(String accountId, String orgId, String projectId, long days, List<String> statusList,
       long startInterval, long endInterval) {
     String selectStatusQuery = "select " + executionStatusCdTimeScaleColumns() + " from " + tableNameCD + " where ";
@@ -339,6 +281,8 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
 
     if (startInterval > 0 && endInterval > 0) {
       totalBuildSqlBuilder.append(String.format(") and startts>=%s and startts<%s", startInterval, endInterval));
+    } else {
+      totalBuildSqlBuilder.append(String.format(")"));
     }
 
     totalBuildSqlBuilder.append(String.format(" and startts is not null ORDER BY startts DESC LIMIT %s;", days));
