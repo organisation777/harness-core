@@ -41,6 +41,7 @@ import io.harness.beans.Scope;
 import io.harness.category.element.UnitTests;
 import io.harness.context.GlobalContext;
 import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.manage.GlobalContextManager;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
@@ -104,14 +105,16 @@ public class ProjectServiceImplTest extends CategoryTest {
   @Mock private NgUserService ngUserService;
   @Mock private AccessControlClient accessControlClient;
   @Mock private ScopeAccessHelper scopeAccessHelper;
+  @Mock private YamlGitConfigService yamlGitConfigService;
   @InjectMocks ProjectInstrumentationHelper instrumentationHelper;
   private ProjectServiceImpl projectService;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    projectService = spy(new ProjectServiceImpl(projectRepository, organizationService, transactionTemplate,
-        outboxService, ngUserService, accessControlClient, scopeAccessHelper, instrumentationHelper));
+    projectService =
+        spy(new ProjectServiceImpl(projectRepository, organizationService, transactionTemplate, outboxService,
+            ngUserService, accessControlClient, scopeAccessHelper, instrumentationHelper, yamlGitConfigService));
     when(scopeAccessHelper.getPermittedScopes(any())).then(returnsFirstArg());
   }
 

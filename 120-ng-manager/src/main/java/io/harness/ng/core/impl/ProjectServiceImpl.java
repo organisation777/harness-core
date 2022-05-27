@@ -46,6 +46,7 @@ import io.harness.enforcement.client.annotation.FeatureRestrictionCheck;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.DefaultOrganization;
@@ -125,12 +126,13 @@ public class ProjectServiceImpl implements ProjectService {
   private final AccessControlClient accessControlClient;
   private final ScopeAccessHelper scopeAccessHelper;
   private final ProjectInstrumentationHelper instrumentationHelper;
+  private final YamlGitConfigService yamlGitConfigService;
 
   @Inject
   public ProjectServiceImpl(ProjectRepository projectRepository, OrganizationService organizationService,
       @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate, OutboxService outboxService,
       NgUserService ngUserService, AccessControlClient accessControlClient, ScopeAccessHelper scopeAccessHelper,
-      ProjectInstrumentationHelper instrumentationHelper) {
+      ProjectInstrumentationHelper instrumentationHelper, YamlGitConfigService yamlGitConfigService) {
     this.projectRepository = projectRepository;
     this.organizationService = organizationService;
     this.transactionTemplate = transactionTemplate;
@@ -139,6 +141,7 @@ public class ProjectServiceImpl implements ProjectService {
     this.accessControlClient = accessControlClient;
     this.scopeAccessHelper = scopeAccessHelper;
     this.instrumentationHelper = instrumentationHelper;
+    this.yamlGitConfigService = yamlGitConfigService;
   }
 
   @Override
@@ -543,6 +546,7 @@ public class ProjectServiceImpl implements ProjectService {
     return Failsafe.with(DEFAULT_TRANSACTION_RETRY_POLICY).get(() -> transactionTemplate.execute(status -> {
       Project deletedProject = projectRepository.delete(accountIdentifier, orgIdentifier, projectIdentifier, version);
       boolean delete = deletedProject != null;
+      yamlGitConfigService.deleteAll(accountIdentifier, orgIdentifier, projectIdentifier);
 
       if (delete) {
         log.info(String.format("Project with identifier %s and orgIdentifier %s was successfully deleted",
