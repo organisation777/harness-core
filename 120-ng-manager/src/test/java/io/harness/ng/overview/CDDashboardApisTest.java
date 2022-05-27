@@ -185,6 +185,28 @@ public class CDDashboardApisTest extends CategoryTest {
                              .deployments(Deployment.builder().count(1).build())
                              .build());
 
+    List<DeploymentDateAndCount> activeCountList = new ArrayList<>();
+    activeCountList.add(DeploymentDateAndCount.builder()
+                            .time(1619568000000L)
+                            .deployments(Deployment.builder().count(1).build())
+                            .build());
+    activeCountList.add(DeploymentDateAndCount.builder()
+                            .time(1619654400000L)
+                            .deployments(Deployment.builder().count(0).build())
+                            .build());
+    activeCountList.add(DeploymentDateAndCount.builder()
+                            .time(1619740800000L)
+                            .deployments(Deployment.builder().count(0).build())
+                            .build());
+    activeCountList.add(DeploymentDateAndCount.builder()
+                            .time(1619827200000L)
+                            .deployments(Deployment.builder().count(1).build())
+                            .build());
+    activeCountList.add(DeploymentDateAndCount.builder()
+                            .time(1619913600000L)
+                            .deployments(Deployment.builder().count(0).build())
+                            .build());
+
     HealthDeploymentDashboard expectedHealthDeploymentDashboard =
         HealthDeploymentDashboard.builder()
             .healthDeploymentInfo(
@@ -194,7 +216,6 @@ public class CDDashboardApisTest extends CategoryTest {
                                .production(4L)
                                .nonProduction(6L)
                                .countList(totalCountList)
-
                                .build())
                     .success(DeploymentInfo.builder()
                                  .count(4)
@@ -202,6 +223,7 @@ public class CDDashboardApisTest extends CategoryTest {
                                  .countList(successCountList)
                                  .build())
                     .failure(DeploymentInfo.builder().count(4).rate(0.0).countList(failureCountList).build())
+                    .active(DeploymentInfo.builder().count(2).rate(100.0).countList(activeCountList).build())
                     .build())
             .build();
 
