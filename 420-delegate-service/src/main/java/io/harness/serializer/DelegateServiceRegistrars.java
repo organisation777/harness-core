@@ -40,6 +40,7 @@ public class DelegateServiceRegistrars {
           .add(SecretManagerClientKryoRegistrar.class)
           .addAll(OutboxEventRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
+          .addAll(WaitEngineRegistrars.kryoRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -55,5 +56,6 @@ public class DelegateServiceRegistrars {
           .addAll(SMCoreRegistrars.morphiaRegistrars)
           .addAll(SecretManagerClientRegistrars.morphiaRegistrars)
           .add(DelegateServiceMorphiaRegistrar.class)
+          .addAll(WaitEngineRegistrars.morphiaRegistrars)
           .build();
 }
