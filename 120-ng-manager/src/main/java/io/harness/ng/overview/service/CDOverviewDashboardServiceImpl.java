@@ -250,11 +250,10 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     totalBuildSqlBuilder.deleteCharAt(totalBuildSqlBuilder.length() - 1);
 
     if (startInterval > 0 && endInterval > 0) {
-      totalBuildSqlBuilder.append(
-          String.format(" and startts is not null and startts>=%s and startts<%s", startInterval, endInterval));
+      totalBuildSqlBuilder.append(String.format(") and startts>=%s and startts<%s", startInterval, endInterval));
     }
 
-    totalBuildSqlBuilder.append(String.format(") ORDER BY startts DESC LIMIT %s", days));
+    totalBuildSqlBuilder.append(String.format(" and startts is not null ORDER BY startts DESC LIMIT %s", days));
 
     return totalBuildSqlBuilder.toString();
   }
