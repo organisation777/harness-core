@@ -70,7 +70,7 @@ public class ConnectorEntityCRUDEventHandler {
     List<ConnectorResponseDTO> connectorList = new ArrayList<>();
     do {
       pagedConnectorList = connectorService.list(pagedConnectorList == null ? 0 : pagedConnectorList.getNumber() + 1,
-          10, accountIdentifier, null, orgIdentifier, projectIdentifier, null, null, false, true);
+          10, accountIdentifier, null, orgIdentifier, projectIdentifier, null, null, true, true);
       connectorList.addAll(pagedConnectorList.stream().collect(Collectors.toList()));
     } while (pagedConnectorList.hasNext());
     return connectorList;
