@@ -8,6 +8,7 @@
 package io.harness.ng.overview;
 
 import static io.harness.NGDateUtils.getStartTimeOfNextDay;
+import static io.harness.ng.core.activityhistory.dto.TimeGroupType.DAY;
 import static io.harness.ng.overview.service.CDOverviewDashboardServiceImpl.INVALID_CHANGE_RATE;
 import static io.harness.rule.OwnerRule.MEENAKSHI;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
@@ -578,6 +579,8 @@ public class CDDashboardApisTest extends CategoryTest {
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testGetDeploymentActiveFailedRunningInfo() {
+    Long endInterval = 1622650432000L;
+    endInterval = endInterval + cdOverviewDashboardServiceImpl.getTimeUnitToGroupBy(DAY);
     List<String> objectIdListFailure = Arrays.asList("11", "12", "13", "14", "15", "16", "17", "18");
     List<String> namePipelineListFailure =
         Arrays.asList("name1", "name2", "name3", "name4", "name5", "name1", "name2", "name3");
@@ -675,19 +678,19 @@ public class CDDashboardApisTest extends CategoryTest {
                                                                    .build();
 
     String queryFailed = cdOverviewDashboardServiceImpl.queryBuilderStatus(
-        "acc", "orgId", "pro", 10, failedStatusList, 1619626802003L, 1622564032003L);
+        "acc", "orgId", "pro", 10, failedStatusList, 1619626802000L, endInterval);
     String queryIdFailed = cdOverviewDashboardServiceImpl.queryBuilderSelectIdLimitTimeCdTable(
-        "acc", "orgId", "pro", 10, failedStatusList, 1619626802003L, 1622564032003L);
+        "acc", "orgId", "pro", 10, failedStatusList, 1619626802000L, endInterval);
 
     String queryActive = cdOverviewDashboardServiceImpl.queryBuilderStatus(
-        "acc", "orgId", "pro", 10, activeStatusList, 1619626802002L, 1622564032002L);
+        "acc", "orgId", "pro", 10, activeStatusList, 1619626802000L, endInterval);
     String queryIdActive = cdOverviewDashboardServiceImpl.queryBuilderSelectIdLimitTimeCdTable(
-        "acc", "orgId", "pro", 10, activeStatusList, 16196268020002L, 16225640320002L);
+        "acc", "orgId", "pro", 10, activeStatusList, 1619626802000L, endInterval);
 
     String queryPending = cdOverviewDashboardServiceImpl.queryBuilderStatus(
-        "acc", "orgId", "pro", 10, pendingStatusList, 1619626802001L, 1622564032001L);
+        "acc", "orgId", "pro", 10, pendingStatusList, 1619626802000L, endInterval);
     String queryIdPending = cdOverviewDashboardServiceImpl.queryBuilderSelectIdLimitTimeCdTable(
-        "acc", "orgId", "pro", 10, pendingStatusList, 16196268020001L, 16225640320001L);
+        "acc", "orgId", "pro", 10, pendingStatusList, 1619626802000L, endInterval);
 
     // failure
     doReturn(deploymentStatusInfoListFailure)
@@ -741,7 +744,7 @@ public class CDDashboardApisTest extends CategoryTest {
 
     DashboardExecutionStatusInfo dashboardExecutionStatusInfo =
         cdOverviewDashboardServiceImpl.getDeploymentActiveFailedRunningInfo(
-            "acc", "orgId", "pro", 10, 1619626802000L, 1622564032000L);
+            "acc", "orgId", "pro", 10, 1619626802000L, 1622650432000L);
 
     // failure
 
