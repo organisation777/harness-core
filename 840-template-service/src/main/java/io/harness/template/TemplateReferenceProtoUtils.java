@@ -27,33 +27,22 @@ public class TemplateReferenceProtoUtils {
   public TemplateReferenceProtoDTO createTemplateReferenceProtoFromIdentifierRef(
       IdentifierRef identifierRef, String versionLabel) {
     return createTemplateReferenceProto(identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
-        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(), identifierRef.getScope(), versionLabel);
+        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(), identifierRef.getScope(), versionLabel,
+        null);
+  }
+
+  public TemplateReferenceProtoDTO createTemplateReferenceProtoFromIdentifierRef(
+      IdentifierRef identifierRef, String versionLabel, Map<String, String> metaData) {
+    return createTemplateReferenceProto(identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
+        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(), identifierRef.getScope(), versionLabel,
+        metaData);
   }
 
   public TemplateReferenceProtoDTO createTemplateReferenceProtoFromTemplateReference(
       NGTemplateReference templateReference) {
     return createTemplateReferenceProto(templateReference.getAccountIdentifier(), templateReference.getOrgIdentifier(),
         templateReference.getProjectIdentifier(), templateReference.getIdentifier(), templateReference.getScope(),
-        templateReference.getVersionLabel());
-  }
-
-  public TemplateReferenceProtoDTO createTemplateReferenceProto(String accountId, String orgIdentifier,
-      String projectIdentifier, String templateIdentifier, Scope scope, String versionLabel) {
-    TemplateReferenceProtoDTO.Builder templateRefBuilder = TemplateReferenceProtoDTO.newBuilder()
-                                                               .setIdentifier(StringValue.of(templateIdentifier))
-                                                               .setAccountIdentifier(StringValue.of(accountId))
-                                                               .setScope(ScopeProtoEnum.valueOf(scope.toString()))
-                                                               .setVersionLabel(StringValue.of(versionLabel));
-
-    if (isNotEmpty(orgIdentifier)) {
-      templateRefBuilder.setOrgIdentifier(StringValue.of(orgIdentifier));
-    }
-
-    if (isNotEmpty(projectIdentifier)) {
-      templateRefBuilder.setProjectIdentifier(StringValue.of(projectIdentifier));
-    }
-
-    return templateRefBuilder.build();
+        templateReference.getVersionLabel(), null);
   }
 
   public TemplateReferenceProtoDTO createTemplateReferenceProto(String accountId, String orgIdentifier,

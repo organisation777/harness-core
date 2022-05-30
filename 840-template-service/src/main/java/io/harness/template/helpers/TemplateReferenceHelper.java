@@ -274,9 +274,8 @@ public class TemplateReferenceHelper {
     metadata.put("fqn", fqn);
     return EntityDetailProtoDTO.newBuilder()
         .setType(EntityTypeProtoEnum.TEMPLATE)
-        .setTemplateRef(TemplateReferenceProtoUtils.createTemplateReferenceProto(identifierRef.getAccountIdentifier(),
-            identifierRef.getOrgIdentifier(), identifierRef.getProjectIdentifier(), identifierRef.getIdentifier(),
-            identifierRef.getScope(), versionLabel, metadata))
+        .setTemplateRef(TemplateReferenceProtoUtils.createTemplateReferenceProtoFromIdentifierRef(
+            identifierRef, versionLabel, metadata))
         .build();
   }
 
