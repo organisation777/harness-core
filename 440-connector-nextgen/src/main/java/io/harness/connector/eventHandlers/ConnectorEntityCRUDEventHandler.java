@@ -59,7 +59,11 @@ public class ConnectorEntityCRUDEventHandler {
         entityScopeInfoBuilder.setOrgId(StringValue.of(orgIdentifier));
       }
       entityKeySource.updateKey(entityScopeInfoBuilder.build());
-      connectorService.deleteBatch(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifiers);
+      try {
+        connectorService.deleteBatch(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifiers);
+      } catch (Exception ex) {
+        log.error("Exception occurred in delete batch call", ex);
+      }
     }
     return true;
   }
@@ -70,7 +74,7 @@ public class ConnectorEntityCRUDEventHandler {
     List<ConnectorResponseDTO> connectorList = new ArrayList<>();
     do {
       pagedConnectorList = connectorService.list(pagedConnectorList == null ? 0 : pagedConnectorList.getNumber() + 1,
-          10, accountIdentifier, null, orgIdentifier, projectIdentifier, null, null, true, true);
+          10, accountIdentifier, null, orgIdentifier, projectIdentifier, null, null, false, false);
       connectorList.addAll(pagedConnectorList.stream().collect(Collectors.toList()));
     } while (pagedConnectorList.hasNext());
     return connectorList;
