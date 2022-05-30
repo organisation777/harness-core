@@ -28,7 +28,7 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-# Download the Go rules 
+# Download the Go rules
 http_archive(
     name = "io_bazel_rules_go",
     sha256 = "2b1641428dff9018f9e85c0384f03ec6c10660d935b750e3fa1492a281a53b0f",
@@ -4360,7 +4360,7 @@ plain_artifacts = [
     "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.13.1",
     "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.13.1",
     "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.1",
-    "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.11",
+    "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.1",
     "com.fasterxml.jackson.datatype:jackson-datatype-guava:2.13.1",
     "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1",
     "com.fasterxml.jackson.datatype:jackson-datatype-joda:2.13.1",
@@ -4675,6 +4675,7 @@ plain_artifacts = [
     "io.netty:netty-codec-socks:4.1.52.Final",
     "io.netty:netty-codec:4.1.52.Final",
     "io.netty:netty-common:4.1.52.Final",
+    "io.netty:netty-handler-proxy:4.1.52.Final",
     "io.netty:netty-handler:4.1.52.Final",
     "io.netty:netty-resolver-dns:4.1.52.Final",
     "io.netty:netty-resolver:4.1.52.Final",
