@@ -2005,6 +2005,9 @@
         "envGroupRef"
       ],
       "properties": {
+        "deployToAll": {
+          "type": "boolean"
+        },
         "envGroupConfig": {
           "type": "array",
           "items": {
@@ -4058,11 +4061,7 @@
         },
         {
           "type": "object",
-          "properties": {
-            "gitOpsEnabled": {
-              "type": "boolean"
-            }
-          }
+          "properties": { }
         }
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
