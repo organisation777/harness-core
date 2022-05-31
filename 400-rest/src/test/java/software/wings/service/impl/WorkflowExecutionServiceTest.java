@@ -30,6 +30,7 @@ import static io.harness.rule.OwnerRule.GARVIT;
 import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.HARSH;
 import static io.harness.rule.OwnerRule.INDER;
+import static io.harness.rule.OwnerRule.LUCAS_SALES;
 import static io.harness.rule.OwnerRule.POOJA;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.RAMA;
@@ -312,6 +313,20 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void testRejectWithRollback() {
+    String approvalId = generateUuid();
+    ApprovalDetails approvalDetails = new ApprovalDetails();
+    approvalDetails.setApprovalId(approvalId);
+    approvalDetails.setAction(Action.ROLLBACK);
+
+    boolean success =
+        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(), approvalDetails, "workflow");
+    assertThat(success).isEqualTo(true);
+  }
+
+  @Test
   @Owner(developers = POOJA)
   @Category(UnitTests.class)
   public void shouldListExecutions() {
@@ -469,7 +484,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
 
     boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
+        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(true);
     UserThreadLocal.unset();
   }
@@ -493,7 +508,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(false);
 
     boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
+        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(false);
     UserThreadLocal.unset();
   }
@@ -677,7 +692,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
 
     boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
+        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(true);
     UserThreadLocal.unset();
   }
@@ -701,7 +716,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(false);
 
     boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
+        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(false);
     UserThreadLocal.unset();
   }
@@ -725,7 +740,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     UserThreadLocal.set(user1);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
 
-    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
+    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
   }
 
   @Test(expected = InvalidRequestException.class)
@@ -747,7 +762,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     UserThreadLocal.set(user1);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
 
-    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails);
+    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
   }
 
   @Test

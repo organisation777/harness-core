@@ -195,7 +195,7 @@ public interface WorkflowExecutionService extends StateStatusUpdate {
 
   boolean updateNotes(String appId, String workflowExecutionId, ExecutionArgs executionArgs);
 
-  boolean approveOrRejectExecution(String appId, List<String> userGroupIds, ApprovalDetails approvalDetails, ApprovalStateExecutionData approvalStateExecutionData);
+  boolean approveOrRejectExecution(String appId, List<String> userGroupIds, ApprovalDetails approvalDetails, String executionUuid);
 
   boolean approveOrRejectExecution(
       String appId, List<String> userGroupIds, ApprovalDetails approvalDetails, ApiKeyEntry apiEntryKey);

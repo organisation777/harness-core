@@ -456,7 +456,7 @@ public class ExecutionResource {
     approvalStateExecutionData.setExecutionUuid(workflowExecutionId);
 
     return new RestResponse<>(workflowExecutionService.approveOrRejectExecution(
-        appId, approvalStateExecutionData.getUserGroups(), approvalDetails, approvalStateExecutionData));
+        appId, approvalStateExecutionData.getUserGroups(), approvalDetails, workflowExecutionId));
   }
 
   /**

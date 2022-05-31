@@ -618,7 +618,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   public boolean approveOrRejectExecution(
       String appId, List<String> userGroupIds, ApprovalDetails approvalDetails, ApiKeyEntry apiEntryKey) {
     if (apiEntryKey == null) {
-      return approveOrRejectExecution(appId, userGroupIds, approvalDetails, (ApprovalStateExecutionData) null);
+      return approveOrRejectExecution(appId, userGroupIds, approvalDetails, (String) null);
     }
     if (apiEntryKey != null && isNotEmpty(userGroupIds)
         && !verifyAuthorizedToAcceptOrReject(userGroupIds, apiEntryKey.getUserGroupIds(), appId, null)) {
@@ -629,15 +629,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   }
 
   @Override
-  public boolean approveOrRejectExecution(String appId, List<String> userGroupIds, ApprovalDetails approvalDetails, ApprovalStateExecutionData approvalStateExecutionData) {
+  public boolean approveOrRejectExecution(String appId, List<String> userGroupIds, ApprovalDetails approvalDetails, String executionUuid) {
     if (isNotEmpty(userGroupIds) && !verifyAuthorizedToAcceptOrReject(userGroupIds, appId, null)) {
       throw new InvalidRequestException("User not authorized to accept or reject the approval");
     }
 
-    return approveOrRejectExecution(appId, approvalDetails, approvalStateExecutionData);
+    return approveOrRejectExecution(appId, approvalDetails, executionUuid);
   }
 
-  private boolean approveOrRejectExecution(String appId, ApprovalDetails approvalDetails, ApprovalStateExecutionData approvalStateExecutionData) {
+  private boolean approveOrRejectExecution(String appId, ApprovalDetails approvalDetails, String executionUuid) {
     User user = UserThreadLocal.get();
     if (user != null && approvalDetails.getApprovedBy() == null) {
       approvalDetails.setApprovedBy(
@@ -661,8 +661,12 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     if (approvalDetails.getAction() == APPROVE) {
       executionData.setStatus(SUCCESS);
     } else {
-        if (approvalDetails.getAction() == ROLLBACK) {
-          WorkflowExecution workflowExecution = fetchWorkflowExecution(appId, approvalStateExecutionData.getExecutionUuid());
+        if (approvalDetails.getAction() == ROLLBACK && executionUuid != null) {
+          WorkflowExecution workflowExecution = fetchWorkflowExecution(appId, executionUuid);
+          if (workflowExecution.getWorkflowType() == PIPELINE) {
+            executionData.setStatus(ExecutionStatus.REJECTED);
+            throw new InvalidRequestException("Unsupported rollback from pipeline, defaulting to reject.");
+          }
           ExecutionInterrupt executionInterrupt = ExecutionInterrupt.ExecutionInterruptBuilder.anExecutionInterrupt().executionUuid(workflowExecution.getUuid()).appId(appId).executionInterruptType(ExecutionInterruptType.ROLLBACK).build();
           triggerExecutionInterrupt(executionInterrupt);
         }
@@ -6329,7 +6333,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       String stateExecutionId, ApprovalDetails approvalDetails, PreviousApprovalDetails previousApprovalDetails) {
     ApprovalStateExecutionData stateExecutionData = fetchApprovalStateExecutionDataFromWorkflowExecution(
         appId, workflowExecutionId, stateExecutionId, approvalDetails);
-    boolean success = approveOrRejectExecution(appId, stateExecutionData.getUserGroups(), approvalDetails, (ApprovalStateExecutionData) null);
+    boolean success = approveOrRejectExecution(appId, stateExecutionData.getUserGroups(), approvalDetails, (String) null);
     List<String> previousApprovalIds = new ArrayList<>();
     if (previousApprovalDetails.getPreviousApprovals() != null) {
       previousApprovalIds =
