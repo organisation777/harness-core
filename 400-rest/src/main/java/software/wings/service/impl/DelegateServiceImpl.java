@@ -702,8 +702,9 @@ public class DelegateServiceImpl implements DelegateService {
       throw new InvalidRequestException("K8s namespace must be provided for this type of permission.", USER);
     }
 
-    if (!KUBERNETES.equals(delegateSetupDetails.getDelegateType())) {
-      throw new InvalidRequestException("Delegate type must be KUBERNETES.");
+    if (!(KUBERNETES.equals(delegateSetupDetails.getDelegateType())
+            || HELM_DELEGATE.equals(delegateSetupDetails.getDelegateType()))) {
+      throw new InvalidRequestException("Delegate type must be KUBERNETES OR HELM_DELEGATE.");
     }
 
     if (isEmpty(delegateSetupDetails.getTokenName())) {
@@ -1314,6 +1315,7 @@ public class DelegateServiceImpl implements DelegateService {
                   delegateVersionService.getUpgraderImageTag(
                       templateParameters.getAccountId(), templateParameters.getDelegateType()))
               .put("accountId", templateParameters.getAccountId())
+              .put("nextGen", String.valueOf(isNgDelegate))
               .put("delegateToken", accountSecret != null ? accountSecret : EMPTY)
               .put("base64Secret", base64Secret)
               .put("hexkey", hexkey)
@@ -1915,6 +1917,7 @@ public class DelegateServiceImpl implements DelegateService {
         false);
 
     File yaml = File.createTempFile(HARNESS_DELEGATE_VALUES_YAML, YAML);
+    log.info("Calling old helm values API, path of file {} ", yaml.getAbsolutePath());
     saveProcessedTemplate(params, yaml, "delegate-helm-values.yaml.ftl");
     delegateTelemetryPublisher.sendTelemetryTrackEvents(accountId, HELM_DELEGATE, false, DELEGATE_CREATED_EVENT);
     return yaml;
@@ -2355,6 +2358,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (ECS.equals(delegate.getDelegateType())) {
       return registerResponseFromDelegate(handleEcsDelegateRequest(delegate));
     } else {
+      log.info("Anupam: This place is causing two heartbeats probably, message with [X] is sent");
       return registerResponseFromDelegate(upsertDelegateOperation(existingDelegate, delegate));
     }
   }
@@ -2590,6 +2594,7 @@ public class DelegateServiceImpl implements DelegateService {
 
     // Not needed to be done when polling is enabled for delegate
     if (isDelegateWithoutPollingEnabled(delegate)) {
+      log.info("Anupam : sending heartbeat message to delegate agent");
       // Broadcast Message containing, DelegateId and SeqNum (if applicable)
       StringBuilder message = new StringBuilder(128).append("[X]").append(delegate.getUuid());
       updateBroadcastMessageIfEcsDelegate(message, delegate, registeredDelegate);

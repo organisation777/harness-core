@@ -113,6 +113,8 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
       }
       resource.suspend();
     } else if (req.getMethod().equalsIgnoreCase("POST")) {
+      // when will this be called, i dont't see any post method called from socket.
+      // broadcaster.broadcast will call post method of on request ?
       List<String> pathSegments = SPLITTER.splitToList(req.getPathInfo());
       String accountId = pathSegments.get(1);
       String delegateId = req.getParameter("delegateId");
@@ -140,10 +142,11 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
   public void onStateChange(AtmosphereResourceEvent event) throws IOException {
     AtmosphereResource r = event.getResource();
     AtmosphereResponse res = r.getResponse();
-
+    log.info("Anupam: State change happened");
     if (r.isSuspended()) {
       Object message = event.getMessage();
       if (message != null) {
+        log.info("Anupam: rec State change message" + message.toString());
         if (message instanceof String) {
           event.getResource().write((String) message);
         } else {

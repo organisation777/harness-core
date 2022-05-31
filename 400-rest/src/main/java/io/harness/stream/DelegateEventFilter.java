@@ -21,6 +21,7 @@ import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.DelegateTaskServiceClassic;
 
 import com.google.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.atmosphere.cpr.AtmosphereRequest;
 import org.atmosphere.cpr.AtmosphereResource;
@@ -28,6 +29,7 @@ import org.atmosphere.cpr.BroadcastFilter.BroadcastAction.ACTION;
 import org.atmosphere.cpr.BroadcastFilterAdapter;
 import org.jetbrains.annotations.NotNull;
 
+@Slf4j
 public class DelegateEventFilter extends BroadcastFilterAdapter {
   @Inject private DelegateService delegateService;
   @Inject private DelegateTaskServiceClassic delegateTaskServiceClassic;
@@ -75,12 +77,15 @@ public class DelegateEventFilter extends BroadcastFilterAdapter {
 
     if (message instanceof String && ((String) message).startsWith("[X]")) {
       String msg = (String) message;
+      log.info("Anupam: message via delegate Filter : {} ", msg);
       int seqIndex = msg.lastIndexOf("[TOKEN]");
       if (seqIndex != -1) {
         msg = msg.substring(3, seqIndex);
       } else {
         msg = msg.substring(3);
       }
+
+      log.info("Anupam: Delegate Filter msg after formatting {} and delegateId {} ", msg, delegateId);
 
       if (!delegateId.equals(msg)) {
         return abort(message);
