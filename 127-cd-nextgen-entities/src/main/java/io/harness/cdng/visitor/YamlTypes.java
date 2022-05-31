@@ -24,6 +24,7 @@ public interface YamlTypes {
   String SIDECAR_ARTIFACT_CONFIG = "sidecar";
   String SIDECARS_ARTIFACT_CONFIG = "sidecars";
   String ENVIRONMENT_YAML = "environment";
+  String ENVIRONMENT_GROUP_YAML = "environmentGroup";
   String GITOPS_CLUSTERS = "gitopsClusters";
   String ENVIRONMENT_REF = "environmentRef";
   String INFRASTRUCTURE_DEF = "infrastructureDefinition";

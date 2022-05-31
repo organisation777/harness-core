@@ -9,6 +9,7 @@ import io.harness.cdng.envGroup.helper.EnvGroupPlanCreatorConfigVisitorHelper;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
@@ -36,6 +37,8 @@ public class EnvGroupPlanCreatorConfig implements Visitable {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   private String uuid;
+
+  @NotNull ParameterField<String> environmentGroupRef;
 
   String orgIdentifier;
   String projectIdentifier;

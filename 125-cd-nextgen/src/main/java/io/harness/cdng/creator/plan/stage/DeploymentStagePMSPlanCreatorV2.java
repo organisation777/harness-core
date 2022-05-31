@@ -10,10 +10,12 @@ package io.harness.cdng.creator.plan.stage;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.creator.plan.envGroup.EnvGroupPlanCreatorHelper;
 import io.harness.cdng.creator.plan.environment.EnvironmentPlanCreatorHelper;
 import io.harness.cdng.creator.plan.infrastructure.InfrastructurePmsPlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreator;
 import io.harness.cdng.creator.plan.service.ServicePlanCreatorHelper;
+import io.harness.cdng.envGroup.yaml.EnvGroupPlanCreatorConfig;
 import io.harness.cdng.envgroup.yaml.EnvironmentGroupYaml;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
@@ -107,6 +109,8 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
   @Inject private ServiceEntityService serviceEntityService;
   @Inject private InfrastructureEntityService infrastructure;
   @Inject private ServiceOverrideService serviceOverrideService;
+  @Inject private EnvGroupPlanCreatorHelper envGroupPlanCreatorHelper;
+
   @Override
   public Set<String> getSupportedStageTypes() {
     return Collections.singleton("Deployment");
@@ -166,6 +170,7 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
 
       String infraSectionUuid = "service-" + UUIDGenerator.generateUuid();
       String environmentUuid = "environment-" + UUIDGenerator.generateUuid();
+      String envGroupUuid = "environmentgroup-" + UUIDGenerator.generateUuid();
 
       // Spec node is also added in this method
       YamlField serviceField =
@@ -174,7 +179,7 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
       PipelineInfrastructure pipelineInfrastructure = stageNode.getDeploymentStageConfig().getInfrastructure();
       String serviceSpecNodeUuid = ServicePlanCreatorHelper.fetchServiceSpecUuid(serviceField);
       addEnvAndInfraDependency(ctx, stageNode, planCreationResponseMap, specField, pipelineInfrastructure,
-          infraSectionUuid, environmentUuid, serviceSpecNodeUuid);
+          infraSectionUuid, environmentUuid, serviceSpecNodeUuid, envGroupUuid);
 
       // Add dependency for execution
       YamlField executionField = specField.getNode().getField(YAMLFieldNameConstants.EXECUTION);
@@ -193,7 +198,7 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
   private void addEnvAndInfraDependency(PlanCreationContext ctx, DeploymentStageNode stageNode,
       LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap, YamlField specField,
       PipelineInfrastructure pipelineInfrastructure, String infraSectionUuid, String environmentUuid,
-      String serviceSpecNodeUuid) throws IOException {
+      String serviceSpecNodeUuid, String envGroupUuid) throws IOException {
     YamlField infraField = specField.getNode().getField(YamlTypes.PIPELINE_INFRASTRUCTURE);
     EnvironmentYamlV2 environmentV2 = stageNode.getDeploymentStageConfig().getEnvironment();
     EnvironmentGroupYaml envGroupYaml = stageNode.getDeploymentStageConfig().getEnvironmentGroup();
@@ -232,7 +237,11 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
           infraNode, infraDefPlanNode.getUuid(), pipelineInfrastructure, kryoSerializer, infraNode.getUuid()));
     } else if (envGroupYaml != null) {
       final boolean gitOpsEnabled = isGitopsEnabled(ctx, stageNode.getDeploymentStageConfig().getService());
-
+      EnvGroupPlanCreatorConfig config =
+          envGroupPlanCreatorHelper.createEnvGroupPlanCreatorConfig(ctx.getMetadata(), envGroupYaml);
+      envGroupPlanCreatorHelper.addEnvironmentGroupDependency(planCreationResponseMap, config,
+          specField.getNode().getField(YamlTypes.ENVIRONMENT_GROUP_YAML), gitOpsEnabled, envGroupUuid, infraSectionUuid,
+          serviceSpecNodeUuid);
     } else {
       final boolean gitOpsEnabled = isGitopsEnabled(stageNode.getDeploymentStageConfig());
 
