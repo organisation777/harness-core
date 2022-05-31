@@ -626,14 +626,14 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
     };
   }
 
-  public Observable<ServiceResponse<Page<TagDetails>>> listTagsSinglePageAsync(
+  private Observable<ServiceResponse<Page<TagDetails>>> listTagsSinglePageAsync(
       final AzureConfig azureConfig, String subscriptionId) {
     return getAzureManagementRestClient(azureConfig.getAzureEnvironmentType())
         .listTags(getAzureBearerAuthToken(azureConfig), subscriptionId)
         .flatMap(toTagDetails());
   }
 
-  public Observable<ServiceResponse<Page<TagDetails>>> listTagsNextSinglePageAsync(
+  private Observable<ServiceResponse<Page<TagDetails>>> listTagsNextSinglePageAsync(
       final AzureConfig azureConfig, final String nextPageLink) {
     if (nextPageLink == null) {
       throw new IllegalArgumentException(NEXT_PAGE_LINK_BLANK_VALIDATION_MSG);

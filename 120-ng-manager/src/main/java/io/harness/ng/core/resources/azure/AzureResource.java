@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.azure.resources.dtos.AzureTagsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureClustersDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureDeploymentSlotsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupsDTO;
@@ -134,8 +135,9 @@ public class AzureResource {
 
   @GET
   @Path("subscriptions/{subscriptionId}/tags")
-  @ApiOperation(value = "Gets azure tags by subscription ", nickname = "getAzureTags")
-  public ResponseDTO<AzureTagsDTO> getTags(@NotNull @QueryParam("connectorRef") String azureConnectorIdentifier,
+  @ApiOperation(value = "Gets azure tags by subscription ", nickname = "getSubscriptionTags")
+  public ResponseDTO<AzureTagsDTO> getSubscriptionTags(
+      @NotNull @QueryParam("connectorRef") String azureConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,

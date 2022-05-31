@@ -11,6 +11,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.azure.AzureHelperService;
+import io.harness.cdng.azure.resources.dtos.AzureTagDTO;
+import io.harness.cdng.azure.resources.dtos.AzureTagsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureClusterDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureClustersDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureDeploymentSlotDTO;
