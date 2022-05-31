@@ -184,6 +184,8 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.WorkflowService;
 import software.wings.service.intfc.applicationmanifest.HelmChartService;
 import software.wings.sm.ExecutionContextImpl;
+import software.wings.sm.ExecutionInterrupt;
+import software.wings.sm.ExecutionInterruptManager;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.StateExecutionInstance.StateExecutionInstanceKeys;
@@ -241,6 +243,7 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
       spy(software.wings.service.impl.WorkflowExecutionServiceImpl.class);
 
   @Mock private WingsPersistence wingsPersistence;
+  @Mock private ExecutionInterruptManager executionInterruptManager;
   @Mock private WorkflowService workflowService;
   @Mock private PipelineService pipelineService;
   @Mock private UserGroupService userGroupService;
@@ -316,6 +319,17 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
   @Owner(developers = LUCAS_SALES)
   @Category(UnitTests.class)
   public void testRejectWithRollback() {
+    Query mockQuery = mock(Query.class);
+    WorkflowExecution workflowExecution = WorkflowExecution.builder().uuid("executionId").build();
+    doReturn(mockQuery).when(wingsPersistence).createQuery(WorkflowExecution.class);
+    doReturn(mockQuery).when(mockQuery).filter(any(), any());
+    doReturn(mockQuery).when(mockQuery).filter(any(), any());
+    doReturn(mockQuery).when(mockQuery).project(WorkflowExecutionKeys.appId, true);
+    doReturn(mockQuery).when(mockQuery).project(WorkflowExecutionKeys.uuid, true);
+    doReturn(workflowExecution).when(mockQuery).get();
+    doReturn(workflowExecution).when(wingsPersistence).getWithAppId(eq(WorkflowExecution.class), any(), any());
+    doReturn(mock(ExecutionInterrupt.class)).when(executionInterruptManager).registerExecutionInterrupt(any());
+
     String approvalId = generateUuid();
     ApprovalDetails approvalDetails = new ApprovalDetails();
     approvalDetails.setApprovalId(approvalId);
