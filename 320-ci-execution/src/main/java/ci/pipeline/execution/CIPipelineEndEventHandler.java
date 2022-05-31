@@ -84,6 +84,7 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
       }
     } else {
       ciBuiltMap.put(USED_CODEBASE, false);
+      ciBuiltMap.put("dummy", false);
     }
 
     ciBuiltMap.put(BRANCH, moduleInfo.getBranch());
