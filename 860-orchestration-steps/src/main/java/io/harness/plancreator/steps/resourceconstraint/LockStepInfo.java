@@ -66,7 +66,7 @@ public class LockStepInfo implements PMSStepInfo {
   public SpecParameters getSpecParameters() {
     return ResourceRestraintSpecParameters.builder()
         .resourceUnit(key.getValue())
-        .holdingScope(HoldingScope.builder().scope("PLAN").build()) // COME FROM UI
+        .holdingScope(HoldingScope.valueOf(getScope().getValue())) // JUST TO UNBLOCK UI TASKS
         .name(PmsConstants.QUEUING_RC_NAME)
         .permits(PmsConstants.QUEUING_RC_PERMITS)
         .acquireMode(AcquireMode.ENSURE)
