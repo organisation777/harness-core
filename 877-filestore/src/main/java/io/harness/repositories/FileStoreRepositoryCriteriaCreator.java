@@ -67,7 +67,7 @@ public class FileStoreRepositoryCriteriaCreator {
       criteria.and(NGFiles.tags).in(TagMapper.convertToList(filterProperties.getTags()));
     }
 
-    if (!isEmpty(fileIdentifiers)) {
+    if (filterProperties != null && null != filterProperties.getReferencedBy()) {
       criteria.and(NGFiles.identifier).in(fileIdentifiers);
     }
 

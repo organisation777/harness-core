@@ -13,6 +13,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import io.harness.EntityType;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
+import io.harness.beans.ScopeLevel;
 import io.harness.context.GlobalContextData;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.sdk.EntityGitDetails;
@@ -168,16 +170,20 @@ public class EntitySetupUsageQueryFilterHelper {
     return criteria;
   }
 
-  public Criteria createCriteriaForEntitiesInScope(String accountIdentifier, String referredEntityFQScope,
-      EntityType referredEntityType, EntityType referredByEntityType) {
+  public Criteria createCriteriaForReferredEntitiesInScope(Scope scope, String referredEntityFQScope,
+      EntityType referredEntityType, EntityType referredByEntityType, String referredByEntityName) {
     Criteria criteria = new Criteria();
-    criteria.and(EntitySetupUsageKeys.accountIdentifier).is(accountIdentifier);
+    criteria.and(EntitySetupUsageKeys.accountIdentifier).is(scope.getAccountIdentifier());
     criteria.and(EntitySetupUsageKeys.referredEntityFQN).regex(referredEntityFQScope);
+    criteria.and(EntitySetupUsageKeys.referredEntityRefScope).is(ScopeLevel.of(scope));
     if (referredEntityType != null) {
       criteria.and(EntitySetupUsageKeys.referredEntityType).is(referredEntityType.getYamlName());
     }
     if (referredByEntityType != null) {
       criteria.and(EntitySetupUsageKeys.referredByEntityType).is(referredByEntityType.getYamlName());
+    }
+    if (null != referredByEntityName) {
+      criteria.and(EntitySetupUsageKeys.referredByEntityName).regex(referredByEntityName);
     }
     populateGitCriteriaForReferredEntity(criteria);
     return criteria;
