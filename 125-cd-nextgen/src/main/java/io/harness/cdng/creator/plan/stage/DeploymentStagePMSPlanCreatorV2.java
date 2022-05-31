@@ -207,8 +207,8 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
       throw new InvalidRequestException("Infrastructure and Environment cannot be siblings of each other");
     }
 
-    if (infraField == null && environmentV2 == null) {
-      throw new InvalidRequestException("Infrastructure Or Environment section is missing");
+    if (infraField == null && environmentV2 == null && envGroupYaml == null) {
+      throw new InvalidRequestException("Infrastructure Or Environment or Environment Group section is missing");
     }
 
     if (infraField != null) {
