@@ -62,6 +62,7 @@ import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.ApprovalDetails.Action.APPROVE;
 import static software.wings.beans.ApprovalDetails.Action.REJECT;
+import static software.wings.beans.ApprovalDetails.Action.ROLLBACK;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.beans.ElementExecutionSummary.ElementExecutionSummaryBuilder.anElementExecutionSummary;
 import static software.wings.beans.EntityType.DEPLOYMENT;
@@ -195,7 +196,6 @@ import software.wings.beans.ApiKeyEntry;
 import software.wings.beans.Application;
 import software.wings.beans.ApprovalAuthorization;
 import software.wings.beans.ApprovalDetails;
-import software.wings.beans.ApprovalRejectionAction;
 import software.wings.beans.ArtifactStreamMetadata;
 import software.wings.beans.ArtifactVariable;
 import software.wings.beans.AwsLambdaExecutionSummary;
@@ -660,13 +660,12 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     if (approvalDetails.getAction() == APPROVE) {
       executionData.setStatus(SUCCESS);
-    } else if (approvalDetails.getAction() == REJECT) {
-      if (approvalStateExecutionData != null) {
-        if (approvalStateExecutionData.getApprovalRejectionAction() == ApprovalRejectionAction.ROLLBACK_WORKFLOW) {
+    } else {
+        if (approvalDetails.getAction() == ROLLBACK) {
           WorkflowExecution workflowExecution = fetchWorkflowExecution(appId, approvalStateExecutionData.getExecutionUuid());
-          triggerRollbackExecutionWorkflow(appId, workflowExecution);
+          ExecutionInterrupt executionInterrupt = ExecutionInterrupt.ExecutionInterruptBuilder.anExecutionInterrupt().executionUuid(workflowExecution.getUuid()).appId(appId).executionInterruptType(ExecutionInterruptType.ROLLBACK).build();
+          triggerExecutionInterrupt(executionInterrupt);
         }
-      }
 
       executionData.setStatus(ExecutionStatus.REJECTED);
     }

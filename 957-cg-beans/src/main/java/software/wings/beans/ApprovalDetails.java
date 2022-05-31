@@ -39,6 +39,8 @@ public class ApprovalDetails {
      */
     APPROVE,
     /** Reject Action */
-    REJECT
+    REJECT,
+    /** Rollback Workflow*/
+    ROLLBACK
   }
 }

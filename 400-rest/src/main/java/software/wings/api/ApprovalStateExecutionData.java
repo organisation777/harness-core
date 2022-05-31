@@ -17,7 +17,6 @@ import io.harness.beans.EmbeddedUser;
 import io.harness.beans.ExecutionStatus;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 
-import software.wings.beans.ApprovalRejectionAction;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.approval.Criteria;
 import software.wings.beans.security.UserGroup;
@@ -82,8 +81,6 @@ public class ApprovalStateExecutionData extends StateExecutionData implements De
   private Criteria snowApproval;
   private Criteria snowRejection;
   private boolean waitingForChangeWindow;
-
-  private ApprovalRejectionAction approvalRejectionAction;
 
   /** Slack approval */
   private boolean approvalFromSlack;
