@@ -26,8 +26,8 @@ import io.harness.context.GlobalContext;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenStatus;
-import io.harness.delegate.utils.DelegateJWTCacheHelper;
-import io.harness.delegate.utils.DelegateJWTCacheValueObject;
+import io.harness.delegate.utils.DelegateJWTCache;
+import io.harness.delegate.utils.DelegateJWTCacheValue;
 import io.harness.delegate.utils.DelegateTokenCacheHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidTokenException;
@@ -75,7 +75,7 @@ import org.mongodb.morphia.query.Query;
 public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticator {
   @Inject private HPersistence persistence;
   @Inject private DelegateTokenCacheHelper delegateTokenCacheHelper;
-  @Inject private DelegateJWTCacheHelper delegateJWTCacheHelper;
+  @Inject private DelegateJWTCache delegateJWTCache;
 
   private final LoadingCache<String, String> keyCache =
       Caffeine.newBuilder()
@@ -91,9 +91,11 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
 
   // we should set global context data only for rest calls, because we unset the global context thread only for rest
   // calls.
+  // We can use delegateTokenName variable to determine whether the delegate is reusing the same jwt or not. And remove
+  // it after 1-2 months.
   @Override
-  public void validateDelegateToken(
-      String accountId, String tokenString, String delegateId, boolean shouldSetTokenNameInGlobalContext) {
+  public void validateDelegateToken(String accountId, String tokenString, String delegateId, String delegateTokenName,
+      boolean shouldSetTokenNameInGlobalContext) {
     final String tokenHash = DigestUtils.md5Hex(tokenString);
     // first validate it from DelegateJWTCache
     if (validateDelegateJWTFromCache(tokenHash)) {
@@ -135,7 +137,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
       } catch (ParseException e) {
         log.warn("Couldn't parse token", e);
       }
-      delegateJWTCacheHelper.setDelegateJWTCache(tokenHash, false, 0);
+      delegateJWTCache.setDelegateJWTCache(tokenHash, delegateTokenName, new DelegateJWTCacheValue(false, 0L));
       log.error("Delegate {} is using REVOKED delegate token. DelegateId: {}", delegateHostName, delegateId);
       throw new RevokedTokenException("Invalid delegate token. Delegate is using revoked token", USER_ADMIN);
     }
@@ -149,13 +151,14 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
       final long expiryInMillis = jwtClaimsSet.getExpirationTime().getTime();
       if (System.currentTimeMillis() > expiryInMillis) {
         log.error("Delegate {} is using EXPIRED delegate token. DelegateId: {}", jwtClaimsSet.getIssuer(), delegateId);
-        delegateJWTCacheHelper.setDelegateJWTCache(tokenHash, false, 0);
+        delegateJWTCache.setDelegateJWTCache(tokenHash, delegateTokenName, new DelegateJWTCacheValue(false, 0L));
         throw new InvalidRequestException("Unauthorized", EXPIRED_TOKEN, null);
       } else {
-        delegateJWTCacheHelper.setDelegateJWTCache(tokenHash, true, expiryInMillis);
+        delegateJWTCache.setDelegateJWTCache(
+            tokenHash, delegateTokenName, new DelegateJWTCacheValue(true, expiryInMillis));
       }
     } catch (Exception ex) {
-      delegateJWTCacheHelper.setDelegateJWTCache(tokenHash, false, 0);
+      delegateJWTCache.setDelegateJWTCache(tokenHash, delegateTokenName, new DelegateJWTCacheValue(false, 0L));
       throw new InvalidRequestException("Unauthorized", ex, EXPIRED_TOKEN, null);
     }
   }
@@ -328,14 +331,14 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
   }
 
   private boolean validateDelegateJWTFromCache(String tokenHash) {
-    DelegateJWTCacheValueObject delegateJWTCacheValueObject = delegateJWTCacheHelper.getDelegateJWTCache(tokenHash);
+    DelegateJWTCacheValue delegateJWTCacheValue = delegateJWTCache.getDelegateJWTCache(tokenHash);
 
     // cache miss
-    if (delegateJWTCacheValueObject == null) {
+    if (delegateJWTCacheValue == null) {
       return false;
-    } else if (!delegateJWTCacheValueObject.isValid()) {
+    } else if (!delegateJWTCacheValue.isValid()) {
       throw new RevokedTokenException("Invalid delegate token. Delegate is using invalid token", USER_ADMIN);
-    } else if (delegateJWTCacheValueObject.getExpiryInMillis() < System.currentTimeMillis()) {
+    } else if (delegateJWTCacheValue.getExpiryInMillis() < System.currentTimeMillis()) {
       throw new InvalidRequestException("Unauthorized", EXPIRED_TOKEN, null);
     }
 
