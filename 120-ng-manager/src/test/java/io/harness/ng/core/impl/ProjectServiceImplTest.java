@@ -65,6 +65,7 @@ import io.harness.security.dto.Principal;
 import io.harness.security.dto.PrincipalType;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.telemetry.helpers.ProjectInstrumentationHelper;
+import io.harness.utils.featureflaghelper.NGFeatureFlagHelperService;
 
 import io.dropwizard.jersey.validation.JerseyViolationException;
 import java.lang.reflect.Field;
@@ -108,13 +109,14 @@ public class ProjectServiceImplTest extends CategoryTest {
   @Mock private YamlGitConfigService yamlGitConfigService;
   @InjectMocks ProjectInstrumentationHelper instrumentationHelper;
   private ProjectServiceImpl projectService;
+  private NGFeatureFlagHelperService ngFeatureFlagHelperService;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    projectService =
-        spy(new ProjectServiceImpl(projectRepository, organizationService, transactionTemplate, outboxService,
-            ngUserService, accessControlClient, scopeAccessHelper, instrumentationHelper, yamlGitConfigService));
+    projectService = spy(new ProjectServiceImpl(projectRepository, organizationService, transactionTemplate,
+        outboxService, ngUserService, accessControlClient, scopeAccessHelper, instrumentationHelper,
+        yamlGitConfigService, ngFeatureFlagHelperService));
     when(scopeAccessHelper.getPermittedScopes(any())).then(returnsFirstArg());
   }
 
