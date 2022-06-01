@@ -321,7 +321,6 @@ public abstract class VerificationJob
     return Collections.max(Arrays.asList(startTime.plus(dataCollectionDelay), createdAt));
   }
 
-  @FieldNameConstants(innerTypeName = "RuntimeParameterKeys")
   @Data
   @Builder
   public static class RuntimeParameter {
@@ -334,6 +333,7 @@ public abstract class VerificationJob
       }
       return value;
     }
+    public static final class RuntimeParameterKeys { public static final String value = "value"; }
   }
 
   public static RuntimeParameter getRunTimeParameter(String value, boolean isRuntimeParam) {
