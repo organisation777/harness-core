@@ -88,7 +88,7 @@ public class FeatureFlagServiceImpl implements FeatureFlagService {
   @Override
   public boolean isEnabledReloadCache(FeatureName featureName, String accountId) {
     synchronized (cache) {
-      cache.clear();
+      cache.remove(featureName);
     }
     return isEnabled(featureName, accountId);
   }
