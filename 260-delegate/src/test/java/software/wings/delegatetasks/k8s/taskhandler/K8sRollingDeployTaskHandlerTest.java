@@ -99,6 +99,7 @@ import org.mockito.Mockito;
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @OwnedBy(CDP)
 public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
+
   @Mock private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
   @Mock private KubernetesContainerService kubernetesContainerService;
   @Mock private K8sTaskHelper k8sTaskHelper;
