@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-// TODO: ARPIT record cache hit and miss metrics using OpenCensus
 @OwnedBy(DEL)
 @Singleton
 public class DelegateJWTCache {
