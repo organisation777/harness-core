@@ -335,9 +335,32 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     approvalDetails.setApprovalId(approvalId);
     approvalDetails.setAction(Action.ROLLBACK);
 
-    boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(), approvalDetails, "workflow");
+    boolean success = workflowExecutionService.approveOrRejectExecution(APP_ID, asList(), approvalDetails, "workflow");
     assertThat(success).isEqualTo(true);
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void testRejectWithRollbackShouldFailWhenPipelineExecution() {
+    Query mockQuery = mock(Query.class);
+    WorkflowExecution workflowExecution =
+        WorkflowExecution.builder().workflowType(WorkflowType.PIPELINE).uuid("executionId").build();
+    doReturn(mockQuery).when(wingsPersistence).createQuery(WorkflowExecution.class);
+    doReturn(mockQuery).when(mockQuery).filter(any(), any());
+    doReturn(mockQuery).when(mockQuery).filter(any(), any());
+    doReturn(mockQuery).when(mockQuery).project(WorkflowExecutionKeys.appId, true);
+    doReturn(mockQuery).when(mockQuery).project(WorkflowExecutionKeys.uuid, true);
+    doReturn(workflowExecution).when(mockQuery).get();
+    doReturn(workflowExecution).when(wingsPersistence).getWithAppId(eq(WorkflowExecution.class), any(), any());
+    doReturn(mock(ExecutionInterrupt.class)).when(executionInterruptManager).registerExecutionInterrupt(any());
+
+    String approvalId = generateUuid();
+    ApprovalDetails approvalDetails = new ApprovalDetails();
+    approvalDetails.setApprovalId(approvalId);
+    approvalDetails.setAction(Action.ROLLBACK);
+
+    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(), approvalDetails, "workflow");
   }
 
   @Test
@@ -497,8 +520,8 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
 
-    boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
+    boolean success = workflowExecutionService.approveOrRejectExecution(
+        APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(true);
     UserThreadLocal.unset();
   }
@@ -521,8 +544,8 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(false);
 
-    boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
+    boolean success = workflowExecutionService.approveOrRejectExecution(
+        APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(false);
     UserThreadLocal.unset();
   }
@@ -705,8 +728,8 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(true);
 
-    boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
+    boolean success = workflowExecutionService.approveOrRejectExecution(
+        APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(true);
     UserThreadLocal.unset();
   }
@@ -729,8 +752,8 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(userGroupService.verifyUserAuthorizedToAcceptOrRejectApproval(anyString(), anyList())).thenReturn(false);
 
-    boolean success =
-        workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
+    boolean success = workflowExecutionService.approveOrRejectExecution(
+        APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
     assertThat(success).isEqualTo(false);
     UserThreadLocal.unset();
   }
@@ -754,7 +777,8 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     UserThreadLocal.set(user1);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
 
-    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
+    workflowExecutionService.approveOrRejectExecution(
+        APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
   }
 
   @Test(expected = InvalidRequestException.class)
@@ -776,7 +800,8 @@ public class WorkflowExecutionServiceTest extends WingsBaseTest {
     UserThreadLocal.set(user1);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
 
-    workflowExecutionService.approveOrRejectExecution(APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
+    workflowExecutionService.approveOrRejectExecution(
+        APP_ID, asList(userGroup.getUuid()), approvalDetails, (String) null);
   }
 
   @Test
