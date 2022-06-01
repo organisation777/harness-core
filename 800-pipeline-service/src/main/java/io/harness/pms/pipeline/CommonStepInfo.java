@@ -141,7 +141,7 @@ public class CommonStepInfo {
       StepInfo.newBuilder()
           .setName("Jenkins Build")
           .setType(StepSpecTypeConstants.JENKINS_BUILD)
-          .setStepMetaData(StepMetaData.newBuilder().addCategory("Jenkins").addFolderPaths("JenkinsBuild").build())
+          .setStepMetaData(StepMetaData.newBuilder().addCategory("Jenkins").addFolderPaths("Jenkins").build())
           .setFeatureRestrictionName(FeatureRestrictionName.JENKINS_BUILD.name())
           .setFeatureFlag(FeatureName.JENKINS_BUILD.name())
           .build();
