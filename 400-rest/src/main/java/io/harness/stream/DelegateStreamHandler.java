@@ -85,6 +85,8 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
 
           updateIfEcsDelegate(delegate, sequenceNum, delegateToken);
 
+          log.info("Anupam: Received GET call ");
+
           delegateService.register(delegate);
           delegateService.registerHeartbeat(accountId, delegateId,
               DelegateConnectionHeartbeat.builder()
@@ -119,6 +121,8 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
       String accountId = pathSegments.get(1);
       String delegateId = req.getParameter("delegateId");
 
+      log.info("Anupam: Received POST call ");
+
       try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
            AutoLogContext ignore2 = new DelegateLogContext(delegateId, OVERRIDE_ERROR)) {
         String delegateConnectionId = req.getParameter("delegateConnectionId");
@@ -134,6 +138,7 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
                 .location(delegate.getLocation())
                 .build(),
             ConnectionMode.STREAMING);
+        // http toolkit
       }
     }
   }
@@ -146,7 +151,7 @@ public class DelegateStreamHandler extends AtmosphereHandlerAdapter {
     if (r.isSuspended()) {
       Object message = event.getMessage();
       if (message != null) {
-        log.info("Anupam: rec State change message" + message.toString());
+        log.info("Anupam: State change message" + message.toString());
         if (message instanceof String) {
           event.getResource().write((String) message);
         } else {
