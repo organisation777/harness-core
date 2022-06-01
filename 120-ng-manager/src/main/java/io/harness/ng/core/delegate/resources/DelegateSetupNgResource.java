@@ -49,8 +49,8 @@ import javax.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
-@Api("delegate-setup-ng")
-@Path("/delegate-setup-ng")
+@Api("ng/delegate-setup")
+@Path("/ng/delegate-setup")
 @Consumes({"application/json"})
 @Produces({"application/json"})
 @Slf4j
@@ -90,7 +90,7 @@ public class DelegateSetupNgResource {
 
   @POST
   @Timed
-  @Path("generate-helm-values-yaml")
+  @Path("generate-helm-values")
   @ExceptionMetered
   @ApiOperation(value = "Generate helm values yaml file", nickname = "generateNgHelmValuesYaml")
   @Operation(operationId = "generateNgHelmValuesYaml",
