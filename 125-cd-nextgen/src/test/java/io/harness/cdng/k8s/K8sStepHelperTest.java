@@ -33,6 +33,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -231,7 +232,7 @@ public class K8sStepHelperTest extends CategoryTest {
     doReturn(true)
         .when(cdFeatureFlagHelper)
         .isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.USE_LATEST_CHARTMUSEUM_VERSION);
-    doAnswer(invocation -> invocation.getArgumentAt(1, String.class))
+    doAnswer(invocation -> invocation.getArgument(1, String.class))
         .when(engineExpressionService)
         .renderExpression(eq(ambiance), anyString());
   }
@@ -338,7 +339,7 @@ public class K8sStepHelperTest extends CategoryTest {
                         .connector(ConnectorInfoDTO.builder().connectorConfig(GitConfigDTO.builder().build()).build())
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.K8S_MANIFEST);
@@ -372,7 +373,7 @@ public class K8sStepHelperTest extends CategoryTest {
                         .connector(ConnectorInfoDTO.builder().connectorConfig(GitConfigDTO.builder().build()).build())
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.HELM_CHART);
@@ -438,7 +439,7 @@ public class K8sStepHelperTest extends CategoryTest {
                         .connector(ConnectorInfoDTO.builder().connectorConfig(GitConfigDTO.builder().build()).build())
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.KUSTOMIZE);
@@ -478,7 +479,7 @@ public class K8sStepHelperTest extends CategoryTest {
                                             .build())
                              .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.HELM_CHART);
@@ -506,7 +507,7 @@ public class K8sStepHelperTest extends CategoryTest {
                         .connector(ConnectorInfoDTO.builder().connectorConfig(GitConfigDTO.builder().build()).build())
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.OPENSHIFT_TEMPLATE);
@@ -603,7 +604,7 @@ public class K8sStepHelperTest extends CategoryTest {
                 .connector(ConnectorInfoDTO.builder().connectorType(AWS).connectorConfig(awsConnectorConfig).build())
                 .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(manifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.HELM_CHART);
@@ -650,7 +651,7 @@ public class K8sStepHelperTest extends CategoryTest {
                      .connector(ConnectorInfoDTO.builder().connectorType(GCP).connectorConfig(gcpConnectorDTO).build())
                      .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     ManifestDelegateConfig delegateConfig = k8sStepHelper.getManifestDelegateConfig(helmChartManifestOutcome, ambiance);
     assertThat(delegateConfig.getManifestType()).isEqualTo(ManifestType.HELM_CHART);
@@ -707,7 +708,7 @@ public class K8sStepHelperTest extends CategoryTest {
 
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -998,7 +999,7 @@ public class K8sStepHelperTest extends CategoryTest {
                                        .build())
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -1110,7 +1111,7 @@ public class K8sStepHelperTest extends CategoryTest {
                                     .build())
                      .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -1135,13 +1136,13 @@ public class K8sStepHelperTest extends CategoryTest {
     assertThat(s3StoreConfig.getRepoDisplayName()).isEqualTo("helm-s3-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
     assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
-    assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("HelmChart");
-    assertThat(helmFetchFileConfigs.get(0).getFilePaths())
-        .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
     assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
     assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("HelmChart");
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths())
+        .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
+    assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("HelmChart");
+    assertThat(helmFetchFileConfigs.get(0).getFilePaths()).isEqualTo(asList("values.yaml"));
     assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
     assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
     assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
@@ -1214,7 +1215,7 @@ public class K8sStepHelperTest extends CategoryTest {
                                     .build())
                      .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -1238,13 +1239,13 @@ public class K8sStepHelperTest extends CategoryTest {
     assertThat(gcsStoreConfig.getRepoDisplayName()).isEqualTo("helm-gcs-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
     assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
-    assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("HelmChart");
-    assertThat(helmFetchFileConfigs.get(0).getFilePaths())
-        .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
     assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
     assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("HelmChart");
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths())
+        .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
+    assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("HelmChart");
+    assertThat(helmFetchFileConfigs.get(0).getFilePaths()).isEqualTo(asList("values.yaml"));
     assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
     assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
     assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
@@ -1314,7 +1315,7 @@ public class K8sStepHelperTest extends CategoryTest {
                         .build())
                 .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -1336,13 +1337,13 @@ public class K8sStepHelperTest extends CategoryTest {
     assertThat(httpStoreConfig.getRepoDisplayName()).isEqualTo("helm-http-repo-display");
     List<HelmFetchFileConfig> helmFetchFileConfigs = helmValuesFetchRequest.getHelmFetchFileConfigList();
     assertThat(helmFetchFileConfigs.size()).isEqualTo(3);
-    assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
-    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("HelmChart");
-    assertThat(helmFetchFileConfigs.get(0).getFilePaths())
-        .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
     assertThat(helmFetchFileConfigs.get(1).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
     assertThat(helmFetchFileConfigs.get(1).getManifestType()).isEqualTo("HelmChart");
-    assertThat(helmFetchFileConfigs.get(1).getFilePaths()).isEqualTo(asList("values.yaml"));
+    assertThat(helmFetchFileConfigs.get(1).getFilePaths())
+        .isEqualTo(helmChartManifestOutcome.getValuesPaths().getValue());
+    assertThat(helmFetchFileConfigs.get(0).getIdentifier()).isEqualTo(helmChartManifestOutcome.getIdentifier());
+    assertThat(helmFetchFileConfigs.get(0).getManifestType()).isEqualTo("HelmChart");
+    assertThat(helmFetchFileConfigs.get(0).getFilePaths()).isEqualTo(asList("values.yaml"));
     assertThat(helmFetchFileConfigs.get(2).getIdentifier()).isEqualTo(valuesManifestOutcome2.getIdentifier());
     assertThat(helmFetchFileConfigs.get(2).getManifestType()).isEqualTo(valuesManifestOutcome2.getType());
     assertThat(helmFetchFileConfigs.get(2).getFilePaths()).isEqualTo(asList("values4.yaml"));
@@ -1967,7 +1968,7 @@ public class K8sStepHelperTest extends CategoryTest {
 
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -2318,7 +2319,7 @@ public class K8sStepHelperTest extends CategoryTest {
 
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
 
     TaskChainResponse taskChainResponse =
         k8sStepHelper.startChainLink(k8sStepExecutor, ambiance, rollingStepElementParams);
@@ -2457,7 +2458,7 @@ public class K8sStepHelperTest extends CategoryTest {
 
                         .build()))
         .when(connectorService)
-        .get(anyString(), anyString(), anyString(), anyString());
+        .get(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class));
     when(k8sStepExecutor.executeK8sTask(any(), any(), any(), any(), any(), anyBoolean(), any()))
         .thenReturn(TaskChainResponse.builder().chainEnd(true).build());
 

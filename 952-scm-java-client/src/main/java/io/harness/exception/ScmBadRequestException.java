@@ -14,7 +14,10 @@ import io.harness.eraro.ErrorCode;
 
 @OwnedBy(PL)
 public class ScmBadRequestException extends ScmException {
+  private static final String MESSAGE_ARG = "message";
+
   public ScmBadRequestException(String errorMessage) {
-    super(errorMessage, ErrorCode.SCM_BAD_REQUEST);
+    super(errorMessage, null, ErrorCode.SCM_BAD_REQUEST);
+    super.param(MESSAGE_ARG, errorMessage);
   }
 }

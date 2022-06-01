@@ -650,6 +650,9 @@ public class CDStepHelper {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.NEW_KUBECTL_VERSION);
   }
 
+  public boolean shouldCleanUpIncompleteCanaryDeployRelease(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.CLEANUP_INCOMPLETE_CANARY_DEPLOY_RELEASE);
+  }
   public boolean isSkipAddingTrackSelectorToDeployment(String accountId) {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.SKIP_ADDING_TRACK_LABEL_SELECTOR_IN_ROLLING);
   }
@@ -756,11 +759,11 @@ public class CDStepHelper {
   public static List<HelmFetchFileConfig> mapHelmChartManifestsToHelmFetchFileConfig(
       String identifier, List<String> valuesPaths, String manifestType) {
     List<HelmFetchFileConfig> helmFetchFileConfigList = new ArrayList<>();
+    helmFetchFileConfigList.add(
+        createHelmFetchFileConfig(identifier, manifestType, Arrays.asList(VALUES_YAML_KEY), true));
     if (isNotEmpty(valuesPaths)) {
       helmFetchFileConfigList.add(createHelmFetchFileConfig(identifier, manifestType, valuesPaths, false));
     }
-    helmFetchFileConfigList.add(
-        createHelmFetchFileConfig(identifier, manifestType, Arrays.asList(VALUES_YAML_KEY), true));
     return helmFetchFileConfigList;
   }
 
@@ -840,6 +843,9 @@ public class CDStepHelper {
 
   public List<ManifestOutcome> getStepLevelManifestOutcomes(StepElementParameters stepElementParameters) {
     if (!(stepElementParameters.getSpec() instanceof K8sApplyStepParameters)) {
+      return Collections.emptyList();
+    }
+    if (((K8sApplyStepParameters) stepElementParameters.getSpec()).getOverrides() == null) {
       return Collections.emptyList();
     }
     List<ManifestOutcome> manifestOutcomes = new ArrayList<>();

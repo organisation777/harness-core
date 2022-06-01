@@ -17,6 +17,7 @@ import io.harness.cdng.infra.yaml.InfrastructurePlanCreatorConfig;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.ng.core.environment.beans.EnvironmentType;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.walktree.visitor.SimpleVisitorHelper;
@@ -47,7 +48,7 @@ public class EnvironmentPlanCreatorConfig implements Visitable {
   @ApiModelProperty(hidden = true)
   private String uuid;
 
-  @NotNull String environmentRef;
+  @NotNull ParameterField<String> environmentRef;
 
   // Environment Basic Info
   String orgIdentifier;
@@ -58,8 +59,10 @@ public class EnvironmentPlanCreatorConfig implements Visitable {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) String description;
   @ApiModelProperty(required = true) EnvironmentType type;
   List<NGVariable> variables;
-  List<NGServiceOverrides> serviceOverrides;
+  NGServiceOverrides serviceOverrides;
 
   // linked Infra Info
+  boolean deployToAll;
   List<InfrastructurePlanCreatorConfig> infrastructureDefinitions;
+  List<String> gitOpsClusterRefs;
 }

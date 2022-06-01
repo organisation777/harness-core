@@ -91,9 +91,15 @@ public class YamlRefreshHelperTest extends CategoryTest {
     assertThat(convertToYaml(refreshNodeFromSourceNode(convertYamlToJsonNode("field: \"yes\""),
                    convertYamlToJsonNode("field: <+input>.allowedValues(yes, no)"))))
         .isEqualTo("field: \"yes\"");
-    assertThat(convertToYaml(refreshNodeFromSourceNode(convertYamlToJsonNode("field: \"1\""),
-                   convertYamlToJsonNode("field: <+input>.allowedValues(1, 2)"))))
-        .isEqualTo("field: \"1\"");
+    assertThat(convertToYaml(refreshNodeFromSourceNode(convertYamlToJsonNode("field: \"01\""),
+                   convertYamlToJsonNode("field: <+input>.allowedValues(01, 2)"))))
+        .isEqualTo("field: \"01\"");
+    assertThat(convertToYaml(refreshNodeFromSourceNode(convertYamlToJsonNode("field: <+input>.allowedValues(yes, no)"),
+                   convertYamlToJsonNode("field: <+input>"))))
+        .isEqualTo("field: \"<+input>.allowedValues(yes, no)\"");
+    assertThat(convertToYaml(refreshNodeFromSourceNode(
+                   convertYamlToJsonNode("field: <+input>.regex(a.*)"), convertYamlToJsonNode("field: <+input>"))))
+        .isEqualTo("field: \"<+input>.regex(a.*)\"");
 
     // all false scenarios
     assertThat(convertToYaml(refreshNodeFromSourceNode(null, convertYamlToJsonNode("field: <+input>"))))

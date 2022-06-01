@@ -15,15 +15,15 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.CDNGTestBase;
+import io.harness.cdng.creator.plan.environment.EnvironmentPlanCreatorHelper;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
-import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.visitor.YamlTypes;
-import io.harness.pms.contracts.plan.Dependencies;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
+import io.harness.serializer.KryoSerializer;
 
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -36,6 +36,7 @@ import org.junit.experimental.categories.Category;
 
 @OwnedBy(HarnessTeam.CDC)
 public class DeploymentStagePMSPlanCreatorV2Test extends CDNGTestBase {
+  @Inject KryoSerializer kryoSerializer;
   @Inject DeploymentStagePMSPlanCreatorV2 deploymentStagePMSPlanCreator;
 
   private YamlField getYamlFieldFromPath(String path) throws IOException {
@@ -48,28 +49,12 @@ public class DeploymentStagePMSPlanCreatorV2Test extends CDNGTestBase {
     return YamlUtils.readTree(yaml);
   }
 
-  private String getYamlFromPath(String path) throws IOException {
+  private String getYamlFromPath(String path) {
     ClassLoader classLoader = this.getClass().getClassLoader();
     InputStream yamlFile = classLoader.getResourceAsStream(path);
     assertThat(yamlFile).isNotNull();
 
     return new Scanner(yamlFile, "UTF-8").useDelimiter("\\A").next();
-  }
-  @Test
-  @Owner(developers = PRASHANTSHARMA)
-  @Category(UnitTests.class)
-  public void testGetDependenciesForService() throws IOException {
-    YamlField serviceField = getYamlFieldFromPath("cdng/plan/service.yml");
-
-    String serviceNodeId = serviceField.getNode().getUuid();
-    Dependencies dependencies =
-        deploymentStagePMSPlanCreator.getDependenciesForService(serviceField, PipelineInfrastructure.builder().build());
-    assertThat(dependencies).isNotEqualTo(null);
-    assertThat(dependencies.getDependenciesMap().containsKey(serviceNodeId)).isEqualTo(true);
-    assertThat(dependencies.getDependencyMetadataMap()
-                   .get(serviceNodeId)
-                   .containsMetadata(YamlTypes.INFRASTRUCTURE_STEP_PARAMETERS))
-        .isEqualTo(true);
   }
 
   @Test
@@ -94,12 +79,12 @@ public class DeploymentStagePMSPlanCreatorV2Test extends CDNGTestBase {
         getYamlFromPath("cdng/plan/environment/environmentPlanCreatorConfigWithInfra.yml");
     EnvironmentPlanCreatorConfig environmentPlanCreatorConfig =
         YamlUtils.read(envPlanCreatorConfigYaml, EnvironmentPlanCreatorConfig.class);
-    YamlField updatedEnvironmentYamlField = deploymentStagePMSPlanCreator.fetchEnvironmentPlanCreatorConfigYaml(
+    YamlField updatedEnvironmentYamlField = EnvironmentPlanCreatorHelper.fetchEnvironmentPlanCreatorConfigYaml(
         environmentPlanCreatorConfig, environmentYamlV2);
     assertThat(updatedEnvironmentYamlField).isNotNull();
     assertThat(updatedEnvironmentYamlField.getNode().getFieldName()).isEqualTo(YamlTypes.ENVIRONMENT_YAML);
     assertThat(updatedEnvironmentYamlField.getNode().getField("environmentRef").getNode().asText())
-        .isEqualTo(environmentPlanCreatorConfig.getEnvironmentRef());
+        .isEqualTo(environmentPlanCreatorConfig.getEnvironmentRef().getValue());
     List<YamlNode> infrastructureDefinitions =
         updatedEnvironmentYamlField.getNode().getField("infrastructureDefinitions").getNode().asArray();
     assertThat(infrastructureDefinitions.size()).isEqualTo(2);
@@ -120,8 +105,8 @@ public class DeploymentStagePMSPlanCreatorV2Test extends CDNGTestBase {
     EnvironmentPlanCreatorConfig environmentPlanCreatorConfig =
         YamlUtils.read(envPlanCreatorConfigYaml, EnvironmentPlanCreatorConfig.class);
     LinkedHashMap<String, PlanCreationResponse> planCreationResponseMap = new LinkedHashMap<>();
-    deploymentStagePMSPlanCreator.addEnvironmentV2Dependency(
-        planCreationResponseMap, environmentPlanCreatorConfig, environmentYamlV2);
+    EnvironmentPlanCreatorHelper.addEnvironmentV2Dependency(planCreationResponseMap, environmentPlanCreatorConfig,
+        environmentYamlV2, false, "environmentUuid", "infraSectionUuid", "serviceSpecNodeUuid", kryoSerializer);
     assertThat(planCreationResponseMap.size()).isEqualTo(1);
     String key = planCreationResponseMap.keySet().iterator().next();
     assertThat(planCreationResponseMap.get(key).getYamlUpdates().getFqnToYamlCount()).isEqualTo(1);
