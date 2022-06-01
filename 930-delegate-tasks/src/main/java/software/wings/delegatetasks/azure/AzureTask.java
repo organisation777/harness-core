@@ -116,7 +116,8 @@ public class AzureTask extends AbstractDelegateRunnableTask {
             azureTaskParams.getEncryptionDetails(), azureTaskParams.getAzureConnector());
       }
       case LIST_TAGS:
-        validateSubscriptionIdExist(azureTaskParams, "Could not retrieve any tags because of invalid parameter(s)");
+        validateAzureResourceExist(azureTaskParams, "Could not retrieve any tags because of invalid parameter(s)",
+            AzureAdditionalParams.SUBSCRIPTION_ID);
         return azureAsyncTaskHelper.listTags(azureTaskParams.getEncryptionDetails(),
             azureTaskParams.getAzureConnector(),
             azureTaskParams.getAdditionalParams().get(AzureAdditionalParams.SUBSCRIPTION_ID));

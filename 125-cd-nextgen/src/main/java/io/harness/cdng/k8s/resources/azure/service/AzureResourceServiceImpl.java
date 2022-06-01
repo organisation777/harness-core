@@ -21,8 +21,6 @@ import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureResourceGroupsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureSubscriptionsDTO;
-import io.harness.cdng.k8s.resources.azure.dtos.AzureTagDTO;
-import io.harness.cdng.k8s.resources.azure.dtos.AzureTagsDTO;
 import io.harness.cdng.k8s.resources.azure.dtos.AzureWebAppNamesDTO;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureDeploymentSlotsResponse;
