@@ -300,13 +300,10 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     }
     StringBuilder builder = new StringBuilder();
     String delegateSelectorReceived = generateSelectionLogForSelectors(delegateTask.getExecutionCapabilities());
-    if (isEmpty(delegateSelectorReceived)) {
-      return;
-    }
-    builder.append(delegateSelectorReceived).append('\n');
+    builder.append(delegateSelectorReceived).append("%n");
     delegateTask.getExecutionCapabilities().forEach(capability -> {
       if (!isEmpty(capability.getCapabilityToString())) {
-        builder.append('\n').append(capability.getCapabilityToString());
+        builder.append("%n").append(capability.getCapabilityToString());
       }
     });
 
@@ -348,7 +345,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     if (isEmpty(selectorCapabilities)) {
       return EMPTY;
     }
-    selectorCapabilities.forEach(capability -> taskSelectors.addAll(capability.getSelectors()));
-    return "Selectors for task : " + String.join(", ", taskSelectors);
+    selectorCapabilities.forEach(capability -> taskSelectors.add(capability.getSelectorOrigin().concat(capability.getSelectors().toString())));
+    return "Selectors from task : " + String.join(", ", taskSelectors);
   }
 }
