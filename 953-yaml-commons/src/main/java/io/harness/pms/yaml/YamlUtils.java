@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -452,6 +453,9 @@ public class YamlUtils {
 
   public YamlField getMatchingFieldNameFromParentUsingValueAsText(YamlNode parent, String value) {
     for (YamlField field : parent.fields()) {
+      if (parent.getField(field.getName()) == null) {
+        continue;
+      }
       if (value.equals(parent.getField(field.getName()).getNode().getCurrJsonNode().asText())) {
         return field;
       }
@@ -541,5 +545,11 @@ public class YamlUtils {
     for (Iterator<JsonNode> it = arrayNode.elements(); it.hasNext();) {
       removeUuid(it.next());
     }
+  }
+
+  public void setStringValueForField(String fieldName, String value, YamlField yamlField) {
+    YamlNode yamlNode = yamlField.getNode();
+    ObjectNode currJsonNode = (ObjectNode) yamlNode.getCurrJsonNode();
+    currJsonNode.set(fieldName, new TextNode(value));
   }
 }

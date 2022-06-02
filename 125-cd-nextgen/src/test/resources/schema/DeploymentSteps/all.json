@@ -565,6 +565,52 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "CreatePRStepInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CDStepInfo"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "commitMessage": {
+              "type": "string"
+            },
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "isNewBranch": {
+              "type": "boolean"
+            },
+            "prTitle": {
+              "type": "string"
+            },
+            "store": {
+              "$ref": "#/definitions/StoreConfigWrapper"
+            },
+            "stringMap": {
+              "$ref": "#/definitions/ParameterFieldMapStringString"
+            },
+            "targetBranch": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "DeleteManifestPathSpec": {
       "allOf": [
         {
@@ -991,6 +1037,40 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "HarnessStore": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "filePath",
+            "fileReference",
+            "fileType"
+          ],
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "minLength": 1
+            },
+            "fileReference": {
+              "type": "string",
+              "minLength": 1
+            },
+            "fileType": {
+              "type": "string",
+              "description": "io.harness.cdng.manifest.yaml.harness.HarnessFileType",
+              "enum": [
+                "FileStore",
+                "Encrypted"
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "HelmChartManifest": {
       "allOf": [
         {
@@ -1034,6 +1114,21 @@
             },
             "store": {
               "$ref": "#/definitions/StoreConfigWrapper"
+            },
+            "valuesPaths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             }
           }
         }
@@ -1136,6 +1231,34 @@
             },
             "metadata": {
               "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "InheritFromManifestStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             }
           }
         }
@@ -1622,6 +1745,21 @@
             },
             "store": {
               "$ref": "#/definitions/StoreConfigWrapper"
+            },
+            "valuesPaths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             }
           }
         }
@@ -1773,6 +1911,21 @@
           "properties": {
             "metadata": {
               "type": "string"
+            },
+            "patchesPaths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "pluginPath": {
               "type": "string"
@@ -2089,6 +2242,21 @@
             "metadata": {
               "type": "string"
             },
+            "paramsPaths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
             "skipResourceVersioning": {
               "oneOf": [
                 {
@@ -2179,6 +2347,36 @@
         },
         "value": {
           "type": "boolean"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ParameterFieldMapStringString": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2522,7 +2720,9 @@
             "Gcs",
             "Inline",
             "Artifactory",
-            "S3Url"
+            "S3Url",
+            "InheritFromManifest",
+            "Harness"
           ]
         }
       },
@@ -2628,6 +2828,22 @@
           "if": {
             "properties": {
               "type": {
+                "const": "Harness"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/HarnessStore"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
                 "const": "Http"
               }
             }
@@ -2636,6 +2852,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/HttpStoreConfig"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "InheritFromManifest"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/InheritFromManifestStoreConfig"
               }
             }
           }
@@ -2940,6 +3172,16 @@
               }
             ]
           }
+        },
+        "exportTerraformPlanJson": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
         },
         "secretManagerRef": {
           "type": "string"

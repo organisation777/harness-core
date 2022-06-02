@@ -25,6 +25,7 @@ import io.harness.cvng.notification.beans.NotificationRuleConditionType;
 import io.harness.cvng.notification.beans.NotificationRuleRef;
 import io.harness.cvng.notification.beans.NotificationRuleRefDTO;
 import io.harness.cvng.notification.beans.NotificationRuleResponse;
+import io.harness.cvng.notification.beans.NotificationRuleType;
 import io.harness.cvng.notification.entities.NotificationRule;
 import io.harness.cvng.notification.entities.NotificationRule.CVNGNotificationChannel;
 import io.harness.cvng.notification.entities.SLONotificationRule;
@@ -400,14 +401,14 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
 
   @Override
   public void sendNotification(ServiceLevelObjective serviceLevelObjective) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(serviceLevelObjective.getAccountId())
+                                      .orgIdentifier(serviceLevelObjective.getOrgIdentifier())
+                                      .projectIdentifier(serviceLevelObjective.getProjectIdentifier())
+                                      .build();
     List<NotificationRule> notificationRules = getNotificationRules(serviceLevelObjective);
     Map<String, String> templateData =
-        getNotificationTemplateData(ProjectParams.builder()
-                                        .accountIdentifier(serviceLevelObjective.getAccountId())
-                                        .orgIdentifier(serviceLevelObjective.getOrgIdentifier())
-                                        .projectIdentifier(serviceLevelObjective.getProjectIdentifier())
-                                        .build(),
-            templateIdentifierName, serviceLevelObjective.getName());
+        getNotificationTemplateData(projectParams, templateIdentifierName, serviceLevelObjective.getName());
     Set<String> notificationRuleRefsWithChange = new HashSet<>();
 
     for (NotificationRule notificationRule : notificationRules) {
@@ -420,18 +421,27 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
               notificationClient.sendNotificationAsync(notificationChannel.toNotificationChannel(
                   serviceLevelObjective.getAccountId(), serviceLevelObjective.getOrgIdentifier(),
                   serviceLevelObjective.getProjectIdentifier(), templateId, templateData));
-          log.info("Notification with Notification ID {} sent", notificationResult.getNotificationId());
+          log.info("Notification with Notification ID {}, Notification Rule {}, Condition {} for SLO {} sent",
+              notificationResult.getNotificationId(), notificationRule.getName(), condition.getType().getDisplayName(),
+              serviceLevelObjective.getName());
           notificationRuleRefsWithChange.add(notificationRule.getIdentifier());
         }
       }
     }
-    updateNotificationRuleRefInSLO(serviceLevelObjective, new ArrayList<>(notificationRuleRefsWithChange));
+    updateNotificationRuleRefInSLO(
+        projectParams, serviceLevelObjective, new ArrayList<>(notificationRuleRefsWithChange));
   }
 
   @Override
   public PageResponse<NotificationRuleResponse> getNotificationRules(
       ProjectParams projectParams, String sloIdentifier, PageParams pageParams) {
     ServiceLevelObjective serviceLevelObjective = getEntity(projectParams, sloIdentifier);
+    if (serviceLevelObjective == null) {
+      throw new InvalidRequestException(String.format(
+          "SLO  with identifier %s, accountId %s, orgIdentifier %s and projectIdentifier %s  is not present",
+          sloIdentifier, projectParams.getAccountIdentifier(), projectParams.getOrgIdentifier(),
+          projectParams.getProjectIdentifier()));
+    }
     List<NotificationRuleRef> notificationRuleRefList = serviceLevelObjective.getNotificationRuleRefs();
     List<NotificationRuleResponse> notificationRuleResponseList =
         notificationRuleService.getNotificationRuleResponse(projectParams, notificationRuleRefList);
@@ -460,7 +470,7 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
   }
 
   private void updateNotificationRuleRefInSLO(
-      ServiceLevelObjective serviceLevelObjective, List<String> notificationRuleRefs) {
+      ProjectParams projectParams, ServiceLevelObjective serviceLevelObjective, List<String> notificationRuleRefs) {
     List<NotificationRuleRef> allNotificationRuleRefs = new ArrayList<>();
     List<NotificationRuleRef> notificationRuleRefsWithoutChange =
         serviceLevelObjective.getNotificationRuleRefs()
@@ -472,8 +482,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
             .map(notificationRuleRef
                 -> NotificationRuleRefDTO.builder().notificationRuleRef(notificationRuleRef).enabled(true).build())
             .collect(Collectors.toList());
-    List<NotificationRuleRef> notificationRuleRefsWithChange =
-        notificationRuleService.getNotificationRuleRefs(notificationRuleRefDTOs, clock.instant());
+    List<NotificationRuleRef> notificationRuleRefsWithChange = notificationRuleService.getNotificationRuleRefs(
+        projectParams, notificationRuleRefDTOs, NotificationRuleType.SLO, clock.instant());
     allNotificationRuleRefs.addAll(notificationRuleRefsWithChange);
     allNotificationRuleRefs.addAll(notificationRuleRefsWithoutChange);
     UpdateOperations<ServiceLevelObjective> updateOperations =
@@ -530,8 +540,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
     updateOperations.set(
         ServiceLevelObjectiveKeys.sloTargetPercentage, serviceLevelObjectiveDTO.getTarget().getSloTargetPercentage());
     updateOperations.set(ServiceLevelObjectiveKeys.notificationRuleRefs,
-        notificationRuleService.getNotificationRuleRefs(
-            serviceLevelObjectiveDTO.getNotificationRuleRefs(), Instant.ofEpochSecond(0)));
+        notificationRuleService.getNotificationRuleRefs(projectParams,
+            serviceLevelObjectiveDTO.getNotificationRuleRefs(), NotificationRuleType.SLO, Instant.ofEpochSecond(0)));
     hPersistence.update(serviceLevelObjective, updateOperations);
     return serviceLevelObjective;
   }
@@ -591,8 +601,8 @@ public class ServiceLevelObjectiveServiceImpl implements ServiceLevelObjectiveSe
             .serviceLevelIndicators(serviceLevelIndicatorService.create(projectParams,
                 serviceLevelObjectiveDTO.getServiceLevelIndicators(), serviceLevelObjectiveDTO.getIdentifier(),
                 serviceLevelObjectiveDTO.getMonitoredServiceRef(), serviceLevelObjectiveDTO.getHealthSourceRef()))
-            .notificationRuleRefs(notificationRuleService.getNotificationRuleRefs(
-                serviceLevelObjectiveDTO.getNotificationRuleRefs(), Instant.ofEpochSecond(0)))
+            .notificationRuleRefs(notificationRuleService.getNotificationRuleRefs(projectParams,
+                serviceLevelObjectiveDTO.getNotificationRuleRefs(), NotificationRuleType.SLO, Instant.ofEpochSecond(0)))
             .monitoredServiceIdentifier(serviceLevelObjectiveDTO.getMonitoredServiceRef())
             .healthSourceIdentifier(serviceLevelObjectiveDTO.getHealthSourceRef())
             .tags(TagMapper.convertToList(serviceLevelObjectiveDTO.getTags()))

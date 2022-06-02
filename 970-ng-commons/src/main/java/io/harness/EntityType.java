@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 // todo(abhinav): refactor/adapt this according to needs later depending on how service registration comes in
 // one more enum might come in here for product types.
 public enum EntityType {
+  @JsonProperty(EntityTypeConstants.GITOPS_CREATE_PR)
+  GITOPS_CREATE_PR(
+      ModuleType.CD, EntityTypeConstants.GITOPS_CREATE_PR, IdentifierRef.class, EntityYamlRootNames.GITOPS_CREATE_PR),
   @JsonProperty(EntityTypeConstants.PROJECTS)
   PROJECTS(ModuleType.CORE, EntityTypeConstants.PROJECTS, IdentifierRef.class, EntityYamlRootNames.PROJECT),
   @JsonProperty(EntityTypeConstants.PIPELINES)
@@ -235,7 +238,10 @@ public enum EntityType {
   CUSTOM_STAGE(ModuleType.PMS, EntityTypeConstants.CUSTOM_STAGE, IdentifierRef.class, EntityYamlRootNames.CUSTOM_STAGE),
   @JsonProperty(EntityTypeConstants.CLOUDFORMATION_ROLLBACK_STACK_STEP)
   CLOUDFORMATION_ROLLBACK_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_ROLLBACK_STACK_STEP,
-      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_ROLLBACK_STACK_STEP);
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_ROLLBACK_STACK_STEP),
+  @JsonProperty(EntityTypeConstants.INFRASTRUCTURE)
+  INFRASTRUCTURE(
+      ModuleType.CORE, EntityTypeConstants.INFRASTRUCTURE, IdentifierRef.class, EntityYamlRootNames.INFRASTRUCTURE);
 
   private final ModuleType moduleType;
   String yamlName;
