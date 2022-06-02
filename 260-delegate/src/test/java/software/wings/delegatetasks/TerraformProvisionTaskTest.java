@@ -54,7 +54,6 @@ import io.harness.delegate.task.terraform.TerraformBaseHelperImpl;
 import io.harness.delegate.task.terraform.TerraformCommand;
 import io.harness.delegate.task.terraform.TerraformCommandUnit;
 import io.harness.filesystem.FileIo;
-import io.harness.product.ci.engine.proto.Execution;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 import io.harness.secretmanagerclient.EncryptDecryptHelper;
