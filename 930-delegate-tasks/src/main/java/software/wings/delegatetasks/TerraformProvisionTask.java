@@ -471,7 +471,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
             .executionStatus(ExecutionStatus.FAILED)
             .errorMessage("The terraform command exited with code " + code)
             .build();
-      };
+      }
 
       String tfPlanJsonFileId = null;
       if (parameters.isSaveTerraformJson() && parameters.isUseOptimizedTfPlanJson() && version.minVersion(0, 12)) {
