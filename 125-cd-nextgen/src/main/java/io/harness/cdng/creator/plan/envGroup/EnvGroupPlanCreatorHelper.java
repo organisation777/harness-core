@@ -35,7 +35,6 @@ import java.util.Optional;
 @Singleton
 public class EnvGroupPlanCreatorHelper {
   @Inject private EnvironmentGroupService environmentGroupService;
-  @Inject private EnvironmentService environmentService;
   @Inject private KryoSerializer kryoSerializer;
 
   public EnvGroupPlanCreatorConfig createEnvGroupPlanCreatorConfig(
