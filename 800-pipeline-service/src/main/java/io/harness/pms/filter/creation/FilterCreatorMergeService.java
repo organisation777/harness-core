@@ -120,7 +120,14 @@ public class FilterCreatorMergeService {
   }
 
   public SetupMetadata.Builder getSetupMetadataBuilder(String accountId, String orgId, String projectId) {
-    return SetupMetadata.newBuilder().setAccountId(accountId).setProjectId(projectId).setOrgId(orgId);
+    SetupMetadata.Builder setupMetaData = SetupMetadata.newBuilder().setAccountId(accountId);
+    if (isNotEmpty(projectId)) {
+      setupMetaData.setProjectId(projectId);
+    }
+    if (isNotEmpty(orgId)) {
+      setupMetaData.setOrgId(orgId);
+    }
+    return setupMetaData;
   }
 
   public Map<String, PlanCreatorServiceInfo> getServices() {

@@ -95,9 +95,13 @@ public class TemplateReferenceHelper {
     EntityReferenceRequest.Builder entityReferenceRequestBuilder =
         EntityReferenceRequest.newBuilder()
             .setYaml(pmsUnderstandableYaml)
-            .setAccountIdentifier(templateEntity.getAccountIdentifier())
-            .setOrgIdentifier(templateEntity.getOrgIdentifier())
-            .setProjectIdentifier(templateEntity.getProjectIdentifier());
+            .setAccountIdentifier(templateEntity.getAccountIdentifier());
+    if (isNotEmpty(templateEntity.getOrgIdentifier())) {
+      entityReferenceRequestBuilder.setOrgIdentifier(templateEntity.getOrgIdentifier());
+    }
+    if (isNotEmpty(templateEntity.getProjectIdentifier())) {
+      entityReferenceRequestBuilder.setProjectIdentifier(templateEntity.getProjectIdentifier());
+    }
     ByteString gitSyncBranchContext = pmsGitSyncHelper.getGitSyncBranchContextBytesThreadLocal();
     if (gitSyncBranchContext != null) {
       entityReferenceRequestBuilder.setGitSyncBranchContext(gitSyncBranchContext);
