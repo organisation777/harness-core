@@ -15,6 +15,8 @@ import static io.harness.threading.Morpheus.sleep;
 
 import static software.wings.helpers.ext.jenkins.BuildDetails.Builder.aBuildDetails;
 import static software.wings.helpers.ext.jenkins.JenkinsJobPathBuilder.constructParentJobPath;
+import static software.wings.helpers.ext.jenkins.JenkinsJobPathBuilder.getJenkinsJobPath;
+import static software.wings.helpers.ext.jenkins.JenkinsJobPathBuilder.getJobPathFromJenkinsJobUrl;
 
 import static java.lang.String.format;
 import static java.time.Duration.ofMillis;
@@ -28,19 +30,17 @@ import io.harness.artifacts.jenkins.client.JenkinsClient;
 import io.harness.artifacts.jenkins.client.JenkinsCustomServer;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.delegate.beans.artifact.ArtifactFileMetadata;
-import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGParameters;
 import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.GeneralException;
+import io.harness.exception.InvalidCredentialsException;
 import io.harness.exception.InvalidRequestException;
+import io.harness.exception.UnauthorizedException;
 import io.harness.exception.WingsException;
-import io.harness.steps.jenkins.jenkinsstep.JenkinsBuildSpecParameters;
 
-import software.wings.beans.JenkinsConfig;
-import software.wings.beans.command.JenkinsTaskParams;
 import software.wings.common.BuildDetailsComparator;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.CustomJenkinsHttpClient;
-import software.wings.helpers.ext.jenkins.JenkinsImpl;
 import software.wings.helpers.ext.jenkins.JobDetails;
 import software.wings.helpers.ext.jenkins.SvnBuildDetails;
 import software.wings.helpers.ext.jenkins.SvnRevision;
@@ -53,10 +53,12 @@ import com.offbytwo.jenkins.model.Artifact;
 import com.offbytwo.jenkins.model.Build;
 import com.offbytwo.jenkins.model.BuildResult;
 import com.offbytwo.jenkins.model.BuildWithDetails;
+import com.offbytwo.jenkins.model.Executable;
 import com.offbytwo.jenkins.model.ExtractHeader;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.Job;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.QueueItem;
 import com.offbytwo.jenkins.model.QueueReference;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -89,6 +91,7 @@ public class JenkinsRegistryUtils {
       "com.cloudbees.opscenter.bluesteel.folder.BlueSteelTeamFolder";
   private final String ORGANIZATION_FOLDER_CLASS_NAME = "jenkins.branch.OrganizationFolder";
   private final String SERVER_ERROR = "Server Error";
+  private static final int MAX_RETRY = 5;
 
   @Inject private ExecutorService executorService;
   @Inject private TimeLimiter timeLimiter;
@@ -460,11 +463,8 @@ public class JenkinsRegistryUtils {
     return folderJob;
   }
 
-  public QueueReference trigger(String jobName, JenkinsBuildTaskNGParameters jenkinsBuildTaskNGParameters)
-      throws IOException {
-    Map<String, String> parameters = jenkinsBuildTaskNGParameters.getJobParameter();
-    JenkinsInternalConfig jenkinsInternalConfig = jenkinsBuildTaskNGParameters.getJenkinsInternalConfig();
-
+  public QueueReference trigger(
+      String jobName, JenkinsInternalConfig jenkinsInternalConfig, Map<String, String> parameters) throws IOException {
     Job job = getJob(jobName, jenkinsInternalConfig);
     if (job == null) {
       throw new ArtifactServerException("No job [" + jobName + "] found", USER);
@@ -493,6 +493,136 @@ public class JenkinsRegistryUtils {
     } catch (IOException e) {
       throw new IOException(format("Failed to trigger job %s with url %s", jobName, job.getUrl()), e);
     }
+  }
+
+  public Build waitForJobToStartExecution(QueueReference queueReference, JenkinsInternalConfig jenkinsInternalConfig)
+      throws URISyntaxException {
+    Build jenkinsBuild = null;
+    int retry = 0;
+    do {
+      log.info(
+          "Waiting for job {} to start execution with URL {}", queueReference, queueReference.getQueueItemUrlPart());
+      sleep(Duration.ofSeconds(1));
+      try {
+        jenkinsBuild = getBuild(queueReference, jenkinsInternalConfig);
+        if (jenkinsBuild != null) {
+          log.info("Job started and Build No {}", jenkinsBuild.getNumber());
+        }
+      } catch (IOException e) {
+        log.error("Error occurred while waiting for Job to start execution.", e);
+        if (e instanceof HttpResponseException) {
+          if (((HttpResponseException) e).getStatusCode() == 401) {
+            throw new InvalidCredentialsException("Invalid Jenkins credentials", WingsException.USER);
+          } else if (((HttpResponseException) e).getStatusCode() == 403) {
+            throw new UnauthorizedException("User not authorized to access jenkins", WingsException.USER);
+          } else if (((HttpResponseException) e).getStatusCode() == 500) {
+            log.info("Failed to retrieve job details at url {}, Retrying (retry count {})  ",
+                queueReference.getQueueItemUrlPart(), retry);
+            if (retry < MAX_RETRY) {
+              retry++;
+              continue;
+            } else {
+              throw new GeneralException(String.format(
+                  "Error retrieving job details at url %s: %s", queueReference.getQueueItemUrlPart(), e.getMessage()));
+            }
+          }
+          throw new GeneralException(e.getMessage());
+        }
+      }
+    } while (jenkinsBuild == null);
+    return jenkinsBuild;
+  }
+
+  public Build getBuild(QueueReference queueReference, JenkinsInternalConfig jenkinsInternalConfig)
+      throws IOException, URISyntaxException {
+    log.info("Retrieving queued item for job URL {}", queueReference.getQueueItemUrlPart());
+    JenkinsCustomServer jenkinsServer = JenkinsClient.getJenkinsServer(jenkinsInternalConfig);
+    CustomJenkinsHttpClient jenkinsHttpClient = JenkinsClient.getJenkinsHttpClient(jenkinsInternalConfig);
+    QueueItem queueItem = jenkinsServer.getQueueItem(queueReference);
+    String buildUrl = null;
+
+    if (queueItem == null) {
+      log.info("Queue item value is null");
+      return null;
+    } else if (queueItem.getExecutable() == null) {
+      log.info("Executable value is null");
+      return null;
+    } else if (queueItem.getTask() == null) {
+      log.info("Task value is null");
+      return null;
+    } else {
+      log.info("Queued item {} returned successfully", queueItem);
+      log.info("Executable value {}", queueItem.getExecutable());
+      log.info("Task value {}", queueItem.getTask());
+    }
+
+    log.info("Executable number is {}", queueItem.getExecutable().getNumber());
+    log.info("Executable URL is {}", queueItem.getExecutable().getUrl());
+
+    log.info("Task URL is {}", queueItem.getTask().getUrl());
+    log.info("Task name is {}", queueItem.getTask().getName());
+
+    log.info("Queue item URL is {}", queueItem.getUrl());
+    log.info("Queue item ID is {}", queueItem.getId());
+
+    if (jenkinsInternalConfig.isUseConnectorUrlForJobExecution()) {
+      buildUrl = getBuildUrl(jenkinsInternalConfig.getJenkinsUrl(),
+          getJobPathFromJenkinsJobUrl(queueItem.getTask().getUrl()), queueItem.getExecutable().getNumber().toString());
+
+      configureExecutable(queueItem, buildUrl);
+    }
+
+    Build build = jenkinsServer.getBuild(queueItem);
+
+    if (jenkinsInternalConfig.isUseConnectorUrlForJobExecution()) {
+      log.info("Retrieving build with URL {}", buildUrl);
+      return createBuild(build, buildUrl, jenkinsHttpClient);
+    }
+
+    log.info("Retrieving build with URL {}", build.getUrl());
+    return build;
+  }
+
+  /**
+   * Configures new executable property for Queue item
+   *
+   * @param queueItem      the queue item
+   * @param buildUrl       the build URL
+   */
+  private void configureExecutable(QueueItem queueItem, String buildUrl) {
+    Executable executable = new Executable();
+    executable.setUrl(buildUrl);
+    executable.setNumber(queueItem.getExecutable().getNumber());
+    queueItem.setExecutable(executable);
+  }
+
+  /**
+   * Form and returns new build url from URL, job path and job name
+   *
+   * @param url          the URL
+   * @param jobPath      the job path
+   * @param jobNumber    the job number
+   * @return build url.
+   */
+  private String getBuildUrl(String url, String jobPath, String jobNumber) {
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length() - 1);
+    }
+
+    return url.concat(getJenkinsJobPath(jobPath)).concat(jobNumber).concat("/");
+  }
+
+  /**
+   * Creates build with new url and number
+   *
+   * @param build          existing build with Jenkins master URL
+   * @param buildUrl       build url with Jenkins connector URL
+   * @return new build.
+   */
+  private Build createBuild(Build build, String buildUrl, CustomJenkinsHttpClient jenkinsHttpClient) {
+    Build newBuild = new Build(build.getNumber(), buildUrl);
+    newBuild.setClient(jenkinsHttpClient);
+    return newBuild;
   }
 
   @Data

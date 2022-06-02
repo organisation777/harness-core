@@ -41,7 +41,6 @@ public class JenkinsBuildSpecParameters implements SpecParameters {
   boolean unstableStatusAsSuccess;
   boolean captureEnvironmentVariable;
   private Map<String, String> filePathsForAssertion;
-  private boolean unstableSuccess;
   private String queuedBuildUrl;
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }

@@ -7,21 +7,27 @@
 
 package io.harness.delegate.task.artifacts.jenkins;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.USER;
 
 import static java.util.stream.Collectors.toList;
 
+import io.harness.artifacts.jenkins.beans.JenkinsInternalConfig;
+import io.harness.artifacts.jenkins.client.JenkinsClient;
+import io.harness.artifacts.jenkins.client.JenkinsCustomServer;
 import io.harness.artifacts.jenkins.service.JenkinsRegistryService;
+import io.harness.artifacts.jenkins.service.JenkinsRegistryUtils;
+import io.harness.beans.ExecutionStatus;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.mappers.JenkinsRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
-import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGParameters;
+import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
 import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.security.encryption.SecretDecryptionService;
-import io.harness.steps.jenkins.jenkinsstep.JenkinsBuildSpecParameters;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
@@ -30,19 +36,24 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.offbytwo.jenkins.model.Artifact;
+import com.offbytwo.jenkins.model.Build;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.QueueReference;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<JenkinsArtifactDelegateRequest> {
   private static final int ARTIFACT_RETENTION_SIZE = 25;
   private final SecretDecryptionService secretDecryptionService;
   private final JenkinsRegistryService jenkinsRegistryService;
+  @Inject private JenkinsRegistryUtils jenkinsRegistryUtils;
 
   @Override
   public ArtifactTaskExecutionResponse validateArtifactServer(JenkinsArtifactDelegateRequest attributesRequest) {
@@ -90,9 +101,41 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
   }
 
   public ArtifactTaskExecutionResponse triggerBuild(JenkinsArtifactDelegateRequest attributesRequest) {
-    QueueReference queueReference = jenkinsRegistryService.triggerTheJob(
-        attributesRequest.getJobName(), attributesRequest.getJenkinsBuildTaskNGParameters());
-    return ArtifactTaskExecutionResponse.builder().QueueReference(queueReference).build();
+    JenkinsBuildTaskNGResponse jenkinsBuildTaskNGResponse = new JenkinsBuildTaskNGResponse();
+    try {
+      ExecutionStatus executionStatus = ExecutionStatus.SUCCESS;
+      String msg = "Error occurred while starting Jenkins task\n";
+      JenkinsInternalConfig jenkinsInternalConfig =
+          JenkinsRequestResponseMapper.toJenkinsInternalConfig(attributesRequest);
+      QueueReference queueReference = jenkinsRegistryUtils.trigger(
+          attributesRequest.getJobName(), jenkinsInternalConfig, attributesRequest.getJobParameter());
+      String queueItemUrl = queueReference != null ? queueReference.getQueueItemUrlPart() : null;
+
+      // Check if jenkins job start is successful
+      if (queueReference != null && isNotEmpty(queueItemUrl)) {
+        if (jenkinsInternalConfig.isUseConnectorUrlForJobExecution()) {
+          queueItemUrl = updateQueueItemUrl(queueItemUrl, jenkinsInternalConfig.getJenkinsUrl());
+          queueReference = createQueueReference(queueItemUrl);
+        }
+        log.info("Triggered Job successfully with queued Build URL {} ", queueItemUrl);
+        jenkinsBuildTaskNGResponse.setQueuedBuildUrl(queueItemUrl);
+      } else {
+        log.error("The Job was not triggered successfully with queued Build URL {} ", queueItemUrl);
+        executionStatus = ExecutionStatus.FAILED;
+        jenkinsBuildTaskNGResponse.setErrorMessage(msg);
+      }
+      JenkinsCustomServer jenkinsServer = JenkinsClient.getJenkinsServer(jenkinsInternalConfig);
+      Build jenkinsBuild = jenkinsRegistryUtils.waitForJobToStartExecution(queueReference, jenkinsInternalConfig);
+      jenkinsBuildTaskNGResponse.setBuildNumber(String.valueOf(jenkinsBuild.getNumber()));
+      jenkinsBuildTaskNGResponse.setJobUrl(jenkinsBuild.getUrl());
+    } catch (WingsException e) {
+      throw e;
+    } catch (IOException ex) {
+      throw new InvalidRequestException("Failed to trigger the Jenkins Job" + ExceptionUtils.getMessage(ex), USER);
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+    }
+    return ArtifactTaskExecutionResponse.builder().jenkinsBuildTaskNGResponse(jenkinsBuildTaskNGResponse).build();
   }
 
   private ArtifactTaskExecutionResponse getSuccessTaskExecutionResponse(
@@ -115,5 +158,17 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
           jenkinsArtifactDelegateRequest.getJenkinsConnectorDTO().getAuth().getCredentials(),
           jenkinsArtifactDelegateRequest.getEncryptedDataDetails());
     }
+  }
+
+  private QueueReference createQueueReference(String location) {
+    return new QueueReference(location);
+  }
+
+  private String updateQueueItemUrl(String queueItemUrl, String jenkinsUrl) {
+    if (jenkinsUrl.endsWith("/")) {
+      jenkinsUrl = jenkinsUrl.substring(0, jenkinsUrl.length() - 1);
+    }
+    String[] queueItemUrlParts = queueItemUrl.split("/queue/");
+    return jenkinsUrl.concat("/queue/").concat(queueItemUrlParts[1]);
   }
 }

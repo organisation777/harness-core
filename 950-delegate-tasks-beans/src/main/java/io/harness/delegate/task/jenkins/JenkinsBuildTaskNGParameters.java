@@ -19,7 +19,6 @@ import io.harness.delegate.task.mixin.JenkinsCapabilityGenerator;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.security.encryption.EncryptedDataDetail;
-import io.harness.steps.jenkins.jenkinsstep.JenkinsParameterField;
 
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +38,7 @@ public class JenkinsBuildTaskNGParameters implements TaskParameters, ExecutionCa
   JenkinsInternalConfig jenkinsInternalConfig;
   List<EncryptedDataDetail> encryptionDetails;
   List<String> delegateSelectors;
-  ParameterField<String> jobName;
+  String jobName;
 
   Map<String, String> jobParameter;
   boolean unstableStatusAsSuccess;

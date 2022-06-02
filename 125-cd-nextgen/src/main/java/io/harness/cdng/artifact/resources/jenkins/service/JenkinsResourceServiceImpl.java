@@ -141,9 +141,9 @@ public class JenkinsResourceServiceImpl implements JenkinsResourceService {
     }
   }
 
-  private ArtifactTaskExecutionResponse executeSyncTask(JenkinsArtifactDelegateRequest dockerRequest,
+  private ArtifactTaskExecutionResponse executeSyncTask(JenkinsArtifactDelegateRequest jenkinsRequest,
       ArtifactTaskType taskType, BaseNGAccess ngAccess, String ifFailedMessage) {
-    DelegateResponseData responseData = getResponseData(ngAccess, dockerRequest, taskType);
+    DelegateResponseData responseData = getResponseData(ngAccess, jenkinsRequest, taskType);
     return getTaskExecutionResponse(responseData, ifFailedMessage);
   }
 

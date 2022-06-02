@@ -11,6 +11,7 @@ import static io.harness.delegate.beans.connector.ConnectorCapabilityBaseHelper.
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifacts.jenkins.beans.JenkinsInternalConfig;
 import io.harness.delegate.beans.connector.jenkins.JenkinsConnectorDTO;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
@@ -24,7 +25,10 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.helpers.ext.jenkins.JobDetails;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -47,7 +51,22 @@ public class JenkinsArtifactDelegateRequest implements ArtifactSourceDelegateReq
   List<EncryptedDataDetail> encryptedDataDetails;
   /** Artifact Source type.*/
   ArtifactSourceType sourceType;
-  JenkinsBuildTaskNGParameters jenkinsBuildTaskNGParameters;
+  Map<String, String> jobParameter;
+  boolean unstableStatusAsSuccess;
+  boolean captureEnvironmentVariable;
+  List<String> delegateSelectors;
+  JenkinsInternalConfig jenkinsInternalConfig;
+
+  public Set<String> getDelegateSelectors() {
+    Set<String> combinedDelegateSelectors = new HashSet<>();
+    if (jenkinsConnectorDTO != null && jenkinsConnectorDTO.getDelegateSelectors() != null) {
+      combinedDelegateSelectors.addAll(jenkinsConnectorDTO.getDelegateSelectors());
+    }
+    if (delegateSelectors != null) {
+      combinedDelegateSelectors.addAll(delegateSelectors);
+    }
+    return combinedDelegateSelectors;
+  }
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {

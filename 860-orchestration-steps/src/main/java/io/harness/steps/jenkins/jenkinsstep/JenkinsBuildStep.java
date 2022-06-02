@@ -9,9 +9,9 @@ package io.harness.steps.jenkins.jenkinsstep;
 
 import io.harness.EntityType;
 import io.harness.beans.IdentifierRef;
-import io.harness.delegate.task.jira.JiraTaskNGParameters;
-import io.harness.delegate.task.jira.JiraTaskNGResponse;
-import io.harness.jira.JiraActionNG;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest.JenkinsArtifactDelegateRequestBuilder;
+import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
 import io.harness.ng.core.EntityDetail;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
@@ -25,8 +25,6 @@ import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.StepUtils;
-import io.harness.steps.jira.JiraStepUtils;
-import io.harness.steps.jira.create.JiraCreateSpecParameters;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.utils.IdentifierRefHelper;
 
@@ -34,7 +32,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<JiraTaskNGResponse> {
+public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<JenkinsBuildTaskNGResponse> {
   public static final StepType STEP_TYPE =
       StepType.newBuilder().setType(StepSpecTypeConstants.JENKINS_BUILD).setStepCategory(StepCategory.STEP).build();
 
@@ -59,23 +57,23 @@ public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<JiraTask
   @Override
   public TaskRequest obtainTaskAfterRbac(
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
-    JiraCreateSpecParameters specParameters = (JiraCreateSpecParameters) stepParameters.getSpec();
-    JiraTaskNGParameters.JiraTaskNGParametersBuilder paramsBuilder =
-        JiraTaskNGParameters.builder()
-            .action(JiraActionNG.CREATE_ISSUE)
-            .projectKey(specParameters.getProjectKey().getValue())
-            .issueType(specParameters.getIssueType().getValue())
+    JenkinsBuildSpecParameters specParameters = (JenkinsBuildSpecParameters) stepParameters.getSpec();
+    JenkinsArtifactDelegateRequestBuilder paramBuilder =
+        JenkinsArtifactDelegateRequest.builder()
+            .jobName(specParameters.getJobName().getValue())
+            .unstableStatusAsSuccess(specParameters.isUnstableStatusAsSuccess())
             .delegateSelectors(
                 StepUtils.getDelegateSelectorListFromTaskSelectorYaml(specParameters.getDelegateSelectors()))
-            .fields(JiraStepUtils.processJiraFieldsInParameters(specParameters.getFields()));
-    return jenkinsBuildStepHelperService.prepareTaskRequest(paramsBuilder, ambiance,
+            .jobParameter(JenkinsBuildStepUtils.processJenkinsFieldsInParameters(specParameters.getFields()));
+
+    return jenkinsBuildStepHelperService.prepareTaskRequest(paramBuilder, ambiance,
         specParameters.getConnectorRef().getValue(), stepParameters.getTimeout().getValue(),
         "Jenkins Task: Create Issue");
   }
 
   @Override
   public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
-      ThrowingSupplier<JiraTaskNGResponse> responseSupplier) throws Exception {
+      ThrowingSupplier<JenkinsBuildTaskNGResponse> responseSupplier) throws Exception {
     return jenkinsBuildStepHelperService.prepareStepResponse(responseSupplier);
   }
 

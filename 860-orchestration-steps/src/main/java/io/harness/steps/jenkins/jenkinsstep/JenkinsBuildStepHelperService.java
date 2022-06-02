@@ -10,8 +10,8 @@ package io.harness.steps.jenkins.jenkinsstep;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGParameters.JenkinsBuildTaskNGParametersBuilder;
-import io.harness.delegate.task.jira.JiraTaskNGResponse;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest.JenkinsArtifactDelegateRequestBuilder;
+import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -19,7 +19,7 @@ import io.harness.supplier.ThrowingSupplier;
 
 @OwnedBy(CDC)
 public interface JenkinsBuildStepHelperService {
-  TaskRequest prepareTaskRequest(JenkinsBuildTaskNGParametersBuilder paramsBuilder, Ambiance ambiance,
+  TaskRequest prepareTaskRequest(JenkinsArtifactDelegateRequestBuilder paramsBuilder, Ambiance ambiance,
       String connectorRef, String timeStr, String taskName);
-  StepResponse prepareStepResponse(ThrowingSupplier<JiraTaskNGResponse> responseSupplier) throws Exception;
+  StepResponse prepareStepResponse(ThrowingSupplier<JenkinsBuildTaskNGResponse> responseSupplier) throws Exception;
 }

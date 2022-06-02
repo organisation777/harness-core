@@ -5,38 +5,36 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.delegate.task.jenkins;
+package io.harness.steps.jenkins.jenkinsstep;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionStatus;
-import io.harness.delegate.beans.DelegateMetaInfo;
-import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
+import io.harness.pms.sdk.core.data.Outcome;
 
-import software.wings.beans.JenkinsSubTaskType;
 import software.wings.sm.states.FilePathAssertionEntry;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.TypeAlias;
 
-@OwnedBy(CDC)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class JenkinsBuildTaskNGResponse implements DelegateTaskNotifyResponseData {
-  private DelegateMetaInfo delegateMetaInfo;
+@OwnedBy(CDC)
+@JsonTypeName("JenkinsBuildOutcome")
+@TypeAlias("jenkinsBuildOutcome")
+@RecasterAlias("io.harness.steps.jenkins.jenkinsstep.JenkinsBuildOutcome")
+public class JenkinsBuildOutcome implements Outcome {
   private ExecutionStatus executionStatus;
   private String jenkinsResult;
   private String errorMessage;
@@ -51,14 +49,5 @@ public class JenkinsBuildTaskNGResponse implements DelegateTaskNotifyResponseDat
   private String buildFullDisplayName;
   private String queuedBuildUrl;
   private String activityId;
-  private Long timeElapsed; // time taken for task completion
-  @Override
-  public DelegateMetaInfo getDelegateMetaInfo() {
-    return null;
-  }
-
-  @Override
-  public void setDelegateMetaInfo(DelegateMetaInfo metaInfo) {
-    return;
-  }
+  private Long timeElapsed;
 }
