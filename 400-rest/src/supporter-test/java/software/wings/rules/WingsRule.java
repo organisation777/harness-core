@@ -378,6 +378,9 @@ public class WingsRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin 
     ServiceHttpClientConfig ngManagerServiceHttpClientConfig =
         ServiceHttpClientConfig.builder().baseUrl("http://localhost:7457/").build();
     configuration.setNgManagerServiceHttpClientConfig(ngManagerServiceHttpClientConfig);
+    ServiceHttpClientConfig managerServiceHttpClientConfig =
+        ServiceHttpClientConfig.builder().baseUrl("http://localhost:7457/").build();
+    configuration.setManagerServiceHttpClientConfig(managerServiceHttpClientConfig);
 
     configuration.setDistributedLockImplementation(DistributedLockImplementation.NOOP);
     configuration.setEventsFrameworkConfiguration(
