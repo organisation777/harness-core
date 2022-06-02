@@ -16,10 +16,12 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.mappers.JenkinsRequestResponseMapper;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
+import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGParameters;
 import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.WingsException;
 import io.harness.security.encryption.SecretDecryptionService;
+import io.harness.steps.jenkins.jenkinsstep.JenkinsBuildSpecParameters;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
@@ -29,6 +31,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.offbytwo.jenkins.model.Artifact;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.QueueReference;
+import java.io.IOException;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -83,6 +87,12 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
         jenkinsRegistryService.getBuildsForJob(JenkinsRequestResponseMapper.toJenkinsInternalConfig(attributesRequest),
             attributesRequest.getJobName(), attributesRequest.getArtifactPaths(), ARTIFACT_RETENTION_SIZE);
     return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
+  }
+
+  public ArtifactTaskExecutionResponse triggerBuild(JenkinsArtifactDelegateRequest attributesRequest) {
+    QueueReference queueReference = jenkinsRegistryService.triggerTheJob(
+        attributesRequest.getJobName(), attributesRequest.getJenkinsBuildTaskNGParameters());
+    return ArtifactTaskExecutionResponse.builder().QueueReference(queueReference).build();
   }
 
   private ArtifactTaskExecutionResponse getSuccessTaskExecutionResponse(

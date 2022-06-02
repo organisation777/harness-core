@@ -14,6 +14,7 @@ import static io.harness.network.Http.connectableJenkinsHttpUrl;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.artifacts.jenkins.beans.JenkinsInternalConfig;
+import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGParameters;
 import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
@@ -25,6 +26,7 @@ import software.wings.helpers.ext.jenkins.JobDetails;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.QueueReference;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +73,16 @@ public class JenkinsRegistryService {
     } catch (IOException ex) {
       throw new InvalidRequestException(
           "Failed to fetch build details jenkins server. Reason:" + ExceptionUtils.getMessage(ex), USER);
+    }
+  }
+
+  public QueueReference triggerTheJob(String jobName, JenkinsBuildTaskNGParameters jenkinsBuildTaskNGParameters) {
+    try {
+      return jenkinsRegistryUtils.trigger(jobName, jenkinsBuildTaskNGParameters);
+    } catch (WingsException e) {
+      throw e;
+    } catch (IOException ex) {
+      throw new InvalidRequestException("Failed to trigger the Jenkins Job" + ExceptionUtils.getMessage(ex), USER);
     }
   }
 }

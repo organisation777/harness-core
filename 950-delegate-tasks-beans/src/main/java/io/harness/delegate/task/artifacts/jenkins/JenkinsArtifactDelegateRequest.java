@@ -16,6 +16,7 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.ArtifactSourceType;
+import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGParameters;
 import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -46,6 +47,7 @@ public class JenkinsArtifactDelegateRequest implements ArtifactSourceDelegateReq
   List<EncryptedDataDetail> encryptedDataDetails;
   /** Artifact Source type.*/
   ArtifactSourceType sourceType;
+  JenkinsBuildTaskNGParameters jenkinsBuildTaskNGParameters;
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {

@@ -14,6 +14,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.security.encryption.EncryptedDataDetail;
+
+import software.wings.beans.JenkinsConfig;
+import software.wings.beans.JenkinsSubTaskType;
 
 import java.util.List;
 import java.util.Map;
@@ -36,5 +40,8 @@ public class JenkinsBuildSpecParameters implements SpecParameters {
   Map<String, ParameterField<String>> fields;
   boolean unstableStatusAsSuccess;
   boolean captureEnvironmentVariable;
+  private Map<String, String> filePathsForAssertion;
+  private boolean unstableSuccess;
+  private String queuedBuildUrl;
   ParameterField<List<TaskSelectorYaml>> delegateSelectors;
 }

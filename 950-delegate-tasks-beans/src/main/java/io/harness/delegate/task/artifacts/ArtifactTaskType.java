@@ -26,7 +26,8 @@ public enum ArtifactTaskType {
   GET_AUTH_TOKEN("Get Auth Token"),
   GET_IMAGES("Get Images"),
   GET_JOBS("Get Jobs"),
-  GET_ARTIFACT_PATH("Get Artifact Path");
+  GET_ARTIFACT_PATH("Get Artifact Path"),
+  JENKINS_BUILD("Trigger Jenkins Build");
 
   @Getter private final String displayName;
 

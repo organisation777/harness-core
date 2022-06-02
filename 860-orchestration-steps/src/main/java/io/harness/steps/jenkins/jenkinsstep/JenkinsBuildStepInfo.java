@@ -45,7 +45,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonTypeName(StepSpecTypeConstants.JENKINS_BUILD)
-@TypeAlias("jiraCreateStepInfo")
+@TypeAlias("jenkinsBuildStepInfo")
 @RecasterAlias("io.harness.cdng.pipeline.stepinfo.JenkinsBuildStepInfo")
 public class JenkinsBuildStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelector {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)

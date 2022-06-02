@@ -62,6 +62,10 @@ public class JenkinsArtifactTaskHelper {
           artifactTaskResponse = getSuccessTaskResponse(jenkinsArtifactTaskHandler.getBuilds(attributes));
           saveLogs(executionLogCallback, "Get the Jenkins Builds for Job " + registryUrl);
           break;
+        case JENKINS_BUILD:
+          saveLogs(executionLogCallback, "Trigger the Jenkins Builds");
+          artifactTaskResponse = getSuccessTaskResponse(jenkinsArtifactTaskHandler.triggerBuild(attributes));
+          saveLogs(executionLogCallback, "Trigger the Jenkins Builds " + registryUrl);
         default:
           saveLogs(executionLogCallback,
               "No corresponding Jenkins artifact task type [{}]: " + artifactTaskParameters.toString());
