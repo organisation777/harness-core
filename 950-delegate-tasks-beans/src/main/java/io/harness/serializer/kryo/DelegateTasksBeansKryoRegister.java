@@ -1383,6 +1383,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AzureWebAppNamesResponse.class, 543521);
     kryo.register(AzureDeploymentSlotsResponse.class, 543522);
     kryo.register(AzureDeploymentSlotResponse.class, 543523);
+    kryo.register(AzureTagsResponse.class, 543524);
     kryo.register(HostValidationResponse.class, 5167);
     kryo.register(HostReachabilityInfo.class, 5172);
     kryo.register(HttpHelmRepoConfig.class, 7159);
@@ -1405,7 +1406,6 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsContainerInfo.class, 5166);
     kryo.register(KubernetesContainerInfo.class, 5165);
     kryo.register(S3FileRequest.class, 8067);
-    kryo.register(AzureTagsResponse.class, 543521);
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
     kryo.register(WinRmAuthScheme.class, 600002);
