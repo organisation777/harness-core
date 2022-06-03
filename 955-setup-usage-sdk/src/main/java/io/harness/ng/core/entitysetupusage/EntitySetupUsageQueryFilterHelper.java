@@ -8,6 +8,7 @@
 package io.harness.ng.core.entitysetupusage;
 
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -175,14 +176,15 @@ public class EntitySetupUsageQueryFilterHelper {
     Criteria criteria = new Criteria();
     criteria.and(EntitySetupUsageKeys.accountIdentifier).is(scope.getAccountIdentifier());
     criteria.and(EntitySetupUsageKeys.referredEntityFQN).regex(referredEntityFQScope);
-    criteria.and(EntitySetupUsageKeys.referredEntityRefScope).is(ScopeLevel.of(scope));
+    criteria.and(EntitySetupUsageKeys.referredEntityRefScope)
+        .is(io.harness.encryption.Scope.fromString(ScopeLevel.of(scope).name()));
     if (referredEntityType != null) {
       criteria.and(EntitySetupUsageKeys.referredEntityType).is(referredEntityType.getYamlName());
     }
     if (referredByEntityType != null) {
       criteria.and(EntitySetupUsageKeys.referredByEntityType).is(referredByEntityType.getYamlName());
     }
-    if (null != referredByEntityName) {
+    if (isNotEmpty(referredByEntityName)) {
       criteria.and(EntitySetupUsageKeys.referredByEntityName).regex(referredByEntityName);
     }
     populateGitCriteriaForReferredEntity(criteria);

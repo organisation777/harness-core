@@ -21,15 +21,15 @@ import org.modelmapper.ModelMapper;
 public class FilesFilterPropertiesMapper
     implements FilterPropertiesMapper<FilesFilterPropertiesDTO, FilesFilterProperties> {
   @Override
-  public FilesFilterPropertiesDTO writeDTO(FilterProperties filterProperties) {
+  public FilterPropertiesDTO writeDTO(FilterProperties filterProperties) {
     ModelMapper modelMapper = new ModelMapper();
-    FilesFilterPropertiesDTO filterPropertiesDTO = modelMapper.map(filterProperties, FilesFilterPropertiesDTO.class);
+    FilterPropertiesDTO filterPropertiesDTO = modelMapper.map(filterProperties, FilesFilterPropertiesDTO.class);
     filterPropertiesDTO.setTags(TagMapper.convertToMap(filterProperties.getTags()));
     return filterPropertiesDTO;
   }
 
   @Override
-  public FilesFilterProperties toEntity(FilterPropertiesDTO filterPropertiesDTO) {
+  public FilterProperties toEntity(FilterPropertiesDTO filterPropertiesDTO) {
     ModelMapper modelMapper = new ModelMapper();
     FilesFilterProperties filterProperties = modelMapper.map(filterPropertiesDTO, FilesFilterProperties.class);
     filterProperties.setType(filterPropertiesDTO.getFilterType());
