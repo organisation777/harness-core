@@ -63,6 +63,12 @@ public class DelegateConfiguration {
   private String clientCertificateFilePath;
   private String clientCertificateKeyFilePath;
 
+  /*
+   * If set to true, the delegate doesn't verify the certificate of the SAAS endpoint.
+   * This setting can only be set in the config directly and is meant for local testing only.
+   */
+  private boolean trustAllCertificates;
+
   // TODO: This method will get removed once we rolled out new delegate.
   public String getDelegateToken() {
     if (StringUtils.isEmpty(delegateToken)) {

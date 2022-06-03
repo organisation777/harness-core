@@ -48,13 +48,15 @@ public class DelegateAgentManagerClientFactory
   private final TokenGenerator tokenGenerator;
   private final String clientCertificateFilePath;
   private final String clientCertificateKeyFilePath;
+  private final boolean trustAllCertificates;
 
   DelegateAgentManagerClientFactory(String baseUrl, TokenGenerator tokenGenerator, String clientCertificateFilePath,
-      String clientCertificateKeyFilePath) {
+      String clientCertificateKeyFilePath, boolean trustAllCertificates) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = tokenGenerator;
     this.clientCertificateFilePath = clientCertificateFilePath;
     this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
+    this.trustAllCertificates = trustAllCertificates;
   }
 
   @Override
@@ -63,9 +65,12 @@ public class DelegateAgentManagerClientFactory
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
+
+    OkHttpClient client = this.trustAllCertificates ? this.getUnsafeOkHttpClient() : this.getSafeOkHttpClient();
+
     Retrofit retrofit = new Retrofit.Builder()
                             .baseUrl(this.baseUrl)
-                            .client(getSafeOkHttpClient())
+                            .client(client)
                             .addConverterFactory(this.kryoConverterFactory)
                             .addConverterFactory(JacksonConverterFactory.create(objectMapper))
                             .build();
@@ -74,8 +79,7 @@ public class DelegateAgentManagerClientFactory
 
   private OkHttpClient getSafeOkHttpClient() {
     try {
-      //      X509TrustManager trustManager = new X509TrustManagerBuilder().trustDefaultTrustStore().build();
-      X509TrustManager trustManager = new X509TrustManagerBuilder().trustAllCertificates().build();
+      X509TrustManager trustManager = new X509TrustManagerBuilder().trustDefaultTrustStore().build();
       X509SslContextBuilder sslContextBuilder = new X509SslContextBuilder().trustManager(trustManager);
 
       if (StringUtils.isNotEmpty(this.clientCertificateFilePath)
@@ -89,21 +93,8 @@ public class DelegateAgentManagerClientFactory
 
       SSLContext sslContext = sslContextBuilder.build();
 
-      return Http.getOkHttpClientWithProxyAuthSetup()
-          .hostnameVerifier(new NoopHostnameVerifier())
-          .connectionPool(Http.connectionPool)
-          .retryOnConnectionFailure(true)
-          .addInterceptor(new io.harness.managerclient.DelegateAuthInterceptor(this.tokenGenerator))
+      return this.getHttpClientBuilderWithoutSslConfiguration()
           .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
-          .addInterceptor(chain -> {
-            Builder request = chain.request().newBuilder().addHeader(
-                "User-Agent", "delegate/" + this.versionInfoManager.getVersionInfo().getVersion());
-            return chain.proceed(request.build());
-          })
-          .addInterceptor(chain -> FibonacciBackOff.executeForEver(() -> chain.proceed(chain.request())))
-          // During this call we not just query the task but we also obtain the secret on the manager side
-          // we need to give enough time for the call to finish.
-          .readTimeout(2, TimeUnit.MINUTES)
           .build();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -111,9 +102,7 @@ public class DelegateAgentManagerClientFactory
   }
 
   /**
-   * Let's keep this method for now, since we might want to give the options to customers to keep the unsafe way of
-   * ignoring all certificate issues
-   * @return
+   * Trusts all certificates - should only be used for local development.
    */
   private OkHttpClient getUnsafeOkHttpClient() {
     try {
@@ -131,24 +120,28 @@ public class DelegateAgentManagerClientFactory
 
       SSLContext sslContext = sslContextBuilder.build();
 
-      return Http.getOkHttpClientWithProxyAuthSetup()
-          .connectionPool(new ConnectionPool())
-          .retryOnConnectionFailure(true)
-          .addInterceptor(new io.harness.managerclient.DelegateAuthInterceptor(this.tokenGenerator))
+      return this.getHttpClientBuilderWithoutSslConfiguration()
           .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
-          .addInterceptor(chain -> {
-            Builder request = chain.request().newBuilder().addHeader(
-                "User-Agent", "delegate/" + this.versionInfoManager.getVersionInfo().getVersion());
-            return chain.proceed(request.build());
-          })
-          .addInterceptor(chain -> FibonacciBackOff.executeForEver(() -> chain.proceed(chain.request())))
-          .hostnameVerifier(new NoopHostnameVerifier())
-          // During this call we not just query the task but we also obtain the secret on the manager side
-          // we need to give enough time for the call to finish.
-          .readTimeout(2, TimeUnit.MINUTES)
           .build();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private OkHttpClient.Builder getHttpClientBuilderWithoutSslConfiguration() {
+    return Http.getOkHttpClientWithProxyAuthSetup()
+        .hostnameVerifier(new NoopHostnameVerifier())
+        .connectionPool(Http.connectionPool)
+        .retryOnConnectionFailure(true)
+        .addInterceptor(new io.harness.managerclient.DelegateAuthInterceptor(this.tokenGenerator))
+        .addInterceptor(chain -> {
+          Builder request = chain.request().newBuilder().addHeader(
+              "User-Agent", "delegate/" + this.versionInfoManager.getVersionInfo().getVersion());
+          return chain.proceed(request.build());
+        })
+        .addInterceptor(chain -> FibonacciBackOff.executeForEver(() -> chain.proceed(chain.request())))
+        // During this call we not just query the task but we also obtain the secret on the manager side
+        // we need to give enough time for the call to finish.
+        .readTimeout(2, TimeUnit.MINUTES);
   }
 }

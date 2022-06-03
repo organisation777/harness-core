@@ -10,7 +10,6 @@ package io.harness.delegate.app.modules;
 import static io.harness.configuration.DeployMode.DEPLOY_MODE;
 import static io.harness.configuration.DeployMode.isOnPrem;
 import static io.harness.delegate.service.DelegateAgentServiceImpl.getDelegateId;
-import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractAndPrepareAuthority;
 import static io.harness.grpc.utils.DelegateGrpcConfigExtractor.extractTarget;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -55,11 +54,12 @@ public class DelegateAgentModule extends AbstractModule {
 
     install(new DelegateManagerClientModule(configuration.getManagerUrl(), configuration.getVerificationServiceUrl(),
         configuration.getCvNextGenUrl(), configuration.getAccountId(), configuration.getDelegateToken(),
-        configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
+        configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath(),
+        configuration.isTrustAllCertificates()));
 
     install(new LogStreamingModule(configuration.getLogStreamingServiceBaseUrl(),
         configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
-    install(new DelegateGrpcClientModule(configuration));
+    install(new DelegateManagerGrpcClientModule(configuration));
 
     configureCcmEventPublishing();
     install(new PerpetualTaskWorkerModule());

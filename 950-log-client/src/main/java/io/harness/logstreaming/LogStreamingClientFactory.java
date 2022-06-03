@@ -98,7 +98,7 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
           .connectTimeout(5, TimeUnit.SECONDS)
           .readTimeout(10, TimeUnit.SECONDS)
           .retryOnConnectionFailure(true)
-          .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustManagers[0])
+          .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
           .build();
     } catch (Exception e) {
       throw new RuntimeException(e);

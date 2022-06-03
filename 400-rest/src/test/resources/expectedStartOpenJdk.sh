@@ -313,6 +313,12 @@ fi
 if ! `grep fileHandlesLogsRetentionInMinutes config-watcher.yml > /dev/null`; then
   echo "fileHandlesLogsRetentionInMinutes: 1440" >> config-watcher.yml
 fi
+if [ ! -z "$CLIENT_CERTIFICATE_PATH" ] && ! `grep clientCertificateFilePath config-watcher.yml > /dev/null` ; then
+  echo "clientCertificateFilePath: $CLIENT_CERTIFICATE_PATH" >> config-watcher.yml
+fi
+if [ ! -z "$CLIENT_CERTIFICATE_KEY_PATH" ] && ! `grep clientCertificateKeyFilePath config-watcher.yml > /dev/null` ; then
+  echo "clientCertificateKeyFilePath: $CLIENT_CERTIFICATE_KEY_PATH" >> config-watcher.yml
+fi
 
 rm -f -- *.bak
 
