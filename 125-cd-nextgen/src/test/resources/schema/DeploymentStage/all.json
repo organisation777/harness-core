@@ -5016,7 +5016,8 @@
             "ArtifactoryRegistry",
             "CustomArtifact",
             "Acr",
-            "Jenkins"
+            "Jenkins",
+            "AmazonS3"
           ]
         }
       },
@@ -6402,7 +6403,8 @@
             "ArtifactoryRegistry",
             "CustomArtifact",
             "Acr",
-            "Jenkins"
+            "Jenkins",
+            "AmazonS3"
           ]
         }
       },
