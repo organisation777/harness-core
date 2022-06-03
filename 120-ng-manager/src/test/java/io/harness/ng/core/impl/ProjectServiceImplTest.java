@@ -14,6 +14,7 @@ import static io.harness.ng.core.remote.ProjectMapper.toProject;
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.KARAN;
 import static io.harness.rule.OwnerRule.MEET;
+import static io.harness.rule.OwnerRule.VIKAS_M;
 import static io.harness.utils.PageTestUtils.getPage;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
@@ -26,6 +27,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -95,6 +97,8 @@ import org.springframework.data.mongodb.core.aggregation.MatchOperation;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.aggregation.SortOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @OwnedBy(PL)
@@ -109,7 +113,7 @@ public class ProjectServiceImplTest extends CategoryTest {
   @Mock private YamlGitConfigService yamlGitConfigService;
   @InjectMocks ProjectInstrumentationHelper instrumentationHelper;
   private ProjectServiceImpl projectService;
-  private NGFeatureFlagHelperService ngFeatureFlagHelperService;
+  @Mock private NGFeatureFlagHelperService ngFeatureFlagHelperService;
 
   @Before
   public void setup() {
@@ -367,5 +371,70 @@ public class ProjectServiceImplTest extends CategoryTest {
     List<ProjectDTO> projectsResponse = projectService.listProjectsForUser(user, "account");
     assertNotNull(projectsResponse);
     assertEquals(projectsResponse, projects.stream().map(ProjectMapper::writeDTO).collect(Collectors.toList()));
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void testDelete() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String projectIdentifier = randomAlphabetic(10);
+    Long version = 0L;
+    Project project = Project.builder()
+                          .name("name")
+                          .accountIdentifier(accountIdentifier)
+                          .orgIdentifier(orgIdentifier)
+                          .identifier(projectIdentifier)
+                          .build();
+    ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
+
+    when(projectRepository.delete(any(), any(), any(), any())).thenReturn(project);
+    when(ngFeatureFlagHelperService.isEnabled(any(), any())).thenReturn(false);
+    when(yamlGitConfigService.deleteAll(any(), any(), any())).thenReturn(true);
+    when(transactionTemplate.execute(any()))
+        .thenAnswer(invocationOnMock
+            -> invocationOnMock.getArgument(0, TransactionCallback.class)
+                   .doInTransaction(new SimpleTransactionStatus()));
+
+    projectService.delete(accountIdentifier, orgIdentifier, projectIdentifier, version);
+    verify(projectRepository, times(1)).delete(any(), any(), argumentCaptor.capture(), any());
+    assertEquals(projectIdentifier, argumentCaptor.getValue());
+    verify(transactionTemplate, times(1)).execute(any());
+    verify(outboxService, times(1)).save(any());
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void testHardDelete() {
+    String accountIdentifier = randomAlphabetic(10);
+    String orgIdentifier = randomAlphabetic(10);
+    String projectIdentifier = randomAlphabetic(10);
+    Long version = 0L;
+    Project project = Project.builder()
+                          .name("name")
+                          .accountIdentifier(accountIdentifier)
+                          .orgIdentifier(orgIdentifier)
+                          .identifier(projectIdentifier)
+                          .build();
+    ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
+
+    when(projectRepository.delete(any(), any(), any(), any())).thenReturn(project);
+    when(ngFeatureFlagHelperService.isEnabled(any(), any())).thenReturn(true);
+    when(yamlGitConfigService.deleteAll(any(), any(), any())).thenReturn(true);
+    when(transactionTemplate.execute(any()))
+        .thenAnswer(invocationOnMock
+            -> invocationOnMock.getArgument(0, TransactionCallback.class)
+                   .doInTransaction(new SimpleTransactionStatus()));
+    when(projectRepository.hardDelete(any(), any(), any(), any())).thenReturn(true);
+
+    projectService.delete(accountIdentifier, orgIdentifier, projectIdentifier, version);
+    verify(projectRepository, times(1)).hardDelete(any(), any(), argumentCaptor.capture(), any());
+    assertEquals(projectIdentifier, argumentCaptor.getValue());
+    verify(projectRepository, times(1)).delete(any(), any(), argumentCaptor.capture(), any());
+    assertEquals(projectIdentifier, argumentCaptor.getValue());
+    verify(transactionTemplate, times(1)).execute(any());
+    verify(outboxService, times(1)).save(any());
   }
 }
