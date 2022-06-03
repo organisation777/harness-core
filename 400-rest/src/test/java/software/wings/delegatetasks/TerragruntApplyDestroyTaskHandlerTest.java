@@ -25,6 +25,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.SecretManagerConfig;
 import io.harness.category.element.UnitTests;
 import io.harness.cli.CliResponse;
 import io.harness.logging.LogCallback;
@@ -36,6 +37,7 @@ import io.harness.security.encryption.EncryptionConfig;
 import io.harness.terragrunt.TerragruntCliCommandRequestParams;
 import io.harness.terragrunt.TerragruntClient;
 
+import org.mockito.Mockito;
 import software.wings.beans.KmsConfig;
 import software.wings.beans.delegation.TerragruntProvisionParameters;
 
@@ -184,11 +186,15 @@ public class TerragruntApplyDestroyTaskHandlerTest extends CategoryTest {
   public void testExecuteDestroyTaskInheritTfDestroyPlan() throws InterruptedException, TimeoutException, IOException {
     TerragruntProvisionParameters provisionParameters = TerragruntProvisionParameters.builder()
                                                             .runPlanOnly(false)
+                                                            .secretManagerConfig(KmsConfig.builder().build())
                                                             .encryptedTfPlan(EncryptedRecordData.builder().build())
                                                             .build();
     doReturn(CliResponse.builder().commandExecutionStatus(SUCCESS).build())
         .when(terragruntClient)
         .applyDestroyTfPlan(any(TerragruntCliCommandRequestParams.class), any(LogCallback.class));
+    doReturn("encryptedPlanContent".getBytes())
+            .when(encryptDecryptHelper)
+            .getDecryptedContent(any(SecretManagerConfig.class), any(EncryptedRecordData.class));
     applyDestroyTaskHandler.executeDestroyTask(
         provisionParameters, cliCommandRequestParams, delegateLogService, TF_PLAN_NAME, TF_CONFIG_FILE_DIRECTORY);
 
