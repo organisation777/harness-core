@@ -288,38 +288,30 @@ public class PlanExecutionSummaryCdServiceAndInfraChangeDataHandler implements C
             if (serviceInfoObject.get("artifacts") != null) {
               DBObject artifacts = (DBObject) serviceInfoObject.get("artifacts");
               // Add artifacts here
+              String tag = "";
+              String imagePath = "";
               if (artifacts.get("primary") != null) {
                 DBObject primary = (DBObject) artifacts.get("primary");
-                if (primary.get("tag") != null) {
-                  String tag = primary.get("tag").toString();
-                  if (columnValueMapping.containsKey("tag")) {
-                    columnValueMapping.get("tag").add(tag);
-                  } else {
-                    List<String> tagList = new ArrayList<>();
-                    tagList.add(tag);
-                    columnValueMapping.put("tag", tagList);
-                  }
-                }
-                if (primary.get("version") != null) {
-                  String tag = primary.get("version").toString();
-                  if (columnValueMapping.containsKey("tag")) {
-                    columnValueMapping.get("tag").add(tag);
-                  } else {
-                    List<String> tagList = new ArrayList<>();
-                    tagList.add(tag);
-                    columnValueMapping.put("tag", tagList);
-                  }
+                if (primary.get("tag") != null || primary.get("version") != null) {
+                  tag = primary.get("tag") == null ? primary.get("version").toString() : primary.get("tag").toString();
                 }
                 if (primary.get("imagePath") != null) {
-                  String imagePath = primary.get("imagePath").toString();
-                  if (columnValueMapping.containsKey("artifact_image")) {
-                    columnValueMapping.get("artifact_image").add(imagePath);
-                  } else {
-                    List<String> tagList = new ArrayList<>();
-                    tagList.add(imagePath);
-                    columnValueMapping.put("artifact_image", tagList);
-                  }
+                  imagePath = primary.get("imagePath").toString();
                 }
+              }
+              if (columnValueMapping.containsKey("tag")) {
+                columnValueMapping.get("tag").add(tag);
+              } else {
+                List<String> tagList = new ArrayList<>();
+                tagList.add(tag);
+                columnValueMapping.put("tag", tagList);
+              }
+              if (columnValueMapping.containsKey("artifact_image")) {
+                columnValueMapping.get("artifact_image").add(imagePath);
+              } else {
+                List<String> tagList = new ArrayList<>();
+                tagList.add(imagePath);
+                columnValueMapping.put("artifact_image", tagList);
               }
             }
           }

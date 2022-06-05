@@ -225,8 +225,11 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
           .build();
     }
 
-    String baseDir = terraformBaseHelper.resolveBaseDir(
-        parameters.getAccountId(), String.valueOf(parameters.getEntityId().hashCode()));
+    String baseDir = parameters.isUseActivityIdBasedTfBaseDir()
+        ? terraformBaseHelper.activityIdBasedBaseDir(
+            parameters.getAccountId(), String.valueOf(parameters.getEntityId().hashCode()), parameters.getActivityId())
+        : terraformBaseHelper.resolveBaseDir(
+            parameters.getAccountId(), String.valueOf(parameters.getEntityId().hashCode()));
     String tfVarDirectory = Paths.get(baseDir, TF_VAR_FILES_DIR).toString();
     String workingDir = Paths.get(baseDir, TF_SCRIPT_DIR).toString();
 
@@ -321,6 +324,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
       uiLogs = format("%s %s", tfVarFiles, uiLogs);
 
       int code;
+      TerraformVersion version = terraformClient.version(parameters.getTimeoutInMillis(), scriptDirectory);
       if (parameters.isUseTfClient()) {
         try {
           log.info(format("Using TFClient for Running Terraform Commands for account %s", parameters.getAccountId()));
@@ -434,8 +438,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
                 }
               } else {
                 if (parameters.getEncryptedTfPlan() == null) {
-                  String autoApproveArg = TerraformHelperUtils.getAutoApproveArgument(
-                      terraformClient.version(parameters.getTimeoutInMillis(), scriptDirectory));
+                  String autoApproveArg = TerraformHelperUtils.getAutoApproveArgument(version);
                   command = format("terraform destroy %s %s %s", autoApproveArg, targetArgs, varParams);
                   commandToLog = format("terraform destroy %s %s %s", autoApproveArg, targetArgs, uiLogs);
                   saveExecutionLog(commandToLog, CommandExecutionStatus.RUNNING, INFO, logCallback);
@@ -462,7 +465,8 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
       }
 
       String tfPlanJsonFileId = null;
-      if (code == 0 && parameters.isSaveTerraformJson() && parameters.isUseOptimizedTfPlanJson()) {
+      if (code == 0 && parameters.isSaveTerraformJson() && parameters.isUseOptimizedTfPlanJson()
+          && version.minVersion(0, 12)) {
         String planName = getPlanName(parameters);
         saveExecutionLog(format("Uploading terraform %s json representation", planName), CommandExecutionStatus.RUNNING,
             INFO, logCallback);

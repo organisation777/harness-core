@@ -17,4 +17,6 @@ public interface InfrastructureKind {
   String SERVERLESS_AWS_LAMBDA = "ServerlessAwsLambda";
   String PDC = "Pdc";
   String KUBERNETES_AZURE = "KubernetesAzure";
+  String SSH_WINRM_AZURE = "SshWinRmAzure";
+  String AZURE_WEB_APP = "AzureWebApp";
 }

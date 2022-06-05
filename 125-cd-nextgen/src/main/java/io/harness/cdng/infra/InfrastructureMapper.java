@@ -13,18 +13,22 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.infra.beans.AzureWebAppInfrastructureOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sAzureInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
 import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
 import io.harness.cdng.infra.beans.ServerlessAwsLambdaInfrastructureOutcome;
+import io.harness.cdng.infra.beans.SshWinRmAzureInfrastructureOutcome;
+import io.harness.cdng.infra.yaml.AzureWebAppInfrastructure;
 import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sAzureInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
 import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.infra.yaml.ServerlessAwsLambdaInfrastructure;
+import io.harness.cdng.infra.yaml.SshWinRmAzureInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.exception.InvalidArgumentsException;
@@ -109,6 +113,38 @@ public class InfrastructureMapper {
                 InfrastructureKey.generate(service, environmentOutcome, pdcInfrastructure.getInfrastructureKeyValues()))
             .build();
 
+      case InfrastructureKind.SSH_WINRM_AZURE:
+        SshWinRmAzureInfrastructure sshWinRmAzureInfrastructure = (SshWinRmAzureInfrastructure) infrastructure;
+        validateSshWinRmAzureInfrastructure(sshWinRmAzureInfrastructure);
+        return SshWinRmAzureInfrastructureOutcome.builder()
+            .connectorRef(ParameterFieldHelper.getParameterFieldValue(sshWinRmAzureInfrastructure.getConnectorRef()))
+            .subscriptionId(
+                ParameterFieldHelper.getParameterFieldValue(sshWinRmAzureInfrastructure.getSubscriptionId()))
+            .resourceGroup(ParameterFieldHelper.getParameterFieldValue(sshWinRmAzureInfrastructure.getResourceGroup()))
+            .credentialsRef(
+                ParameterFieldHelper.getParameterFieldValue(sshWinRmAzureInfrastructure.getCredentialsRef()))
+            .tags(ParameterFieldHelper.getParameterFieldValue(sshWinRmAzureInfrastructure.getTags()))
+            .usePublicDns(ParameterFieldHelper.getParameterFieldValue(sshWinRmAzureInfrastructure.getUsePublicDns()))
+            .environment(environmentOutcome)
+            .infrastructureKey(InfrastructureKey.generate(
+                service, environmentOutcome, sshWinRmAzureInfrastructure.getInfrastructureKeyValues()))
+            .build();
+
+      case InfrastructureKind.AZURE_WEB_APP:
+        AzureWebAppInfrastructure azureWebAppInfrastructure = (AzureWebAppInfrastructure) infrastructure;
+        validateAzureWebAppInfrastructure(azureWebAppInfrastructure);
+        return AzureWebAppInfrastructureOutcome.builder()
+            .connectorRef(azureWebAppInfrastructure.getConnectorRef().getValue())
+            .appService(azureWebAppInfrastructure.getAppService().getValue())
+            .deploymentSlot(azureWebAppInfrastructure.getDeploymentSlot().getValue())
+            .targetSlot(azureWebAppInfrastructure.getTargetSlot().getValue())
+            .environment(environmentOutcome)
+            .infrastructureKey(InfrastructureKey.generate(
+                service, environmentOutcome, azureWebAppInfrastructure.getInfrastructureKeyValues()))
+            .subscription(azureWebAppInfrastructure.getSubscriptionId().getValue())
+            .resourceGroup(azureWebAppInfrastructure.getResourceGroup().getValue())
+            .build();
+
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));
     }
@@ -167,9 +203,41 @@ public class InfrastructureMapper {
     }
   }
 
+  private void validateAzureWebAppInfrastructure(AzureWebAppInfrastructure infrastructure) {
+    if (ParameterField.isNull(infrastructure.getConnectorRef())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getConnectorRef()))) {
+      throw new InvalidArgumentsException(Pair.of("connectorRef", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getTargetSlot())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getTargetSlot()))) {
+      throw new InvalidArgumentsException(Pair.of("targetSlot", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getDeploymentSlot())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getDeploymentSlot()))) {
+      throw new InvalidArgumentsException(Pair.of("deploymentSlot", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getAppService())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getAppService()))) {
+      throw new InvalidArgumentsException(Pair.of("appService", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getSubscriptionId())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getSubscriptionId()))) {
+      throw new InvalidArgumentsException(Pair.of("subscription", "cannot be empty"));
+    }
+
+    if (ParameterField.isNull(infrastructure.getResourceGroup())
+        || isEmpty(ParameterFieldHelper.getParameterFieldValue(infrastructure.getResourceGroup()))) {
+      throw new InvalidArgumentsException(Pair.of("resourceGroup", "cannot be empty"));
+    }
+  }
+
   private void validatePdcInfrastructure(PdcInfrastructure infrastructure) {
     if (!hasValueOrExpression(infrastructure.getCredentialsRef())) {
-      throw new InvalidArgumentsException(Pair.of("sshKeyRef", "cannot be empty"));
+      throw new InvalidArgumentsException(Pair.of("credentialsRef", "cannot be empty"));
     }
 
     if (!notEmptyOrExpression(infrastructure.getHosts()) && !hasValueOrExpression(infrastructure.getConnectorRef())) {
@@ -186,6 +254,21 @@ public class InfrastructureMapper {
     }
     if (!hasValueOrExpression(infrastructure.getStage())) {
       throw new InvalidArgumentsException(Pair.of("stage", "cannot be empty"));
+    }
+  }
+
+  private static void validateSshWinRmAzureInfrastructure(SshWinRmAzureInfrastructure infrastructure) {
+    if (!hasValueOrExpression(infrastructure.getConnectorRef())) {
+      throw new InvalidArgumentsException(Pair.of("connectorRef", "cannot be empty"));
+    }
+    if (!hasValueOrExpression(infrastructure.getSubscriptionId())) {
+      throw new InvalidArgumentsException(Pair.of("subscriptionId", "cannot be empty"));
+    }
+    if (!hasValueOrExpression(infrastructure.getResourceGroup())) {
+      throw new InvalidArgumentsException(Pair.of("resourceGroup", "cannot be empty"));
+    }
+    if (!hasValueOrExpression(infrastructure.getCredentialsRef())) {
+      throw new InvalidArgumentsException(Pair.of("credentialsRef", "cannot be empty"));
     }
   }
 

@@ -132,7 +132,8 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
       // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
       moduleCriteria.orOperator(Criteria.where(PlanExecutionSummaryKeys.modules).is(Collections.emptyList()),
           // This is here just for backward compatibility should be removed
-          Criteria.where(PlanExecutionSummaryKeys.modules).in(ModuleType.PMS.name().toLowerCase()),
+          Criteria.where(PlanExecutionSummaryKeys.modules)
+              .is(Collections.singletonList(ModuleType.PMS.name().toLowerCase())),
           Criteria.where(PlanExecutionSummaryKeys.modules).in(moduleName));
     }
 
@@ -311,13 +312,14 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
   }
 
   @Override
-  public OrchestrationGraphDTO getOrchestrationGraph(String stageNodeId, String planExecutionId) {
+  public OrchestrationGraphDTO getOrchestrationGraph(
+      String stageNodeId, String planExecutionId, String stageNodeExecutionId) {
     if (EmptyPredicate.isEmpty(stageNodeId)) {
       return graphGenerationService.generateOrchestrationGraphV2(planExecutionId);
     }
-    return graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeId(stageNodeId, planExecutionId);
+    return graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeIdAndExecutionId(
+        stageNodeId, planExecutionId, stageNodeExecutionId);
   }
-
   @Override
   public InterruptDTO registerInterrupt(
       PlanExecutionInterruptType executionInterruptType, String planExecutionId, String nodeExecutionId) {

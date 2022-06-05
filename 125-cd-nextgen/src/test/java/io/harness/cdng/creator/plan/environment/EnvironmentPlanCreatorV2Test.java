@@ -16,14 +16,13 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.CDNGTestBase;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
+import io.harness.cdng.creator.plan.environment.steps.EnvironmentStepV2;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
-import io.harness.cdng.infra.steps.EnvironmentStep;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
-import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
@@ -33,6 +32,7 @@ import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -79,18 +79,16 @@ public class EnvironmentPlanCreatorV2Test extends CDNGTestBase {
     YamlField environmentYaml = YamlUtils.readTree(yaml);
 
     HashMap<String, ByteString> metadataDependency = new HashMap<>();
-    metadataDependency.put(YamlTypes.SERVICE_SPEC, ByteString.copyFrom(kryoSerializer.asDeflatedBytes("service_spec")));
+    metadataDependency.put(YamlTypes.NEXT_UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes("service_spec")));
+    metadataDependency.put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes("uuid")));
     PlanCreationContext ctx = PlanCreationContext.builder()
                                   .currentField(environmentYaml)
                                   .dependency(Dependency.newBuilder().putAllMetadata(metadataDependency).build())
                                   .build();
 
-    PlanCreationResponse planForField =
-        environmentPlanCreator.createPlanForField(ctx, EnvironmentPlanCreatorConfig.builder().build());
-    assertThat(planForField).isNotNull();
-    assertThat(planForField.getPlanNode()).isNotNull();
-    PlanNode planNode = planForField.getPlanNode();
-    assertThat(planNode.getStepType()).isEqualTo(EnvironmentStep.STEP_TYPE);
+    PlanNode planNode = environmentPlanCreator.createPlanForParentNode(
+        ctx, EnvironmentPlanCreatorConfig.builder().build(), Collections.emptyList());
+    assertThat(planNode.getStepType()).isEqualTo(EnvironmentStepV2.STEP_TYPE);
     assertThat(planNode.getName()).isEqualTo(PlanCreatorConstants.ENVIRONMENT_NODE_NAME);
     assertThat(planNode.getIdentifier()).isEqualTo(YamlTypes.ENVIRONMENT_YAML);
   }
