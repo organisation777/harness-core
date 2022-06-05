@@ -1676,11 +1676,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
               .toBuilder()
               .lastHeartBeat(clock.millis())
               .pollingModeEnabled(delegateConfiguration.isPollForTasks())
+              .heartbeatPacket(true)
               .currentlyExecutingDelegateTasks(currentlyExecutingTasks.values()
                                                    .stream()
                                                    .map(DelegateTaskPackage::getDelegateTaskId)
                                                    .collect(toList()))
               .location(Paths.get("").toAbsolutePath().toString())
+
               .build();
 
       try {
@@ -1733,6 +1735,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           builder.build()
               .toBuilder()
               .keepAlivePacket(false)
+              .heartbeatPacket(true)
               .pollingModeEnabled(true)
               .currentlyExecutingDelegateTasks(currentlyExecutingTasks.values()
                                                    .stream()

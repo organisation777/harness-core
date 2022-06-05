@@ -2630,7 +2630,8 @@ public class DelegateServiceImpl implements DelegateService {
     }
 
     // Not needed to be done when polling is enabled for delegate
-    if (isDelegateWithoutPollingEnabled(delegate)) {
+    // broadcast heartbeat back to client only after receiveing heartbeat message from delegate agent
+    if (isDelegateWithoutPollingEnabled(delegate) && delegate.isHeartbeatPacket()) {
       // Broadcast Message containing, DelegateId and SeqNum (if applicable)
       StringBuilder message = new StringBuilder(128).append("[X]").append(delegate.getUuid());
       updateBroadcastMessageIfEcsDelegate(message, delegate, registeredDelegate);
