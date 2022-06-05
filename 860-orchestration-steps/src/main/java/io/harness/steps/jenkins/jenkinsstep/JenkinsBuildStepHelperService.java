@@ -11,7 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest.JenkinsArtifactDelegateRequestBuilder;
-import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
+import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -21,5 +21,5 @@ import io.harness.supplier.ThrowingSupplier;
 public interface JenkinsBuildStepHelperService {
   TaskRequest prepareTaskRequest(JenkinsArtifactDelegateRequestBuilder paramsBuilder, Ambiance ambiance,
       String connectorRef, String timeStr, String taskName);
-  StepResponse prepareStepResponse(ThrowingSupplier<JenkinsBuildTaskNGResponse> responseSupplier) throws Exception;
+  StepResponse prepareStepResponse(ThrowingSupplier<ArtifactTaskResponse> responseSupplier) throws Exception;
 }

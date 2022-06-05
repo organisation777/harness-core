@@ -17,6 +17,7 @@ import static software.wings.helpers.ext.jenkins.BuildDetails.Builder.aBuildDeta
 import static software.wings.helpers.ext.jenkins.JenkinsJobPathBuilder.constructParentJobPath;
 import static software.wings.helpers.ext.jenkins.JenkinsJobPathBuilder.getJenkinsJobPath;
 import static software.wings.helpers.ext.jenkins.JenkinsJobPathBuilder.getJobPathFromJenkinsJobUrl;
+import static software.wings.helpers.ext.jenkins.model.ParamPropertyType.BooleanParameterDefinition;
 
 import static java.lang.String.format;
 import static java.time.Duration.ofMillis;
@@ -44,6 +45,9 @@ import software.wings.helpers.ext.jenkins.CustomJenkinsHttpClient;
 import software.wings.helpers.ext.jenkins.JobDetails;
 import software.wings.helpers.ext.jenkins.SvnBuildDetails;
 import software.wings.helpers.ext.jenkins.SvnRevision;
+import software.wings.helpers.ext.jenkins.model.JobProperty;
+import software.wings.helpers.ext.jenkins.model.JobWithExtendedDetails;
+import software.wings.helpers.ext.jenkins.model.ParametersDefinitionProperty;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -68,6 +72,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Queue;
@@ -292,7 +297,7 @@ public class JenkinsRegistryUtils {
     }
   }
 
-  private List<JobDetails> getJobDetails(JenkinsInternalConfig jenkinsInternalConfig, String parentJob) {
+  public List<JobDetails> getJobDetails(JenkinsInternalConfig jenkinsInternalConfig, String parentJob) {
     List<JobDetails> result = new ArrayList<>(); // TODO:: extend jobDetails to keep track of prefix.
     try {
       JenkinsCustomServer jenkinsServer = JenkinsClient.getJenkinsServer(jenkinsInternalConfig);
@@ -329,6 +334,54 @@ public class JenkinsRegistryUtils {
       log.error("Error in fetching job lists ", ex);
       return result;
     }
+  }
+
+  public JobDetails getJobWithParamters(String jobName, JenkinsInternalConfig jenkinsInternalConfig) {
+    try {
+      log.info("Retrieving Job with details for Job: {}", jobName);
+      JobWithDetails jobWithDetails = getJobWithDetails(jenkinsInternalConfig, jobName);
+      List<JobDetails.JobParameter> parameters = new ArrayList<>();
+      if (jobWithDetails != null) {
+        JobWithExtendedDetails jobWithExtendedDetails = (JobWithExtendedDetails) jobWithDetails;
+        List<JobProperty> properties = jobWithExtendedDetails.getProperties();
+        if (properties != null) {
+          properties.stream()
+              .map(JobProperty::getParameterDefinitions)
+              .filter(Objects::nonNull)
+              .forEach((List<ParametersDefinitionProperty> pds) -> {
+                log.info("Job Properties definitions {}", pds.toArray());
+                pds.forEach((ParametersDefinitionProperty pdProperty) -> parameters.add(getJobParameter(pdProperty)));
+              });
+        }
+        log.info("Retrieving Job with details for Job: {} success", jobName);
+        return new JobDetails(jobWithDetails.getName(), jobWithDetails.getUrl(), parameters);
+      }
+      return null;
+    } catch (WingsException e) {
+      throw e;
+    } catch (Exception ex) {
+      throw new ArtifactServerException(
+          "Error in fetching builds from jenkins server. Reason:" + ExceptionUtils.getMessage(ex), ex, USER);
+    }
+  }
+
+  private JobDetails.JobParameter getJobParameter(ParametersDefinitionProperty pdProperty) {
+    JobDetails.JobParameter jobParameter = new JobDetails.JobParameter();
+    jobParameter.setName(pdProperty.getName());
+    jobParameter.setDescription(pdProperty.getDescription());
+    if (pdProperty.getDefaultParameterValue() != null) {
+      jobParameter.setDefaultValue(pdProperty.getDefaultParameterValue().getValue());
+    }
+    if (pdProperty.getChoices() != null) {
+      jobParameter.setOptions(pdProperty.getChoices());
+    }
+    if (BooleanParameterDefinition.name().equals(pdProperty.getType())) {
+      List<String> booleanValues = new ArrayList<>();
+      booleanValues.add("true");
+      booleanValues.add("false");
+      jobParameter.setOptions(booleanValues);
+    }
+    return jobParameter;
   }
 
   public Job getJob(String jobname, JenkinsInternalConfig jenkinsInternalConfig) {

@@ -194,7 +194,7 @@ public class SettingResource {
    * @return the rest response
    */
   @POST
-  @Timedxecution
+  @Timed
   @ExceptionMetered
   public RestResponse<SettingAttribute> save(@DefaultValue(GLOBAL_APP_ID) @QueryParam("appId") String appId,
       @QueryParam("accountId") String accountId, SettingAttribute variable) {

@@ -27,6 +27,7 @@ import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
@@ -41,6 +42,7 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.QueueReference;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -68,6 +70,16 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
         jenkinsRegistryService.getJobs(JenkinsRequestResponseMapper.toJenkinsInternalConfig(artifactDelegateRequest),
             artifactDelegateRequest.getParentJobName());
     return ArtifactTaskExecutionResponse.builder().jobDetails(jobDetails).build();
+  }
+
+  @Override
+  public ArtifactTaskExecutionResponse getJobWithParamters(JenkinsArtifactDelegateRequest artifactDelegateRequest) {
+    JobDetails jobDetails = jenkinsRegistryService.getJobWithParamters(
+        JenkinsRequestResponseMapper.toJenkinsInternalConfig(artifactDelegateRequest),
+        artifactDelegateRequest.getJobName());
+    List<JobDetails> details = new ArrayList<>();
+    details.add(jobDetails);
+    return ArtifactTaskExecutionResponse.builder().jobDetails(details).build();
   }
 
   @Override
@@ -119,6 +131,10 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
         }
         log.info("Triggered Job successfully with queued Build URL {} ", queueItemUrl);
         jenkinsBuildTaskNGResponse.setQueuedBuildUrl(queueItemUrl);
+        saveLogs(null,
+            "Triggered Job successfully with queued Build URL : " + queueItemUrl + " and remaining Time (sec): "
+                + (attributesRequest.getTimeout() - (System.currentTimeMillis() - attributesRequest.getStartTs()))
+                    / 1000);
       } else {
         log.error("The Job was not triggered successfully with queued Build URL {} ", queueItemUrl);
         executionStatus = ExecutionStatus.FAILED;
@@ -170,5 +186,11 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
     }
     String[] queueItemUrlParts = queueItemUrl.split("/queue/");
     return jenkinsUrl.concat("/queue/").concat(queueItemUrlParts[1]);
+  }
+
+  private void saveLogs(LogCallback executionLogCallback, String message) {
+    if (executionLogCallback != null) {
+      executionLogCallback.saveExecutionLog(message);
+    }
   }
 }

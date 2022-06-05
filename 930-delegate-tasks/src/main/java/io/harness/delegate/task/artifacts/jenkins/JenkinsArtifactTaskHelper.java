@@ -13,6 +13,7 @@ import io.harness.context.MdcGlobalContextData;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
+import io.harness.delegate.task.jira.JiraTaskNGParameters;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionMetadataKeys;
 import io.harness.exception.runtime.JenkinsServerRuntimeException;
@@ -62,6 +63,12 @@ public class JenkinsArtifactTaskHelper {
           artifactTaskResponse = getSuccessTaskResponse(jenkinsArtifactTaskHandler.getBuilds(attributes));
           saveLogs(executionLogCallback, "Get the Jenkins Builds for Job " + registryUrl);
           break;
+        case GET_JOB_PARAMETERS:
+          saveLogs(executionLogCallback, "Get the Jenkins Job");
+          artifactTaskResponse = getSuccessTaskResponse(jenkinsArtifactTaskHandler.getJobWithParamters(attributes));
+          saveLogs(executionLogCallback, "Get the Jenkins Job " + registryUrl);
+          break;
+
         case JENKINS_BUILD:
           saveLogs(executionLogCallback, "Trigger the Jenkins Builds");
           artifactTaskResponse = getSuccessTaskResponse(jenkinsArtifactTaskHandler.triggerBuild(attributes));

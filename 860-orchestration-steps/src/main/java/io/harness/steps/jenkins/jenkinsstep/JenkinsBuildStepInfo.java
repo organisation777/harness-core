@@ -79,6 +79,9 @@ public class JenkinsBuildStepInfo implements PMSStepInfo, WithConnectorRef, With
     return JenkinsBuildSpecParameters.builder()
         .connectorRef(connectorRef)
         .fields(JenkinsBuildStepUtils.processJenkinsFieldsList(jobParameter))
+        .jobName(jobName)
+        .unstableStatusAsSuccess(unstableStatusAsSuccess)
+        .captureEnvironmentVariable(captureEnvironmentVariable)
         .delegateSelectors(delegateSelectors)
         .build();
   }

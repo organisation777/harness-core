@@ -9,6 +9,7 @@ package io.harness.delegate.task.artifacts;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.exception.InvalidRequestException;
 
@@ -41,6 +42,10 @@ public abstract class DelegateArtifactTaskHandler<T extends ArtifactSourceDelega
   }
 
   public ArtifactTaskExecutionResponse getJob(T attributesRequest) {
+    throw new InvalidRequestException("Operation not supported");
+  }
+
+  public ArtifactTaskExecutionResponse getJobWithParamters(T attributesRequest) {
     throw new InvalidRequestException("Operation not supported");
   }
 

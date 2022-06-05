@@ -11,7 +11,7 @@ import io.harness.EntityType;
 import io.harness.beans.IdentifierRef;
 import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest.JenkinsArtifactDelegateRequestBuilder;
-import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
+import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
 import io.harness.ng.core.EntityDetail;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollbackAndRbac;
@@ -32,7 +32,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<JenkinsBuildTaskNGResponse> {
+public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<ArtifactTaskResponse> {
   public static final StepType STEP_TYPE =
       StepType.newBuilder().setType(StepSpecTypeConstants.JENKINS_BUILD).setStepCategory(StepCategory.STEP).build();
 
@@ -55,11 +55,18 @@ public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<JenkinsB
   }
 
   @Override
+  public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
+      ThrowingSupplier<ArtifactTaskResponse> responseDataSupplier) throws Exception {
+    return jenkinsBuildStepHelperService.prepareStepResponse(responseDataSupplier);
+  }
+
+  @Override
   public TaskRequest obtainTaskAfterRbac(
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
     JenkinsBuildSpecParameters specParameters = (JenkinsBuildSpecParameters) stepParameters.getSpec();
     JenkinsArtifactDelegateRequestBuilder paramBuilder =
         JenkinsArtifactDelegateRequest.builder()
+            .connectorRef(specParameters.getConnectorRef().getValue())
             .jobName(specParameters.getJobName().getValue())
             .unstableStatusAsSuccess(specParameters.isUnstableStatusAsSuccess())
             .delegateSelectors(
@@ -68,13 +75,7 @@ public class JenkinsBuildStep extends TaskExecutableWithRollbackAndRbac<JenkinsB
 
     return jenkinsBuildStepHelperService.prepareTaskRequest(paramBuilder, ambiance,
         specParameters.getConnectorRef().getValue(), stepParameters.getTimeout().getValue(),
-        "Jenkins Task: Create Issue");
-  }
-
-  @Override
-  public StepResponse handleTaskResultWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
-      ThrowingSupplier<JenkinsBuildTaskNGResponse> responseSupplier) throws Exception {
-    return jenkinsBuildStepHelperService.prepareStepResponse(responseSupplier);
+        "Jenkins Task: Create Jenkins Build Task");
   }
 
   @Override
