@@ -9,6 +9,7 @@ package io.harness.delegate.authenticator;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
 import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.DEFAULT_ERROR_CODE;
 import static io.harness.eraro.ErrorCode.EXPIRED_TOKEN;
 import static io.harness.eraro.ErrorCode.INVALID_TOKEN;
@@ -102,11 +103,9 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
       boolean shouldSetTokenNameInGlobalContext) {
     final String tokenHash = DigestUtils.md5Hex(tokenString);
     // first validate it from DelegateJWTCache
-    if (validateDelegateJWTFromCache(accountId, tokenHash)) {
-      log.info("Vishal: validated jwt from cache. JWT {}", tokenString);
+    if (isNotEmpty(delegateTokenName) && validateDelegateJWTFromCache(accountId, tokenHash)) {
       return;
     }
-    log.info("Vishal: failed to validate jwt from cache. JWT {}", tokenString);
 
     EncryptedJWT encryptedJWT;
     try {

@@ -52,8 +52,8 @@ public class DelegateMetricsServiceImpl implements DelegateMetricsService {
   public static final String PERPETUAL_TASK_UNASSIGNED = "perpetual_task_unassigned";
   public static final String TASK_TYPE_SUFFIX = "_by_type";
 
-  public static final String DELEGATE_JWT_CACHE_HIT = "delegate_jwt_cache_hit";
-  public static final String DELEGATE_JWT_CACHE_MISS = "delegate_jwt_cache_miss";
+  public static final String DELEGATE_JWT_CACHE_HIT = "delegate_auth_cache_hit";
+  public static final String DELEGATE_JWT_CACHE_MISS = "delegate_auth_cache_miss";
 
   @Inject private MetricService metricService;
   @Inject private DelegateTaskMetricContextBuilder metricContextBuilder;
