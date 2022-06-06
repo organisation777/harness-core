@@ -23,6 +23,7 @@ import io.harness.mongo.iterator.provider.SpringPersistenceRequiredProvider;
 import io.harness.steps.approval.step.beans.ApprovalStatus;
 import io.harness.steps.approval.step.beans.ApprovalType;
 import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
+import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance.CustomApprovalInstanceKeys;
 import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
 
@@ -71,7 +72,7 @@ public class CustomApprovalInstanceHandler implements MongoPersistenceIterator.H
         MongoPersistenceIterator.<ApprovalInstance, SpringFilterExpander>builder()
             .mode(ProcessMode.PUMP)
             .clazz(ApprovalInstance.class)
-            .fieldName(CustomApprovalInstance.CustomApprovalInstanceKeys.nextIterations)
+            .fieldName(CustomApprovalInstanceKeys.nextIterations)
             .targetInterval(ofSeconds(iteratorConfig.getTargetIntervalInSeconds()))
             .acceptableNoAlertDelay(ofSeconds(iteratorConfig.getTargetIntervalInSeconds() * 2))
             .handler(this)

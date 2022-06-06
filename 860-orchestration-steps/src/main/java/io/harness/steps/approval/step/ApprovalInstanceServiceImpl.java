@@ -8,6 +8,7 @@
 package io.harness.steps.approval.step;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.steps.approval.step.custom.entities.CustomApprovalInstance.CustomApprovalInstanceKeys;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
@@ -22,7 +23,6 @@ import io.harness.servicenow.TicketNG;
 import io.harness.steps.approval.step.beans.ApprovalStatus;
 import io.harness.steps.approval.step.beans.ApprovalType;
 import io.harness.steps.approval.step.custom.beans.CustomApprovalResponseData;
-import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
 import io.harness.steps.approval.step.harness.HarnessApprovalResponseData;
@@ -106,7 +106,7 @@ public class ApprovalInstanceServiceImpl implements ApprovalInstanceService {
   @Override
   public void resetNextIterations(@NotNull String approvalInstanceId, List<Long> nextIterations) {
     approvalInstanceRepository.updateFirst(new Query(Criteria.where(Mapper.ID_KEY).is(approvalInstanceId)),
-        new Update().set(CustomApprovalInstance.CustomApprovalInstanceKeys.nextIterations, nextIterations));
+        new Update().set(CustomApprovalInstanceKeys.nextIterations, nextIterations));
   }
 
   @Override

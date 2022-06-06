@@ -16,11 +16,11 @@ import io.harness.pms.sdk.core.data.Outcome;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.Map;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(CDC)
-@Value
+@Data
 @Builder
 @JsonTypeName("customApprovalOutcome")
 @TypeAlias("customApprovalOutcome")
