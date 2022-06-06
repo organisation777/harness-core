@@ -7,4 +7,22 @@
 
 package io.harness.cdng.artifact.resources.amazons3.service;
 
-public class AmazonS3ResourceServiceImpl implements AmazonS3ResourceService {}
+import io.harness.security.encryption.EncryptedDataDetail;
+
+import software.wings.beans.AwsConfig;
+
+import java.util.List;
+import java.util.Map;
+
+public class AmazonS3ResourceServiceImpl implements AmazonS3ResourceService {
+  @Override
+  public Map<String, String> getBuckets(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
+    return null;
+  }
+
+  @Override
+  public List<String> getArtifactPaths(
+      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName) {
+    return null;
+  }
+}
