@@ -46,6 +46,7 @@ public class DelegateParams {
   boolean ng;
   boolean sampleDelegate;
   boolean keepAlivePacket;
+  boolean heartbeatPacket;
   boolean pollingModeEnabled;
   boolean proxy;
   boolean ceEnabled;

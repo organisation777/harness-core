@@ -90,6 +90,7 @@ public class Delegate implements PersistentEntity, UuidAware, CreatedAtAware, Ac
   private String delegateType;
   private transient String delegateRandomToken;
   private transient boolean keepAlivePacket;
+  private boolean heartbeatPacket;
   private boolean polllingModeEnabled;
   private boolean proxy;
   private boolean ceEnabled;
