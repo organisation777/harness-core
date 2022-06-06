@@ -52,14 +52,14 @@ ENV PATH ${PATH}:/opt/gsutil
 
 RUN yum update -y \
     && yum upgrade -y \
-    && yum install -y hostname unzip wget unzip git mongodb-org-shell yum-utils libxcrypt-compat.x86_64 google-cloud-cli \
+    && yum install -y hostname unzip wget unzip git mongodb-org-shell yum-utils google-cloud-cli \
     #&& yum install -y https://packages.endpoint.com/rhel/7/os/x86_64/endpoint-repo-1.9-1.x86_64.rpm \
     && git --version \
     && curl -O https://releases.hashicorp.com/terraform/0.12.11/terraform_0.12.11_linux_amd64.zip \
     && unzip terraform_0.12.11_linux_amd64.zip \
     && chmod 755 terraform \
     && mv terraform /usr/local/bin \
-    && rm -rf terraform_0.12.11_linux_amd64.zip
+    && rm -rf terraform_0.12.11_linux_amd64.zip \
     && chmod +x /usr/local/bin/terragrunt \
     && wget -O /etc/yum.repos.d/cloudfoundry-cli.repo https://packages.cloudfoundry.org/fedora/cloudfoundry-cli.repo \
     && yum install -y cf-cli \
