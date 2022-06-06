@@ -7,6 +7,8 @@
 
 package io.harness.logstreaming;
 
+import io.harness.exception.KeyManagerBuilderException;
+import io.harness.exception.SslContextBuilderException;
 import io.harness.network.Http;
 import io.harness.security.X509KeyManagerBuilder;
 import io.harness.security.X509SslContextBuilder;
@@ -47,12 +49,14 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
   private final String logStreamingServiceBaseUrl;
   private final String clientCertificateFilePath;
   private final String clientCertificateKeyFilePath;
+  private final boolean trustAllCertificates;
 
-  public LogStreamingClientFactory(
-      String logStreamingServiceBaseUrl, String clientCertificateFilePath, String clientCertificateKeyFilePath) {
+  public LogStreamingClientFactory(String logStreamingServiceBaseUrl, String clientCertificateFilePath,
+      String clientCertificateKeyFilePath, boolean trustAllCertificates) {
     this.logStreamingServiceBaseUrl = logStreamingServiceBaseUrl;
     this.clientCertificateFilePath = clientCertificateFilePath;
     this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
+    this.trustAllCertificates = trustAllCertificates;
   }
 
   @Override
@@ -67,8 +71,11 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+    OkHttpClient httpClient = this.trustAllCertificates ? this.getUnsafeOkHttpClient() : this.getSafeOkHttpClient();
+
     Retrofit retrofit = new Retrofit.Builder()
-                            .client(getSafeOkHttpClient())
+                            .client(httpClient)
                             .baseUrl(logStreamingServiceBaseUrl)
                             .addConverterFactory(kryoConverterFactory)
                             .addConverterFactory(JacksonConverterFactory.create(objectMapper))
@@ -80,28 +87,42 @@ public class LogStreamingClientFactory implements Provider<LogStreamingClient> {
   private OkHttpClient getSafeOkHttpClient() {
     try {
       X509TrustManager trustManager = new X509TrustManagerBuilder().trustDefaultTrustStore().build();
-      X509SslContextBuilder sslContextBuilder = new X509SslContextBuilder().trustManager(trustManager);
-
-      if (StringUtils.isNotEmpty(this.clientCertificateFilePath)
-          && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath)) {
-        X509KeyManager keyManager =
-            new X509KeyManagerBuilder()
-                .withClientCertificateFromFile(this.clientCertificateFilePath, this.clientCertificateKeyFilePath)
-                .build();
-        sslContextBuilder.keyManager(keyManager);
-      }
-
-      SSLContext sslContext = sslContextBuilder.build();
-
-      return Http.getOkHttpClientWithProxyAuthSetup()
-          .connectionPool(new ConnectionPool())
-          .connectTimeout(5, TimeUnit.SECONDS)
-          .readTimeout(10, TimeUnit.SECONDS)
-          .retryOnConnectionFailure(true)
-          .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
-          .build();
+      return this.getOkHttpClient(trustManager);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private OkHttpClient getUnsafeOkHttpClient() {
+    try {
+      X509TrustManager trustManager = new X509TrustManagerBuilder().trustAllCertificates().build();
+      return this.getOkHttpClient(trustManager);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private OkHttpClient getOkHttpClient(X509TrustManager trustManager)
+      throws KeyManagerBuilderException, SslContextBuilderException {
+    X509SslContextBuilder sslContextBuilder = new X509SslContextBuilder().trustManager(trustManager);
+
+    if (StringUtils.isNotEmpty(this.clientCertificateFilePath)
+        && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath)) {
+      X509KeyManager keyManager =
+          new X509KeyManagerBuilder()
+              .withClientCertificateFromFile(this.clientCertificateFilePath, this.clientCertificateKeyFilePath)
+              .build();
+      sslContextBuilder.keyManager(keyManager);
+    }
+
+    SSLContext sslContext = sslContextBuilder.build();
+
+    return Http.getOkHttpClientWithProxyAuthSetup()
+        .connectionPool(new ConnectionPool())
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
+        .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
+        .build();
   }
 }

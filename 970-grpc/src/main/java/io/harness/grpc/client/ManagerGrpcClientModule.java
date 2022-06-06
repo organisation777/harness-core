@@ -91,7 +91,7 @@ public class ManagerGrpcClientModule extends ProviderModule {
     return NettyChannelBuilder.forTarget(config.target)
         .overrideAuthority(authorityToUse)
         .sslContext(sslContext)
-        .intercept(HarnessRoutingInterceptor.MANAGER)
+        .intercept(HarnessRoutingGrpcInterceptor.MANAGER)
         .build();
   }
 

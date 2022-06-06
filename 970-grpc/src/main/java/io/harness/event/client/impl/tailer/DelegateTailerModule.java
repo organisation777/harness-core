@@ -12,7 +12,7 @@ import io.harness.event.EventPublisherGrpc.EventPublisherBlockingStub;
 import io.harness.event.client.impl.EventPublisherConstants;
 import io.harness.flow.BackoffScheduler;
 import io.harness.govern.ProviderModule;
-import io.harness.grpc.client.HarnessRoutingInterceptor;
+import io.harness.grpc.client.HarnessRoutingGrpcInterceptor;
 import io.harness.security.X509KeyManagerBuilder;
 import io.harness.security.X509TrustManagerBuilder;
 
@@ -78,7 +78,7 @@ public class DelegateTailerModule extends ProviderModule {
     return NettyChannelBuilder.forTarget(config.publishTarget)
         .overrideAuthority(config.publishAuthority)
         .sslContext(sslContext)
-        .intercept(HarnessRoutingInterceptor.EVENTS)
+        .intercept(HarnessRoutingGrpcInterceptor.EVENTS)
         .build();
   }
 

@@ -30,19 +30,19 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.DEL)
 @Slf4j
 @InterceptorPriority(40)
-public class HarnessRoutingInterceptor implements ClientInterceptor {
+public class HarnessRoutingGrpcInterceptor implements ClientInterceptor {
   private static final Metadata.Key<String> HARNESS_ROUTING_KEY =
       Metadata.Key.of("harness-routing", Metadata.ASCII_STRING_MARSHALLER);
 
   private static final String ROUTING_DESTINATION_MANAGER = "manager";
   private static final String ROUTING_DESTINATION_EVENTS = "events";
 
-  public static final ClientInterceptor MANAGER = new HarnessRoutingInterceptor(ROUTING_DESTINATION_MANAGER);
-  public static final ClientInterceptor EVENTS = new HarnessRoutingInterceptor(ROUTING_DESTINATION_EVENTS);
+  public static final ClientInterceptor MANAGER = new HarnessRoutingGrpcInterceptor(ROUTING_DESTINATION_MANAGER);
+  public static final ClientInterceptor EVENTS = new HarnessRoutingGrpcInterceptor(ROUTING_DESTINATION_EVENTS);
 
   private final ClientInterceptor innerInterceptor;
 
-  private HarnessRoutingInterceptor(String routingDestination) {
+  private HarnessRoutingGrpcInterceptor(String routingDestination) {
     Metadata metadata = new Metadata();
     metadata.put(HARNESS_ROUTING_KEY, routingDestination);
     this.innerInterceptor = MetadataUtils.newAttachHeadersInterceptor(metadata);

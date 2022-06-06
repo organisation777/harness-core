@@ -58,7 +58,8 @@ public class DelegateAgentModule extends AbstractModule {
         configuration.isTrustAllCertificates()));
 
     install(new LogStreamingModule(configuration.getLogStreamingServiceBaseUrl(),
-        configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath()));
+        configuration.getClientCertificateFilePath(), configuration.getClientCertificateKeyFilePath(),
+        configuration.isTrustAllCertificates()));
     install(new DelegateManagerGrpcClientModule(configuration));
 
     configureCcmEventPublishing();
