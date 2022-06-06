@@ -10,7 +10,6 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
-
 import lombok.Getter;
 
 /**
@@ -365,6 +364,7 @@ public enum FeatureName {
   EXPORT_TF_PLAN_JSON_NG,
   JDK11_DELEGATE,
   JDK11_WATCHER,
+  NG_CUSTOM_APPROVAL,
   NG_FILE_STORE,
   ACCOUNT_BASIC_ROLE,
   CVNG_TEMPLATE_MONITORED_SERVICE,
