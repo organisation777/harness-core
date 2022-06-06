@@ -1,4 +1,3 @@
-<#import "common/helm-delegate-values.ftl" as helmValues>
 # This harness-delegate-values.yaml file is compatible harness-delegate-ng helm chart
 
 # You can download the harness-delegate helm chart at
@@ -20,4 +19,22 @@ delegateName: ${delegateName}
 delegateDockerImage: ${delegateDockerImage}
 managerEndpoint: ${managerHostAndPort}
 
-<@helmValues.ngSpecific />
+# Mention tags that will be used to identify delegate
+tags: "${delegateTags}"
+description: "${delegateDescription}"
+
+# Specify access for delegate, CLUSTER_ADMIN, CLUSTER_VIEWER and NAMESPACE_ADMIN are valid entries.
+k8sPermissionsType: ${k8sPermissionsType}
+
+# Resource Configuration
+replicas: ${delegateReplicas}
+cpu: ${delegateCpu}
+memory: ${delegateRam}
+
+# Need to run something specific before delegate starts, enter your script in initScripts.
+initScript: ""
+
+# Specify JAVA_OPTS
+javaOpts: "-Xms64M"
+
+logStreamingServiceBaseUrl: "${logStreamingServiceBaseUrl}"

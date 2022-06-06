@@ -26,9 +26,6 @@ description: ""
 # Specify access for delegate, CLUSTER_ADMIN, CLUSTER_VIEWER and NAMESPACE_ADMIN are valid entries.
 k8sPermissionsType: CLUSTER_ADMIN
 
-# Namespace where delegate will be installed
-namespace: harness-delegate-ng
-
 # Resource Configuration
 replicas: 1
 cpu: 0.5
@@ -41,4 +38,3 @@ initScript: ""
 javaOpts: "-Xms64M"
 
 logStreamingServiceBaseUrl: "http://localhost:8079"
-upgraderDockerImage: "harness/upgrader:latest"

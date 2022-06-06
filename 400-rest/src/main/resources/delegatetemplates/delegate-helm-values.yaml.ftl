@@ -1,4 +1,3 @@
-<#import "common/helm-delegate-values.ftl" as helmValues>
 # This harness-delegate-values.yaml file is compatible with version 1.0.2
 # of the harness-delegate helm chart.
 
@@ -24,7 +23,7 @@ delegateType: ${delegateType}
 delegateDockerImage: ${delegateDockerImage}
 managerHostAndPort: ${managerHostAndPort}
 
-<@helmValues.cgSpecific />
+delegateProfile: "${delegateProfile}"
 
 <#if isImmutable == "false">
 watcherStorageUrl: ${watcherStorageUrl}
