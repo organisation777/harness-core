@@ -111,5 +111,8 @@ public class TailerModule extends ProviderModule {
     @Builder.Default Duration maxDelay = Duration.ofMinutes(5);
     String clientCertificateFilePath;
     String clientCertificateKeyFilePath;
+
+    // As of now ignored (always trusts all certs)
+    boolean trustAllCertificates;
   }
 }

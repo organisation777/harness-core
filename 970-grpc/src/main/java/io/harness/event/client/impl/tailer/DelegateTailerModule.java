@@ -97,7 +97,10 @@ public class DelegateTailerModule extends ProviderModule {
     String queueFilePath;
     @Builder.Default Duration minDelay = Duration.ofSeconds(1);
     @Builder.Default Duration maxDelay = Duration.ofMinutes(5);
-    private String clientCertificateFilePath;
-    private String clientCertificateKeyFilePath;
+    String clientCertificateFilePath;
+    String clientCertificateKeyFilePath;
+
+    // As of now ignored (always trusts all certs)
+    boolean trustAllCertificates;
   }
 }

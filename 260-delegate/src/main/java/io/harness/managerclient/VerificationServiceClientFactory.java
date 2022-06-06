@@ -40,12 +40,16 @@ public class VerificationServiceClientFactory implements Provider<VerificationSe
   private final String clientCertificateFilePath;
   private final String clientCertificateKeyFilePath;
 
+  // As of now ignored (always trusts all certs)
+  private final boolean trustAllCertificates;
+
   public VerificationServiceClientFactory(String baseUrl, TokenGenerator delegateTokenGenerator,
-      String clientCertificateFilePath, String clientCertificateKeyFilePath) {
+      String clientCertificateFilePath, String clientCertificateKeyFilePath, boolean trustAllCertificates) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = delegateTokenGenerator;
     this.clientCertificateFilePath = clientCertificateFilePath;
     this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
+    this.trustAllCertificates = trustAllCertificates;
   }
 
   @Override

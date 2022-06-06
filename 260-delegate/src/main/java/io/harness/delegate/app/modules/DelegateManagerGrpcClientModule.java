@@ -36,6 +36,7 @@ public class DelegateManagerGrpcClientModule extends AbstractManagerGrpcClientMo
         .accountSecret(configuration.getDelegateToken())
         .clientCertificateFilePath(configuration.getClientCertificateFilePath())
         .clientCertificateKeyFilePath(configuration.getClientCertificateKeyFilePath())
+        .trustAllCertificates(configuration.isTrustAllCertificates())
         .build();
   }
 

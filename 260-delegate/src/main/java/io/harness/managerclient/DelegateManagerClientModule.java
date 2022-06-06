@@ -47,10 +47,10 @@ public class DelegateManagerClientModule extends AbstractModule {
         .toProvider(new DelegateAgentManagerClientFactory(managerBaseUrl, tokenGenerator, clientCertificateFilePath,
             clientCertificateKeyFilePath, trustAllCertificates));
     bind(VerificationServiceClient.class)
-        .toProvider(new VerificationServiceClientFactory(
-            verificationServiceBaseUrl, tokenGenerator, clientCertificateFilePath, clientCertificateKeyFilePath));
+        .toProvider(new VerificationServiceClientFactory(verificationServiceBaseUrl, tokenGenerator,
+            clientCertificateFilePath, clientCertificateKeyFilePath, trustAllCertificates));
     bind(CVNextGenServiceClient.class)
-        .toProvider(new CVNextGenServiceClientFactory(
-            cvNextGenUrl, tokenGenerator, clientCertificateFilePath, clientCertificateKeyFilePath));
+        .toProvider(new CVNextGenServiceClientFactory(cvNextGenUrl, tokenGenerator, clientCertificateFilePath,
+            clientCertificateKeyFilePath, trustAllCertificates));
   }
 }

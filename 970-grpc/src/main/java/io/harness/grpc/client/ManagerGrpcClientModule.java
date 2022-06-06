@@ -136,5 +136,8 @@ public class ManagerGrpcClientModule extends ProviderModule {
     String scheme;
     String clientCertificateFilePath;
     String clientCertificateKeyFilePath;
+
+    // As of now ignored (always trusts all certs)
+    boolean trustAllCertificates;
   }
 }

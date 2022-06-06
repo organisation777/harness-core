@@ -159,6 +159,7 @@ public class WatcherApplication {
                                          .publishAuthority(publishAuthority)
                                          .clientCertificateFilePath(configuration.getClientCertificateFilePath())
                                          .clientCertificateKeyFilePath(configuration.getClientCertificateKeyFilePath())
+                                         .trustAllCertificates(configuration.isTrustAllCertificates())
                                          .build()));
       } else {
         log.warn("Unable to configure event publisher configs. Event publisher will be disabled");

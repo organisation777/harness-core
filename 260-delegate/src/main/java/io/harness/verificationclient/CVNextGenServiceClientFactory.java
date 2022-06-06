@@ -43,12 +43,16 @@ public class CVNextGenServiceClientFactory implements Provider<CVNextGenServiceC
   private final String clientCertificateFilePath;
   private final String clientCertificateKeyFilePath;
 
+  // As of now ignored (always trusts all certs)
+  private final boolean trustAllCertificates;
+
   public CVNextGenServiceClientFactory(String baseUrl, TokenGenerator delegateTokenGenerator,
-      String clientCertificateFilePath, String clientCertificateKeyFilePath) {
+      String clientCertificateFilePath, String clientCertificateKeyFilePath, boolean trustAllCertificates) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = delegateTokenGenerator;
     this.clientCertificateFilePath = clientCertificateFilePath;
     this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
+    this.trustAllCertificates = trustAllCertificates;
   }
 
   @Override
