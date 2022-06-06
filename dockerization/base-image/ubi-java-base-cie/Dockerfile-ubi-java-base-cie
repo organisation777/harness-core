@@ -79,7 +79,7 @@ ENV CXX /usr/bin/g++
 USER root
 
 RUN yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
-    && yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin gcc jq bc zlib-devel \
+    && yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin gcc gcc-c++ jq bc zlib-devel \
     && yum install -y autoconf binutils gdb glibc-devel redhat-rpm-config rpm-build \
     && wget https://archive.apache.org/dist/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.tar.gz \
     && tar -xf apache-maven-3.6.1-bin.tar.gz && mv apache-maven-3.6.1/ /usr/local/src/apache-maven \
