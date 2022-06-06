@@ -75,6 +75,7 @@ import static software.wings.beans.deployment.DeploymentMetadata.Include.DEPLOYM
 import static software.wings.beans.deployment.DeploymentMetadata.Include.ENVIRONMENT;
 import static software.wings.service.impl.ApplicationManifestServiceImpl.CHART_NAME;
 import static software.wings.service.impl.pipeline.PipelineServiceHelper.generatePipelineExecutionUrl;
+import static software.wings.sm.ExecutionInterrupt.ExecutionInterruptBuilder.anExecutionInterrupt;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
 import static software.wings.sm.StateType.APPROVAL;
 import static software.wings.sm.StateType.APPROVAL_RESUME;
@@ -668,7 +669,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
           executionData.setStatus(ExecutionStatus.REJECTED);
           throw new InvalidRequestException("Unsupported rollback from pipeline, defaulting to reject.");
         }
-        ExecutionInterrupt executionInterrupt = ExecutionInterrupt.ExecutionInterruptBuilder.anExecutionInterrupt()
+        ExecutionInterrupt executionInterrupt = anExecutionInterrupt()
                                                     .executionUuid(workflowExecution.getUuid())
                                                     .appId(appId)
                                                     .executionInterruptType(ExecutionInterruptType.ROLLBACK)
