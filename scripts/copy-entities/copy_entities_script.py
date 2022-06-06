@@ -9,11 +9,11 @@ import json
 import yaml
 import sys
 from codecs import encode
-from abc import *
+from abc import ABC, abstractmethod
 
-from_projectIdentifier = sys.argv[1]
-to_projectIdentifier = sys.argv[2]
-accountIdentifier = sys.argv[3]
+accountIdentifier = sys.argv[1]
+from_projectIdentifier = sys.argv[2]
+to_projectIdentifier = sys.argv[3]
 from_orgIdentifier = sys.argv[4]
 to_orgIdentifier = sys.argv[5]
 apikey = sys.argv[6]
@@ -31,29 +31,10 @@ headers = {
   'x-api-key': apikey,
   'content-type': 'application/json'
   }
+Entities = ["Secret","Service","Environment","Connector","Template","Pipeline"]
+success_failure_count = [[0 for i in range(2)] for j in range(len(Entities))]
 global success_count
 global failure_count
-
-class ImportExport(ABC):
-  @abstractmethod
-  def list_entity(self):
-    pass
-
-  @abstractmethod
-  def list_entity_paginated(self, j):
-    pass
-
-  @abstractmethod
-  def get_entity(self, response_list_connector, i):
-    pass
-
-  @abstractmethod
-  def get_payload(self, response_get_entity):
-    pass
-
-  @abstractmethod
-  def create_entity(self, payload):
-    pass
 
 def get_response_data(request_type, url, payload):
   conn.request(request_type, url, payload, headers)
@@ -90,6 +71,27 @@ def export_input_set(pipelineIdentifier):
       new_payload_json = modify_payload(yaml.safe_load(response_get_input_set["data"]["inputSetYaml"]), "inputSet")
       url_create_input_set = input_set_endpoint + "?routingId="+accountIdentifier+"&accountIdentifier="+accountIdentifier+"&orgIdentifier="+to_orgIdentifier+"&pipelineIdentifier="+pipelineIdentifier+"&projectIdentifier=" + to_projectIdentifier
       create_and_print_entity(url_create_input_set, new_payload_json)
+
+class ImportExport(ABC):
+  @abstractmethod
+  def list_entity(self):
+    pass
+
+  @abstractmethod
+  def list_entity_paginated(self, j):
+    pass
+
+  @abstractmethod
+  def get_entity(self, response_list_connector, i):
+    pass
+
+  @abstractmethod
+  def get_payload(self, response_get_entity):
+    pass
+
+  @abstractmethod
+  def create_entity(self, payload):
+    pass
 
 class Secret(ImportExport):
   def list_entity(self):
@@ -241,24 +243,12 @@ def main_export(entityType):
         failure_count+=1
   return [success_count,failure_count]
 
-success_failure_count_secret = main_export("Secret")
+for n in range(0,len(Entities)):
+  success_failure_count[n] = main_export(Entities[n])
 
-success_failure_count_service= main_export("Service")
+for n in range(0,len(Entities)):
+  print("Successfully copied "+str(success_failure_count[n][0])+" "+ Entities[n]+" and got error while copying "+str(success_failure_count[n][1])+" "+Entities[n])
 
-success_failure_count_environment = main_export("Environment")
-
-success_failure_count_connector = main_export("Connector")
-
-success_failure_count_template = main_export("Template")
-
-success_failure_count_pipeline = main_export("Pipeline")
-
-print("Successfully copied "+str(success_failure_count_secret[0])+" secret and got error while copying "+str(success_failure_count_secret[1])+" secrets")
-print("Successfully copied "+str(success_failure_count_service[0])+" services and got error while copying "+str(success_failure_count_service[1])+" services")
-print("Successfully copied "+str(success_failure_count_environment[0])+" environments and got error while copying "+str(success_failure_count_connector[1])+" environments")
-print("Successfully copied "+str(success_failure_count_connector[0])+" connectors and got error while copying "+str(success_failure_count_connector[1])+" connectors")
-print("Successfully copied "+str(success_failure_count_template[0])+" templates and got error while copying "+str(success_failure_count_template[1])+" templates")
-print("Successfully copied "+str(success_failure_count_pipeline[0])+" pipelines and got error while copying "+str(success_failure_count_pipeline[1])+" pipelines")
 
 
 
