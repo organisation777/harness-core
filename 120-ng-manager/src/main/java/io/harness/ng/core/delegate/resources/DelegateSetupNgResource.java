@@ -49,8 +49,8 @@ import javax.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
-@Api("ng/delegate-setup")
-@Path("/ng/delegate-setup")
+@Api("delegate-setup")
+@Path("/delegate-setup")
 @Consumes({"application/json"})
 @Produces({"application/json"})
 @Slf4j
