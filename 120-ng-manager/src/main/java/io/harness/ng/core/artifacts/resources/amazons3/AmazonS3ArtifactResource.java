@@ -9,18 +9,26 @@ package io.harness.ng.core.artifacts.resources.amazons3;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.resources.amazons3.dtos.BucketsResponseDTO;
 import io.harness.cdng.artifact.resources.amazons3.service.AmazonS3ResourceService;
+import io.harness.cdng.artifact.resources.jenkins.dtos.JenkinsJobDetailsDTO;
+import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
+import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import java.util.List;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,4 +45,28 @@ import lombok.extern.slf4j.Slf4j;
     })
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 @Slf4j
-public class AmazonS3ArtifactResource {}
+public class AmazonS3ArtifactResource {
+  private final AmazonS3ResourceService amazonS3ResourceService;
+
+  @GET
+  @Path("buckets")
+  @ApiOperation(value = "Gets Buckets for AmazonS3", nickname = "getBuckets")
+  public ResponseDTO<BucketsResponseDTO> getBuckets(@QueryParam("connectorRef") String amazonS3ConnectorIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @QueryParam("parentJobName") String parentJobName, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    return null;
+  }
+
+  @GET
+  @Path("")
+  @ApiOperation(value = "Gets AmazonS3 Artifact Paths", nickname = "getArtifactPaths")
+  public ResponseDTO<List<String>> getArtifactPaths(@QueryParam("connectorRef") String amazonS3ConnectorIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
+      @PathParam("jobName") String jobName, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    return null;
+  }
+}
