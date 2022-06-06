@@ -26,6 +26,7 @@ import io.harness.azure.client.AzureContainerRegistryClient;
 import io.harness.azure.client.AzureKubernetesClient;
 import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.model.AzureConfig;
+import io.harness.azure.model.VirtualMachineData;
 import io.harness.azure.model.kube.AzureKubeConfig;
 import io.harness.azure.model.tag.TagDetails;
 import io.harness.connector.ConnectivityStatus;
@@ -34,6 +35,8 @@ import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureDeploymentSlotResponse;
 import io.harness.delegate.beans.azure.response.AzureDeploymentSlotsResponse;
+import io.harness.delegate.beans.azure.response.AzureHostResponse;
+import io.harness.delegate.beans.azure.response.AzureHostsResponse;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
@@ -238,6 +241,25 @@ public class AzureAsyncTaskHelper {
                   .collect(Collectors.toList()))
         .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
         .build();
+  }
+
+  public AzureHostsResponse listHosts(List<EncryptedDataDetail> encryptionDetails, AzureConnectorDTO azureConnector,
+      String subscriptionId, String resourceGroup, Map<String, String> tags) {
+    AzureConfig azureConfig = AcrRequestResponseMapper.toAzureInternalConfig(azureConnector.getCredential(),
+        encryptionDetails, azureConnector.getCredential().getAzureCredentialType(),
+        azureConnector.getAzureEnvironmentType(), secretDecryptionService);
+
+    return AzureHostsResponse.builder()
+        .hosts(azureManagementClient.listHosts(azureConfig, subscriptionId, resourceGroup, tags)
+                   .stream()
+                   .map(this::toAzureHost)
+                   .collect(Collectors.toList()))
+        .build();
+  }
+
+  @NotNull
+  private AzureHostResponse toAzureHost(VirtualMachineData virtualMachineData) {
+    return AzureHostResponse.builder().hostName(virtualMachineData.getHostName()).build();
   }
 
   public KubernetesConfig getClusterConfig(AzureConnectorDTO azureConnector, String subscriptionId,
