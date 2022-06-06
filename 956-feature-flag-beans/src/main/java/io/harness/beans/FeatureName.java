@@ -365,6 +365,7 @@ public enum FeatureName {
   JDK11_DELEGATE,
   JDK11_WATCHER,
   NG_FILE_STORE,
+  NG_CUSTOM_APPROVAL,
   ACCOUNT_BASIC_ROLE;
 
   FeatureName() {
