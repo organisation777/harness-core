@@ -47,6 +47,6 @@ public class JenkinsArtifactTaskNG extends AbstractDelegateRunnableTask {
   @Override
   public ArtifactTaskResponse run(TaskParameters parameters) {
     ArtifactTaskParameters taskParameters = (ArtifactTaskParameters) parameters;
-    return jenkinsArtifactTaskHelper.getArtifactCollectResponse(taskParameters);
+    return jenkinsArtifactTaskHelper.getArtifactCollectResponse(taskParameters, null);
   }
 }

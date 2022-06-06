@@ -100,7 +100,7 @@ public class JenkinsBuildStepHelperServiceImpl implements JenkinsBuildStepHelper
                             .parameters(new Object[] {artifactTaskParameters})
                             .build();
     return StepUtils.prepareTaskRequest(ambiance, taskData, kryoSerializer, TaskCategory.DELEGATE_TASK_V2,
-        Collections.emptyList(), false, taskName,
+        Collections.emptyList(), true, taskName,
         params.getDelegateSelectors()
             .stream()
             .map(s -> TaskSelector.newBuilder().setSelector(s).build())
