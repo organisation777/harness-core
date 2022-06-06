@@ -74,11 +74,13 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
   }
 
   private void pushInternal(Map<String, ResponseData> response) {
+    log.info("Received response from custom approval script execution with instanceId - {}", approvalInstanceId);
     CustomApprovalInstance instance = (CustomApprovalInstance) approvalInstanceService.get(approvalInstanceId);
     Ambiance ambiance = instance.getAmbiance();
     NGLogCallback logCallback = new NGLogCallback(logStreamingStepClientFactory, ambiance, null, true);
 
     if (instance.hasExpired()) {
+      log.warn("Custom Approval Instance queued has expired");
       updateApprovalInstanceAndLog(logCallback, "Approval instance has expired", LogColor.Red,
           CommandExecutionStatus.FAILURE, ApprovalStatus.EXPIRED, instance.getId());
     }
@@ -88,6 +90,7 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
       ResponseData responseData = response.values().iterator().next();
       responseData = (ResponseData) kryoSerializer.asInflatedObject(((BinaryResponseData) responseData).getData());
       if (responseData instanceof ErrorNotifyResponseData) {
+        log.warn("Failed to run Custom Approval script");
         logCallback.saveExecutionLog("Failed to run custom approval script: " + responseData, LogLevel.WARN);
         return;
       }
@@ -112,6 +115,7 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
       checkApprovalAndRejectionCriteria(
           ticketNG, instance, logCallback, instance.getApprovalCriteria(), instance.getRejectionCriteria());
     } catch (Exception ex) {
+      log.error("An error occurred with custom approval", ex);
       if (ex instanceof ApprovalStepNGException && ((ApprovalStepNGException) ex).isFatal()) {
         handleFatalException(instance, logCallback, (ApprovalStepNGException) ex);
         return;

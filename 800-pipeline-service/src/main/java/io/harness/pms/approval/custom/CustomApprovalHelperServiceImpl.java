@@ -107,6 +107,7 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
       String accountIdentifier = AmbianceUtils.getAccountId(ambiance);
       String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
       String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
+      log.info(String.format("Creating parameters for CustomApproval Instance with id : %s", instanceId));
 
       validateField(instanceId, ApprovalInstanceKeys.id);
       validateField(accountIdentifier, "accountIdentifier");
@@ -114,7 +115,9 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
       validateField(projectIdentifier, "projectIdentifier");
 
       ShellScriptTaskParametersNG scriptTaskParametersNG = buildShellScriptTaskParametersNG(ambiance, instance);
+      log.info("Queuing Custom Approval delegate task");
       String taskId = queueTask(ambiance, instance, scriptTaskParametersNG);
+      log.info("Custom Approval Instance queued task with taskId - {}", taskId);
       logCallback.saveExecutionLog(String.format("Custom Shell Script Approval: %s", taskId));
     } catch (Exception ex) {
       logCallback.saveExecutionLog(
