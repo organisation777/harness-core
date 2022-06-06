@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiModel;
 public enum HoldingScope {
   // This is only for backward compatibility
   // TODO : Remove this after a release
-  @Deprecated @JsonProperty("PLAN") PLAN("PLAN"),
+  @JsonProperty("PLAN") @Deprecated PLAN("PLAN"),
 
   // This corresponds to pipeline
   @JsonProperty("PIPELINE") PIPELINE("PIPELINE"),
