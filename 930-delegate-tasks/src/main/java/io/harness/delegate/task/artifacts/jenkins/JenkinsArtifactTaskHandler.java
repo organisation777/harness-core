@@ -10,7 +10,6 @@ package io.harness.delegate.task.artifacts.jenkins;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.ExecutionContext.DELEGATE;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.logging.CommandExecutionStatus.FAILURE;
 
 import static java.util.stream.Collectors.toList;
 
@@ -35,7 +34,6 @@ import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.security.encryption.SecretDecryptionService;
 
-import software.wings.beans.JenkinsSubTaskType;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
 
@@ -153,9 +151,8 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
       Build jenkinsBuild = jenkinsRegistryUtils.waitForJobToStartExecution(queueReference, jenkinsInternalConfig);
       jenkinsBuildTaskNGResponse.setBuildNumber(String.valueOf(jenkinsBuild.getNumber()));
       jenkinsBuildTaskNGResponse.setJobUrl(jenkinsBuild.getUrl());
-      executionLogCallback.saveExecutionLog(
-          "The Job was build successfull. Build number " + String.valueOf(jenkinsBuild.getNumber()), LogLevel.INFO,
-          CommandExecutionStatus.SUCCESS);
+      executionLogCallback.saveExecutionLog("The Job was build successfull. Build number " + jenkinsBuild.getNumber(),
+          LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     } catch (WingsException e) {
       executionLogCallback.saveExecutionLog(msg + e, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       ExceptionLogger.logProcessedMessages(e, DELEGATE, log);

@@ -22,7 +22,6 @@ import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
 import io.harness.logging.LogCallback;
 
 import com.google.inject.Inject;
-import java.net.URISyntaxException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
