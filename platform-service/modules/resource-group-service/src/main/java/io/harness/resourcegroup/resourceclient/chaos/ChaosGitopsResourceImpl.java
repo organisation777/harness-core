@@ -24,7 +24,6 @@ import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.io.*;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -42,25 +41,21 @@ import lombok.extern.slf4j.Slf4j;
 public class ChaosGitopsResourceImpl implements Resource {
   @Override
   public String getType() {
-    System.out.println("getType");
     return "CHAOS_GITOPS";
   }
 
   @Override
   public Set<ScopeLevel> getValidScopeLevels() {
-    System.out.println("getValidScopeLevels");
     return EnumSet.of(ScopeLevel.ACCOUNT, ScopeLevel.ORGANIZATION, ScopeLevel.PROJECT);
   }
 
   @Override
   public Optional<String> getEventFrameworkEntityType() {
-    System.out.println("getEventFrameworkEntityType");
     return Optional.of(EventsFrameworkMetadataConstants.CHAOS_GITOPS);
   }
 
   @Override
   public ResourceInfo getResourceInfoFromEvent(Message message) {
-    System.out.println("getResourceInfoFromEvent");
     EntityChangeDTO entityChangeDTO = null;
     try {
       entityChangeDTO = EntityChangeDTO.parseFrom(message.getMessage().getData());
@@ -82,7 +77,6 @@ public class ChaosGitopsResourceImpl implements Resource {
 
   @Override
   public List<Boolean> validate(List<String> resourceIds, Scope scope) {
-    System.out.println("validate");
     return null;
   }
 
