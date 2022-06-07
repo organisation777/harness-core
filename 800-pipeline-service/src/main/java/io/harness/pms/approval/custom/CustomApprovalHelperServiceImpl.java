@@ -26,6 +26,7 @@ import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.engine.pms.tasks.NgDelegate2TaskExecutor;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
+import io.harness.iterator.PersistenceIterator;
 import io.harness.logging.AutoLogContext;
 import io.harness.logging.LogLevel;
 import io.harness.logstreaming.LogStreamingStepClientFactory;
@@ -38,8 +39,10 @@ import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepUtils;
+import io.harness.steps.approval.step.ApprovalInstanceService;
 import io.harness.steps.approval.step.custom.CustomApprovalHelperService;
 import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
+import io.harness.steps.approval.step.entities.ApprovalInstance;
 import io.harness.steps.approval.step.entities.ApprovalInstance.ApprovalInstanceKeys;
 import io.harness.steps.shellscript.ShellScriptHelperService;
 import io.harness.steps.shellscript.ShellScriptStepParameters;
@@ -69,12 +72,13 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
   private final String publisherName;
   private final PmsGitSyncHelper pmsGitSyncHelper;
   private final ShellScriptHelperService shellScriptHelperService;
+  private final ApprovalInstanceService approvalInstanceService;
 
   @Inject
   public CustomApprovalHelperServiceImpl(NgDelegate2TaskExecutor ngDelegate2TaskExecutor, KryoSerializer kryoSerializer,
       WaitNotifyEngine waitNotifyEngine, LogStreamingStepClientFactory logStreamingStepClientFactory,
       @Named(OrchestrationPublisherName.PUBLISHER_NAME) String publisherName, PmsGitSyncHelper pmsGitSyncHelper,
-      ShellScriptHelperService shellScriptHelperService) {
+      ShellScriptHelperService shellScriptHelperService, ApprovalInstanceService approvalInstanceService) {
     this.ngDelegate2TaskExecutor = ngDelegate2TaskExecutor;
     this.kryoSerializer = kryoSerializer;
     this.waitNotifyEngine = waitNotifyEngine;
@@ -82,20 +86,22 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
     this.publisherName = publisherName;
     this.pmsGitSyncHelper = pmsGitSyncHelper;
     this.shellScriptHelperService = shellScriptHelperService;
+    this.approvalInstanceService = approvalInstanceService;
   }
 
   @Override
-  public void handlePollingEvent(CustomApprovalInstance instance) {
+  public void handlePollingEvent(PersistenceIterator<ApprovalInstance> iterator, CustomApprovalInstance instance) {
     try (PmsGitSyncBranchContextGuard ignore1 =
              pmsGitSyncHelper.createGitSyncBranchContextGuard(instance.getAmbiance(), true);
          AutoLogContext ignore2 = instance.autoLogContext()) {
-      handlePollingEventInternal(instance);
+      handlePollingEventInternal(iterator, instance);
     }
   }
 
-  private void handlePollingEventInternal(CustomApprovalInstance instance) {
+  private void handlePollingEventInternal(
+      PersistenceIterator<ApprovalInstance> iterator, CustomApprovalInstance instance) {
     Ambiance ambiance = instance.getAmbiance();
-    NGLogCallback logCallback = new NGLogCallback(logStreamingStepClientFactory, ambiance, null, true);
+    NGLogCallback logCallback = new NGLogCallback(logStreamingStepClientFactory, ambiance, COMMAND_UNIT, false);
 
     try {
       log.info("Polling custom approval instance");
@@ -124,6 +130,7 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
           String.format("Error creating task to run the custom shell script: %s", ExceptionUtils.getMessage(ex)),
           LogLevel.WARN);
       log.warn("Error creating task for running the shell script approval while polling", ex);
+      resetNextIteration(iterator, instance);
     }
   }
 
@@ -164,6 +171,13 @@ public class CustomApprovalHelperServiceImpl implements CustomApprovalHelperServ
   private void validateField(String name, String value) {
     if (isBlank(value)) {
       throw new InvalidRequestException(format("Field %s can't be empty", name));
+    }
+  }
+
+  private void resetNextIteration(PersistenceIterator<ApprovalInstance> iterator, CustomApprovalInstance instance) {
+    approvalInstanceService.resetNextIterations(instance.getId(), instance.recalculateNextIterations());
+    if (iterator != null) {
+      iterator.wakeup();
     }
   }
 }

@@ -13,6 +13,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
 import io.harness.exception.ApprovalStepNGException;
+import io.harness.logstreaming.ILogStreamingStepClient;
+import io.harness.logstreaming.LogStreamingStepClientFactory;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.AsyncExecutableWithRollback;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -43,10 +45,13 @@ public class CustomApprovalStep extends AsyncExecutableWithRollback {
 
   @Inject private ApprovalInstanceService approvalInstanceService;
   @Inject private CustomApprovalInstanceHandler customApprovalInstanceHandler;
+  @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
 
   @Override
   public AsyncExecutableResponse executeAsync(Ambiance ambiance, StepElementParameters stepParameters,
       StepInputPackage inputPackage, PassThroughData passThroughData) {
+    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
+    logStreamingStepClient.openStream(ShellScriptTaskNG.COMMAND_UNIT);
     CustomApprovalInstance approvalInstance = CustomApprovalInstance.fromStepParameters(ambiance, stepParameters);
     approvalInstance = (CustomApprovalInstance) approvalInstanceService.save(approvalInstance);
     customApprovalInstanceHandler.wakeup();
@@ -60,33 +65,43 @@ public class CustomApprovalStep extends AsyncExecutableWithRollback {
   @Override
   public StepResponse handleAsyncResponse(
       Ambiance ambiance, StepElementParameters stepParameters, Map<String, ResponseData> responseDataMap) {
-    CustomApprovalResponseData customApprovalResponseData =
-        (CustomApprovalResponseData) responseDataMap.values().iterator().next();
-    CustomApprovalInstance instance =
-        (CustomApprovalInstance) approvalInstanceService.get(customApprovalResponseData.getInstanceId());
-    if (instance.getStatus() == ApprovalStatus.FAILED) {
-      throw new ApprovalStepNGException(
-          instance.getErrorMessage() != null ? instance.getErrorMessage() : "Unknown error polling custom approval");
-    }
+    try {
+      CustomApprovalResponseData customApprovalResponseData =
+          (CustomApprovalResponseData) responseDataMap.values().iterator().next();
+      CustomApprovalInstance instance =
+          (CustomApprovalInstance) approvalInstanceService.get(customApprovalResponseData.getInstanceId());
+      if (instance.getStatus() == ApprovalStatus.FAILED) {
+        throw new ApprovalStepNGException(
+            instance.getErrorMessage() != null ? instance.getErrorMessage() : "Unknown error polling custom approval");
+      }
 
-    return StepResponse.builder()
-        .status(instance.getStatus().toFinalExecutionStatus())
-        .failureInfo(instance.getFailureInfo())
-        .stepOutcome(StepResponse.StepOutcome.builder()
-                         .name(OutputExpressionConstants.OUTPUT)
-                         .outcome(instance.toCustomApprovalOutcome(customApprovalResponseData.getTicket()))
-                         .build())
-        .build();
+      return StepResponse.builder()
+          .status(instance.getStatus().toFinalExecutionStatus())
+          .failureInfo(instance.getFailureInfo())
+          .stepOutcome(StepResponse.StepOutcome.builder()
+                           .name(OutputExpressionConstants.OUTPUT)
+                           .outcome(instance.toCustomApprovalOutcome(customApprovalResponseData.getTicket()))
+                           .build())
+          .build();
+    } finally {
+      closeLogStream(ambiance);
+    }
   }
 
   @Override
   public void handleAbort(
       Ambiance ambiance, StepElementParameters stepParameters, AsyncExecutableResponse executableResponse) {
     approvalInstanceService.expireByNodeExecutionId(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
+    closeLogStream(ambiance);
   }
 
   @Override
   public Class<StepElementParameters> getStepParametersClass() {
     return StepElementParameters.class;
+  }
+
+  private void closeLogStream(Ambiance ambiance) {
+    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
+    logStreamingStepClient.closeStream(ShellScriptTaskNG.COMMAND_UNIT);
   }
 }

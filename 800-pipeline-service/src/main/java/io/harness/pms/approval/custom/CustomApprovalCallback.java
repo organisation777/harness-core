@@ -77,7 +77,7 @@ public class CustomApprovalCallback extends AbstractApprovalCallback implements 
     log.info("Received response from custom approval script execution with instanceId - {}", approvalInstanceId);
     CustomApprovalInstance instance = (CustomApprovalInstance) approvalInstanceService.get(approvalInstanceId);
     Ambiance ambiance = instance.getAmbiance();
-    NGLogCallback logCallback = new NGLogCallback(logStreamingStepClientFactory, ambiance, null, true);
+    NGLogCallback logCallback = new NGLogCallback(logStreamingStepClientFactory, ambiance, "Execute", false);
 
     if (instance.hasExpired()) {
       log.warn("Custom Approval Instance queued has expired");

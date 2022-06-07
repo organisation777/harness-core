@@ -10,9 +10,11 @@ package io.harness.steps.approval.step.custom;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.iterator.PersistenceIterator;
 import io.harness.steps.approval.step.custom.entities.CustomApprovalInstance;
+import io.harness.steps.approval.step.entities.ApprovalInstance;
 
 @OwnedBy(CDC)
 public interface CustomApprovalHelperService {
-  void handlePollingEvent(CustomApprovalInstance entity);
+  void handlePollingEvent(PersistenceIterator<ApprovalInstance> iterator, CustomApprovalInstance entity);
 }

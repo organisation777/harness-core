@@ -19,10 +19,13 @@ import io.harness.delegate.task.shell.ShellScriptTaskParametersNG;
 import io.harness.delegate.task.shell.ShellScriptTaskResponseNG;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.UnitProgress;
+import io.harness.logstreaming.ILogStreamingStepClient;
+import io.harness.logstreaming.LogStreamingStepClientFactory;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.plancreator.steps.common.rollback.TaskExecutableWithRollback;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.execution.TaskExecutableResponse;
 import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
 import io.harness.pms.contracts.steps.StepCategory;
@@ -53,6 +56,7 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
   @Inject private KryoSerializer kryoSerializer;
   @Inject private StepHelper stepHelper;
   @Inject private ShellScriptHelperService shellScriptHelperService;
+  @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
 
   @Override
   public Class<StepElementParameters> getStepParametersClass() {
@@ -62,6 +66,8 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
   @Override
   public TaskRequest obtainTask(
       Ambiance ambiance, StepElementParameters stepParameters, StepInputPackage inputPackage) {
+    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
+    logStreamingStepClient.openStream(ShellScriptTaskNG.COMMAND_UNIT);
     ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
 
     ShellScriptTaskParametersNG taskParameters =
@@ -84,34 +90,49 @@ public class ShellScriptStep extends TaskExecutableWithRollback<ShellScriptTaskR
   @Override
   public StepResponse handleTaskResult(Ambiance ambiance, StepElementParameters stepParameters,
       ThrowingSupplier<ShellScriptTaskResponseNG> responseSupplier) throws Exception {
-    StepResponseBuilder stepResponseBuilder = StepResponse.builder();
-    ShellScriptTaskResponseNG taskResponse = responseSupplier.get();
-    ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
-    List<UnitProgress> unitProgresses = taskResponse.getUnitProgressData() == null
-        ? emptyList()
-        : taskResponse.getUnitProgressData().getUnitProgresses();
-    stepResponseBuilder.unitProgressList(unitProgresses);
+    try {
+      StepResponseBuilder stepResponseBuilder = StepResponse.builder();
+      ShellScriptTaskResponseNG taskResponse = responseSupplier.get();
+      ShellScriptStepParameters shellScriptStepParameters = (ShellScriptStepParameters) stepParameters.getSpec();
+      List<UnitProgress> unitProgresses = taskResponse.getUnitProgressData() == null
+          ? emptyList()
+          : taskResponse.getUnitProgressData().getUnitProgresses();
+      stepResponseBuilder.unitProgressList(unitProgresses);
 
-    stepResponseBuilder.status(StepUtils.getStepStatus(taskResponse.getStatus()));
+      stepResponseBuilder.status(StepUtils.getStepStatus(taskResponse.getStatus()));
 
-    FailureInfo.Builder failureInfoBuilder = FailureInfo.newBuilder();
-    if (taskResponse.getErrorMessage() != null) {
-      failureInfoBuilder.setErrorMessage(taskResponse.getErrorMessage());
-    }
-    stepResponseBuilder.failureInfo(failureInfoBuilder.build());
-
-    if (taskResponse.getStatus() == CommandExecutionStatus.SUCCESS) {
-      ShellExecutionData commandExecutionData =
-          (ShellExecutionData) taskResponse.getExecuteCommandResponse().getCommandExecutionData();
-      ShellScriptOutcome shellScriptOutcome = shellScriptHelperService.prepareShellScriptOutcome(
-          commandExecutionData.getSweepingOutputEnvVariables(), shellScriptStepParameters.getOutputVariables());
-      if (shellScriptOutcome != null) {
-        stepResponseBuilder.stepOutcome(StepResponse.StepOutcome.builder()
-                                            .name(OutputExpressionConstants.OUTPUT)
-                                            .outcome(shellScriptOutcome)
-                                            .build());
+      FailureInfo.Builder failureInfoBuilder = FailureInfo.newBuilder();
+      if (taskResponse.getErrorMessage() != null) {
+        failureInfoBuilder.setErrorMessage(taskResponse.getErrorMessage());
       }
+      stepResponseBuilder.failureInfo(failureInfoBuilder.build());
+
+      if (taskResponse.getStatus() == CommandExecutionStatus.SUCCESS) {
+        ShellExecutionData commandExecutionData =
+            (ShellExecutionData) taskResponse.getExecuteCommandResponse().getCommandExecutionData();
+        ShellScriptOutcome shellScriptOutcome = shellScriptHelperService.prepareShellScriptOutcome(
+            commandExecutionData.getSweepingOutputEnvVariables(), shellScriptStepParameters.getOutputVariables());
+        if (shellScriptOutcome != null) {
+          stepResponseBuilder.stepOutcome(StepResponse.StepOutcome.builder()
+                                              .name(OutputExpressionConstants.OUTPUT)
+                                              .outcome(shellScriptOutcome)
+                                              .build());
+        }
+      }
+      return stepResponseBuilder.build();
+    } finally {
+      closeLogStream(ambiance);
     }
-    return stepResponseBuilder.build();
+  }
+
+  @Override
+  public void handleAbort(
+      Ambiance ambiance, StepElementParameters stepParameters, TaskExecutableResponse executableResponse) {
+    closeLogStream(ambiance);
+  }
+
+  private void closeLogStream(Ambiance ambiance) {
+    ILogStreamingStepClient logStreamingStepClient = logStreamingStepClientFactory.getLogStreamingStepClient(ambiance);
+    logStreamingStepClient.closeStream(ShellScriptTaskNG.COMMAND_UNIT);
   }
 }

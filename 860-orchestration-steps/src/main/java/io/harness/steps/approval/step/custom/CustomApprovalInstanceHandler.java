@@ -95,6 +95,6 @@ public class CustomApprovalInstanceHandler implements MongoPersistenceIterator.H
   @Override
   public void handle(ApprovalInstance entity) {
     CustomApprovalInstance customApprovalInstance = (CustomApprovalInstance) entity;
-    customApprovalHelperService.handlePollingEvent(customApprovalInstance);
+    customApprovalHelperService.handlePollingEvent(iterator, customApprovalInstance);
   }
 }
