@@ -17,8 +17,6 @@ import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
 import io.harness.delegate.beans.connector.jenkins.JenkinsConnectorDTO;
-import io.harness.delegate.beans.connector.jenkins.JenkinsUserNamePasswordDTO;
-import io.harness.delegate.beans.connector.jira.JiraConnectorDTO;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
 import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest.JenkinsArtifactDelegateRequestBuilder;
@@ -28,6 +26,7 @@ import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
 import io.harness.encryption.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.logstreaming.LogStreamingStepClientFactory;
 import io.harness.ng.core.NGAccess;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
@@ -40,6 +39,7 @@ import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.StepUtils;
 import io.harness.steps.jenkins.jenkinsstep.JenkinsBuildOutcome;
+import io.harness.steps.jenkins.jenkinsstep.JenkinsBuildOutcome.JenkinsBuildOutcomeBuilder;
 import io.harness.steps.jenkins.jenkinsstep.JenkinsBuildStepHelperService;
 import io.harness.supplier.ThrowingSupplier;
 import io.harness.utils.IdentifierRefHelper;
@@ -54,13 +54,16 @@ public class JenkinsBuildStepHelperServiceImpl implements JenkinsBuildStepHelper
   private final ConnectorResourceClient connectorResourceClient;
   private final SecretManagerClientService secretManagerClientService;
   private final KryoSerializer kryoSerializer;
+  private final LogStreamingStepClientFactory logStreamingStepClientFactory;
 
   @Inject
   public JenkinsBuildStepHelperServiceImpl(ConnectorResourceClient connectorResourceClient,
-      @Named("PRIVILEGED") SecretManagerClientService secretManagerClientService, KryoSerializer kryoSerializer) {
+      @Named("PRIVILEGED") SecretManagerClientService secretManagerClientService, KryoSerializer kryoSerializer,
+      LogStreamingStepClientFactory logStreamingStepClientFactory) {
     this.connectorResourceClient = connectorResourceClient;
     this.secretManagerClientService = secretManagerClientService;
     this.kryoSerializer = kryoSerializer;
+    this.logStreamingStepClientFactory = logStreamingStepClientFactory;
   }
 
   @Override
@@ -113,7 +116,7 @@ public class JenkinsBuildStepHelperServiceImpl implements JenkinsBuildStepHelper
     ArtifactTaskResponse taskResponse = responseSupplier.get();
     JenkinsBuildTaskNGResponse jenkinsBuildTaskNGResponse =
         taskResponse.getArtifactTaskExecutionResponse().getJenkinsBuildTaskNGResponse();
-    JenkinsBuildOutcome.JenkinsBuildOutcomeBuilder jenkinsBuildOutcomeBuilder =
+    JenkinsBuildOutcomeBuilder jenkinsBuildOutcomeBuilder =
         JenkinsBuildOutcome.builder()
             .buildDisplayName(jenkinsBuildTaskNGResponse.getBuildDisplayName())
             .buildFullDisplayName(jenkinsBuildTaskNGResponse.getBuildFullDisplayName())

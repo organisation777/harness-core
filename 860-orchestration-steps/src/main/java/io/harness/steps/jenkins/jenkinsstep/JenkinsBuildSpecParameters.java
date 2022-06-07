@@ -14,10 +14,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
-import io.harness.security.encryption.EncryptedDataDetail;
-
-import software.wings.beans.JenkinsConfig;
-import software.wings.beans.JenkinsSubTaskType;
 
 import java.util.List;
 import java.util.Map;

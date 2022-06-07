@@ -14,7 +14,6 @@ import io.harness.beans.ExecutionStatus;
 import io.harness.delegate.beans.DelegateMetaInfo;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 
-import software.wings.beans.JenkinsSubTaskType;
 import software.wings.sm.states.FilePathAssertionEntry;
 
 import com.google.common.collect.Lists;

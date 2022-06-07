@@ -13,7 +13,6 @@ import io.harness.context.MdcGlobalContextData;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskExecutionResponse;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
-import io.harness.delegate.task.jira.JiraTaskNGParameters;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionMetadataKeys;
 import io.harness.exception.runtime.JenkinsServerRuntimeException;
@@ -71,7 +70,8 @@ public class JenkinsArtifactTaskHelper {
 
         case JENKINS_BUILD:
           saveLogs(executionLogCallback, "Trigger the Jenkins Builds");
-          artifactTaskResponse = getSuccessTaskResponse(jenkinsArtifactTaskHandler.triggerBuild(attributes));
+          artifactTaskResponse =
+              getSuccessTaskResponse(jenkinsArtifactTaskHandler.triggerBuild(attributes, executionLogCallback));
           saveLogs(executionLogCallback, "Trigger the Jenkins Builds " + registryUrl);
           break;
         default:

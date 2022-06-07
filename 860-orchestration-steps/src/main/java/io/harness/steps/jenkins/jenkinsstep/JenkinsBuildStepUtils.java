@@ -12,7 +12,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.pms.yaml.ParameterField;
-import io.harness.steps.jira.beans.JiraField;
 
 import java.util.Collections;
 import java.util.HashMap;

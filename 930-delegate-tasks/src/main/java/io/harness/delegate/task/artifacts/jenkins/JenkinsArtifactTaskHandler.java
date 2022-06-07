@@ -27,7 +27,9 @@ import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
+import io.harness.logging.LogLevel;
 import io.harness.security.encryption.SecretDecryptionService;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
@@ -48,9 +50,9 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Singleton
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
+@Slf4j
 public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<JenkinsArtifactDelegateRequest> {
   private static final int ARTIFACT_RETENTION_SIZE = 25;
   private final SecretDecryptionService secretDecryptionService;
@@ -112,7 +114,8 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
     return ArtifactTaskExecutionResponse.builder().buildDetails(buildDetails).build();
   }
 
-  public ArtifactTaskExecutionResponse triggerBuild(JenkinsArtifactDelegateRequest attributesRequest) {
+  public ArtifactTaskExecutionResponse triggerBuild(
+      JenkinsArtifactDelegateRequest attributesRequest, LogCallback executionLogCallback) {
     JenkinsBuildTaskNGResponse jenkinsBuildTaskNGResponse = new JenkinsBuildTaskNGResponse();
     try {
       ExecutionStatus executionStatus = ExecutionStatus.SUCCESS;
@@ -131,10 +134,11 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
         }
         log.info("Triggered Job successfully with queued Build URL {} ", queueItemUrl);
         jenkinsBuildTaskNGResponse.setQueuedBuildUrl(queueItemUrl);
-        saveLogs(null,
-            "Triggered Job successfully with queued Build URL : " + queueItemUrl + " and remaining Time (sec): "
+        executionLogCallback.saveExecutionLog("Triggered Job successfully with queued Build URL : " + queueItemUrl
+                + " and remaining Time (sec): "
                 + (attributesRequest.getTimeout() - (System.currentTimeMillis() - attributesRequest.getStartTs()))
-                    / 1000);
+                    / 1000,
+            LogLevel.INFO, CommandExecutionStatus.RUNNING);
       } else {
         log.error("The Job was not triggered successfully with queued Build URL {} ", queueItemUrl);
         executionStatus = ExecutionStatus.FAILED;

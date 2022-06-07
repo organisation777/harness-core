@@ -15,7 +15,6 @@ import io.harness.delegate.task.jenkins.JenkinsBuildTaskNGResponse;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
 
-import com.offbytwo.jenkins.model.QueueReference;
 import java.util.List;
 import lombok.Builder;
 import lombok.Singular;

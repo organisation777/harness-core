@@ -17,7 +17,6 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.mixin.JenkinsCapabilityGenerator;
 import io.harness.expression.ExpressionEvaluator;
-import io.harness.pms.yaml.ParameterField;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import java.util.HashSet;
