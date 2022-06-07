@@ -368,6 +368,7 @@ public enum FeatureName {
   ACCOUNT_BASIC_ROLE,
   CVNG_TEMPLATE_MONITORED_SERVICE,
   CVNG_TEMPLATE_VERIFY_STEP,
+  PIPELINE_QUEUE_STEP,
   USE_PAGINATED_ENCRYPT_SERVICE; // To be only used by UI for safeguarding encrypt component changes in CG
 
   FeatureName() {

@@ -95,6 +95,7 @@ public class CommonStepInfo {
                               .setName("Lock")
                               .setType("Lock")
                               .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Lock").build())
+                              .setFeatureFlag(FeatureName.PIPELINE_QUEUE_STEP.name())
                               .build();
   StepInfo serviceNowApprovalStepInfo =
       StepInfo.newBuilder()

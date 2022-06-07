@@ -51,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.mongodb.morphia.converters.TypeConverter;
 import org.springframework.core.convert.converter.Converter;
@@ -172,6 +173,7 @@ public class OrchestrationStepsModuleRegistrars {
                                            .namespace(SchemaNamespaceConstants.PMS)
                                            .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
                                            .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .featureFlags(List.of(FeatureName.PIPELINE_QUEUE_STEP.name()))
                                            .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
