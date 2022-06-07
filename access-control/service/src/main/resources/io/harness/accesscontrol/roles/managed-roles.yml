@@ -1,6 +1,6 @@
 # Any edit in this file should accompany an increment in version.
 name: rolesConfiguration
-version: 25
+version: 26
 roles:
     - identifier: _project_admin
       name: Project Admin
@@ -118,6 +118,8 @@ roles:
         - chaos_chaosagent_view
         - chaos_chaosagent_edit
         - chaos_chaosagent_delete
+        - chaos_chaosgitops_view
+        - chaos_chaosgitops_edit
       allowedScopeLevels:
         - project
       managed: true
@@ -160,6 +162,7 @@ roles:
         - core_variable_view
         - chaos_chaoshub_view
         - chaos_chaosagent_view
+        - chaos_chaosgitops_view
       allowedScopeLevels:
         - project
       managed: true
@@ -285,6 +288,8 @@ roles:
         - chaos_chaosagent_view
         - chaos_chaosagent_edit
         - chaos_chaosagent_delete
+        - chaos_chaosgitops_view
+        - chaos_chaosgitops_edit
       allowedScopeLevels:
         - organization
       managed: true
@@ -329,6 +334,7 @@ roles:
         - core_variable_view
         - chaos_chaoshub_view
         - chaos_chaosagent_view
+        - chaos_chaosgitops_view
       allowedScopeLevels:
         - organization
       managed: true
@@ -461,6 +467,8 @@ roles:
         - chaos_chaosagent_view
         - chaos_chaosagent_edit
         - chaos_chaosagent_delete
+        - chaos_chaosgitops_view
+        - chaos_chaosgitops_edit
       allowedScopeLevels:
         - account
       managed: true
@@ -508,6 +516,7 @@ roles:
         - core_variable_view
         - chaos_chaoshub_view
         - chaos_chaosagent_view
+        - chaos_chaosgitops_view
       allowedScopeLevels:
         - account
       managed: true

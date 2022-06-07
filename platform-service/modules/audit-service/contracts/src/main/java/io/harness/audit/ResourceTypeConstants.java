@@ -45,4 +45,5 @@ public class ResourceTypeConstants {
   public static final String VARIABLE = "VARIABLE";
   public static final String CHAOS_HUB = "CHAOS_HUB";
   public static final String CHAOS_AGENT = "CHAOS_AGENT";
+  public static final String CHAOS_GITOPS = "CHAOS_GITOPS";
 }

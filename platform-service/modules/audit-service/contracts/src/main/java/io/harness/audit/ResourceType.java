@@ -38,7 +38,8 @@ public enum ResourceType {
   GOVERNANCE_POLICY_SET(ResourceTypeConstants.GOVERNANCE_POLICY_SET),
   VARIABLE(ResourceTypeConstants.VARIABLE),
   CHAOS_HUB(ResourceTypeConstants.CHAOS_HUB),
-  CHAOS_AGENT(ResourceTypeConstants.CHAOS_AGENT);
+  CHAOS_AGENT(ResourceTypeConstants.CHAOS_AGENT),
+  CHAOS_GITOPS(ResourceTypeConstants.CHAOS_GITOPS);
 
   ResourceType(String resourceType) {
     if (!this.name().equals(resourceType)) {
