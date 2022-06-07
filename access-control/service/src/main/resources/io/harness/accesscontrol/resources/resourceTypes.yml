@@ -80,3 +80,11 @@ resourceTypes:
     permissionKey: chaosagent
   - identifier: CHAOS_WORKFLOW
     permissionKey: chaosworkflow
+  - identifier: PERSPECTIVE
+    permissionKey: perspective
+  - identifier: BUDGET
+    permissionKey: budget
+  - identifier: COSTCATEGORY
+    permissionKey: costCategory
+  - identifier: AUTOSTOPPINGRULE
+    permissionKey: autoStoppingRule
