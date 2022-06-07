@@ -1008,6 +1008,72 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "JenkinsBuildStepInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StepSpecType"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef",
+            "jobName"
+          ],
+          "properties": {
+            "captureEnvironmentVariable": {
+              "type": "boolean"
+            },
+            "connectorRef": {
+              "type": "string"
+            },
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "jobName": {
+              "type": "string"
+            },
+            "jobParameter": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/JenkinsParameterField"
+              }
+            },
+            "unstableStatusAsSuccess": {
+              "type": "boolean"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "JenkinsParameterField": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "JexlCriteriaSpec": {
       "allOf": [
         {
@@ -3019,6 +3085,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/HttpStepInfo"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "JenkinsBuild"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/JenkinsBuildStepInfo"
               }
             }
           }

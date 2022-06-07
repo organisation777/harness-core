@@ -13,7 +13,6 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
 import io.harness.expression.ExpressionEvaluator;
-import io.harness.pms.contracts.ambiance.Ambiance;
 
 import java.util.List;
 import javax.validation.constraints.NotNull;

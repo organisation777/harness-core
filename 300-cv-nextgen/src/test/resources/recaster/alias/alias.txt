@@ -90,3 +90,7 @@ io.harness.plancreator.strategy.ExcludeConfig
 io.harness.plancreator.strategy.MatrixConfig
 io.harness.plancreator.strategy.StrategyConfig
 io.harness.plancreator.strategy.HarnessForConfig
+io.harness.cdng.pipeline.stepinfo.JenkinsBuildStepInfo
+io.harness.steps.jenkins.jenkinsstep.JenkinsBuildOutcome
+io.harness.steps.jenkins.jenkinsstep.JenkinsBuildStepNode
+io.harness.steps.jenkins.jenkinsstep.JenkinsBuildSpecParameters

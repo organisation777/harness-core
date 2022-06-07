@@ -380,3 +380,7 @@ io.harness.cdng.infra.yaml.AzureWebAppInfrastructure
 io.harness.cdng.infra.beans.AzureWebAppInfrastructureOutcome
 io.harness.cdng.gitops.steps.ClusterStepParameters.EnvClusterRefs
 io.harness.cdng.gitops.steps.GitopsClustersOutcome
+io.harness.cdng.pipeline.stepinfo.JenkinsBuildStepInfo
+io.harness.steps.jenkins.jenkinsstep.JenkinsBuildOutcome
+io.harness.steps.jenkins.jenkinsstep.JenkinsBuildStepNode
+io.harness.steps.jenkins.jenkinsstep.JenkinsBuildSpecParameters
