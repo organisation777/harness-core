@@ -120,6 +120,9 @@ roles:
         - chaos_chaosagent_delete
         - chaos_chaosgitops_view
         - chaos_chaosgitops_edit
+        - chaos_chaosworkflow_view
+        - chaos_chaosworkflow_edit
+        - chaos_chaosworkflow_delete
       allowedScopeLevels:
         - project
       managed: true
@@ -163,6 +166,7 @@ roles:
         - chaos_chaoshub_view
         - chaos_chaosagent_view
         - chaos_chaosgitops_view
+        - chaos_chaosworkflow_view
       allowedScopeLevels:
         - project
       managed: true
@@ -290,6 +294,9 @@ roles:
         - chaos_chaosagent_delete
         - chaos_chaosgitops_view
         - chaos_chaosgitops_edit
+        - chaos_chaosworkflow_view
+        - chaos_chaosworkflow_edit
+        - chaos_chaosworkflow_delete
       allowedScopeLevels:
         - organization
       managed: true
@@ -335,6 +342,7 @@ roles:
         - chaos_chaoshub_view
         - chaos_chaosagent_view
         - chaos_chaosgitops_view
+        - chaos_chaosworkflow_view
       allowedScopeLevels:
         - organization
       managed: true
@@ -469,6 +477,9 @@ roles:
         - chaos_chaosagent_delete
         - chaos_chaosgitops_view
         - chaos_chaosgitops_edit
+        - chaos_chaosworkflow_view
+        - chaos_chaosworkflow_edit
+        - chaos_chaosworkflow_delete
       allowedScopeLevels:
         - account
       managed: true
@@ -517,6 +528,7 @@ roles:
         - chaos_chaoshub_view
         - chaos_chaosagent_view
         - chaos_chaosgitops_view
+        - chaos_chaosworkflow_view
       allowedScopeLevels:
         - account
       managed: true

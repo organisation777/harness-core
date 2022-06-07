@@ -80,3 +80,5 @@ resourceTypes:
     permissionKey: chaosagent
   - identifier: CHAOS_GITOPS
     permissionKey: chaosgitops
+  - identifier: CHAOS_WORKFLOW
+    permissionKey: chaosworkflow

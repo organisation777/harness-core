@@ -945,14 +945,6 @@ permissions:
       - account
       - organization
       - project
-  - identifier: chaos_chaosgitops_view
-    name: View Gitops
-    status: ACTIVE
-    includeInAllRoles: false
-    allowedScopeLevels:
-      - account
-      - organization
-      - project
   - identifier: chaos_chaosagent_edit
     name: Edit a Chaos Agent
     status: ACTIVE
@@ -969,10 +961,42 @@ permissions:
       - account
       - organization
       - project
+  - identifier: chaos_chaosgitops_view
+    name: View Gitops
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project    
   - identifier: chaos_chaosgitops_edit
     name: Edit Gitops
     status: ACTIVE
     includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: chaos_chaosworkflow_view
+    name: View a Chaos Workflow
+    status: ACTIVE
+    includedInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: chaos_chaosworkflow_edit
+    name: Edit a Chaos Workflow
+    status: ACTIVE
+    includedInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: chaos_chaosworkflow_delete
+    name: Delete a Chaos Workflow
+    status: ACTIVE
+    includedInAllRoles: false
     allowedScopeLevels:
       - account
       - organization

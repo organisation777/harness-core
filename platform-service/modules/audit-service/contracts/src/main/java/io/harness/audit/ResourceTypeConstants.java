@@ -10,7 +10,6 @@ package io.harness.audit;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
-
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(PL)
@@ -44,6 +43,8 @@ public class ResourceTypeConstants {
   public static final String FILE = "FILE";
   public static final String VARIABLE = "VARIABLE";
   public static final String CHAOS_HUB = "CHAOS_HUB";
+  public static final String MONITORED_SERVICE = "MONITORED_SERVICE";
   public static final String CHAOS_AGENT = "CHAOS_AGENT";
   public static final String CHAOS_GITOPS = "CHAOS_GITOPS";
+  public static final String CHAOS_WORKFLOW = "CHAOS_WORKFLOW";
 }

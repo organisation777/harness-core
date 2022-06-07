@@ -10,7 +10,6 @@ package io.harness.eventsframework;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
-
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -41,6 +40,7 @@ public final class EventsFrameworkMetadataConstants {
   public static final String CHAOS_HUB = "chaoshub";
   public static final String CHAOS_AGENT = "chaosagent";
   public static final String CHAOS_GITOPS = "chaosgitops";
+  public static final String CHAOS_WORKFLOW = "chaosworkflow";
 
   public static final String SERVICE_ENTITY = "service";
   public static final String ENVIRONMENT_ENTITY = "environment";
