@@ -16,6 +16,9 @@ import io.harness.steps.StepSpecTypeConstants;
 
 /**
  * A dedicated step to represent a lock, even the lock be a kind of resource constraint.
+ *
+ * We decide create this one to avoid any side effect from changing the original resource restraint step type. While
+ * {@link ResourceRestraintStep} is used for internal stuffs, the lock step is exposed to the customer.
  */
 @OwnedBy(PIPELINE)
 public class LockStep extends ResourceRestraintStep {
