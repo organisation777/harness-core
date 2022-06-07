@@ -74,6 +74,7 @@ import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.NoAvailableDelegatesException;
 import io.harness.delegate.beans.NoInstalledDelegatesException;
 import io.harness.delegate.beans.SecretDetail;
+import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskGroup;
 import io.harness.delegate.beans.TaskSelectorMap;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
@@ -129,6 +130,7 @@ import software.wings.beans.ExecutionCredential;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitValidationParameters;
 import software.wings.beans.HostValidationTaskParameters;
+import software.wings.beans.SerializationFormat;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.common.AuditHelper;
@@ -156,6 +158,7 @@ import software.wings.service.intfc.SettingsService;
 import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
@@ -218,6 +221,7 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   private static final long VALIDATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
   @Inject private HPersistence persistence;
+  @Inject ObjectMapper objectMapper;
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private MainConfiguration mainConfiguration;
   @Inject private EventEmitter eventEmitter;
@@ -820,6 +824,20 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
                                     .filter(DelegateTaskKeys.accountId, accountId)
                                     .filter(DelegateTaskKeys.uuid, taskId)
                                     .get();
+
+    if (delegateTask.getData().getSerializationFormat().equals(SerializationFormat.JSON)) {
+      TaskType type = TaskType.valueOf(delegateTask.getData().getTaskType());
+      TaskParameters taskParameters;
+      try {
+        taskParameters = objectMapper.readValue(delegateTask.getData().getData(), type.getRequest());
+      } catch (IOException e) {
+        throw new InvalidRequestException("could not parse bytes from delegate task data", e);
+      }
+      TaskData taskData = delegateTask.getData();
+      taskData.setParameters(new Object[] {taskParameters});
+      delegateTask.setData(taskData);
+    }
+
     if (delegateTask != null) {
       try (AutoLogContext ignore = new TaskLogContext(taskId, delegateTask.getData().getTaskType(),
                TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR)) {

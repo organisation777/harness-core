@@ -53,6 +53,7 @@ import io.harness.delegate.beans.NoDelegatesException;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidRequestException;
 import io.harness.perpetualtask.PerpetualTaskClientContext;
 import io.harness.perpetualtask.PerpetualTaskClientContext.PerpetualTaskClientContextBuilder;
 import io.harness.perpetualtask.PerpetualTaskId;
@@ -61,15 +62,18 @@ import io.harness.serializer.KryoSerializer;
 import io.harness.service.intfc.DelegateCallbackRegistry;
 import io.harness.service.intfc.DelegateTaskService;
 
+import software.wings.beans.SerializationFormat;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.DelegateTaskServiceClassic;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.grpc.stub.StreamObserver;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -90,18 +94,20 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
   private KryoSerializer kryoSerializer;
   private DelegateTaskService delegateTaskService;
   private DelegateTaskServiceClassic delegateTaskServiceClassic;
+  private ObjectMapper objectMapper;
 
   @Inject
   public DelegateServiceGrpcImpl(DelegateCallbackRegistry delegateCallbackRegistry,
       PerpetualTaskService perpetualTaskService, DelegateService delegateService,
       DelegateTaskService delegateTaskService, KryoSerializer kryoSerializer,
-      DelegateTaskServiceClassic delegateTaskServiceClassic) {
+      DelegateTaskServiceClassic delegateTaskServiceClassic, ObjectMapper objectMapper) {
     this.delegateCallbackRegistry = delegateCallbackRegistry;
     this.perpetualTaskService = perpetualTaskService;
     this.delegateService = delegateService;
     this.kryoSerializer = kryoSerializer;
     this.delegateTaskService = delegateTaskService;
     this.delegateTaskServiceClassic = delegateTaskServiceClassic;
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -137,16 +143,7 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
               .selectionLogsTrackingEnabled(request.getSelectionTrackingLogEnabled())
               .eligibleToExecuteDelegateIds(new LinkedList<>(request.getEligibleToExecuteDelegateIdsList()))
               .forceExecute(request.getForceExecute())
-              .data(TaskData.builder()
-                        .parked(taskDetails.getParked())
-                        .async(taskDetails.getMode() == TaskMode.ASYNC)
-                        .taskType(taskDetails.getType().getType())
-                        .parameters(new Object[] {
-                            kryoSerializer.asInflatedObject(taskDetails.getKryoParameters().toByteArray())})
-                        .timeout(Durations.toMillis(taskDetails.getExecutionTimeout()))
-                        .expressionFunctorToken((int) taskDetails.getExpressionFunctorToken())
-                        .expressions(taskDetails.getExpressionsMap())
-                        .build());
+              .data(createTaskData(taskDetails));
 
       if (request.hasQueueTimeout()) {
         taskBuilder.expiry(System.currentTimeMillis() + Durations.toMillis(request.getQueueTimeout()));
@@ -178,6 +175,34 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
       }
       responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(ex.getMessage()).asRuntimeException());
     }
+  }
+
+  private TaskData createTaskData(TaskDetails taskDetails) {
+    Object[] parameters = null;
+    byte[] data;
+    SerializationFormat serializationFormat;
+    if (taskDetails.getParametersCase().equals(TaskDetails.ParametersCase.KRYO_PARAMETERS)) {
+      serializationFormat = SerializationFormat.KRYO;
+      data = taskDetails.getKryoParameters().toByteArray();
+      parameters = new Object[] {kryoSerializer.asInflatedObject(data)};
+    } else if (taskDetails.getParametersCase().equals(TaskDetails.ParametersCase.JSON_PARAMETERS)) {
+      serializationFormat = SerializationFormat.JSON;
+      data = taskDetails.getJsonParameters().toStringUtf8().getBytes(StandardCharsets.UTF_8);
+    } else {
+      throw new InvalidRequestException("Invalid task response type.");
+    }
+
+    return TaskData.builder()
+        .parked(taskDetails.getParked())
+        .async(taskDetails.getMode() == TaskMode.ASYNC)
+        .taskType(taskDetails.getType().getType())
+        .parameters(parameters)
+        .data(data)
+        .timeout(Durations.toMillis(taskDetails.getExecutionTimeout()))
+        .expressionFunctorToken((int) taskDetails.getExpressionFunctorToken())
+        .expressions(taskDetails.getExpressionsMap())
+        .serializationFormat(serializationFormat)
+        .build();
   }
 
   @Override
