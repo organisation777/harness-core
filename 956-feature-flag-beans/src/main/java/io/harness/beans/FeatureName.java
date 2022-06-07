@@ -10,7 +10,6 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
-
 import lombok.Getter;
 
 /**
@@ -87,6 +86,7 @@ public enum FeatureName {
   FFM_1512,
   FFM_1827,
   FFM_1859,
+  FFM_2134_FF_PIPELINES_TRIGGER,
   WINRM_COPY_CONFIG_OPTIMIZE,
   ECS_MULTI_LBS,
   ENTITY_AUDIT_RECORD,
@@ -350,6 +350,7 @@ public enum FeatureName {
   ALLOW_USER_TYPE_FIELDS_JIRA,
   HARD_DELETE_SECRETS,
   HARD_DELETE_VARIABLES,
+  HARD_DELETE_ENTITIES,
   PIPELINE_MATRIX,
   ACTIVITY_ID_BASED_TF_BASE_DIR,
   INHERITED_USER_GROUP,
