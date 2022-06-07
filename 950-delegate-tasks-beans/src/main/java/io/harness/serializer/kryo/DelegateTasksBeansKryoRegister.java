@@ -1387,7 +1387,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(AzureDeploymentSlotResponse.class, 543523);
     kryo.register(AzureTagsResponse.class, 543524);
     kryo.register(AzureHostResponse.class, 543525);
-    kryo.register(AzureHostsResponse.class, 543526);
+    kryo.register(AzureHostsResponse.class, 543527);
     kryo.register(HostValidationResponse.class, 5167);
     kryo.register(HostReachabilityInfo.class, 5172);
     kryo.register(HttpHelmRepoConfig.class, 7159);

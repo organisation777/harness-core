@@ -661,7 +661,7 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
     }
 
     return OSType.WINDOWS.equals(osType) && virtualMachine.osProfile().windowsConfiguration() != null
-        && OSType.LINUX.equals(osType) && virtualMachine.osProfile().linuxConfiguration() != null;
+        || OSType.LINUX.equals(osType) && virtualMachine.osProfile().linuxConfiguration() != null;
   }
 
   private boolean isVmRunning(VirtualMachine virtualMachine) {
