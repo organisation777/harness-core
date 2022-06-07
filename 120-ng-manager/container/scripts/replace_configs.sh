@@ -366,6 +366,12 @@ if [[ "" != "$REDIS_NETTY_THREADS" ]]; then
   yq write -i $REDISSON_CACHE_FILE nettyThreads "$REDIS_NETTY_THREADS"
 fi
 
+if [[ "" != "$OAUTH_GITHUB_CLIENT_ID" ]]; then
+  yq write -i $CONFIG_FILE githubOauthConfig.clientId "$OAUTH_GITHUB_CLIENT_ID"
+  yq write -i $CONFIG_FILE githubOauthConfig.clientSecret "$OAUTH_GITHUB_CLIENT_SECRET"
+  yq write -i $CONFIG_FILE githubOauthConfig.callbackUrl "$OAUTH_GITHUB_CALLBACK_URL"
+fi
+
 replace_key_value cacheConfig.cacheNamespace $CACHE_NAMESPACE
 replace_key_value cacheConfig.cacheBackend $CACHE_BACKEND
 

@@ -429,3 +429,8 @@ pmsPlanCreatorServicePoolConfig:
   maxPoolSize: ${PLAN_CREATOR_SERVICE_EXECUTOR_POOL_MAX_SIZE:-3}
   idleTime: ${PLAN_CREATOR_SERVICE_EXECUTOR_POOL_IDLE_TIME:-30}
   timeUnit: ${PLAN_CREATOR_SERVICE_EXECUTOR_POOL_IDLE_TIME_TIME_UNIT:-SECONDS}
+
+githubOauthConfig:
+  clientId: "424a251ac2cdfc4a941e"
+  clientSecret: "9d3de34ed24e6b749214a0bd1103adce72f17356"
+  callbackUrl: "https://test/api/users/oauth2/github"

@@ -24,6 +24,7 @@ shared_dependencies = [
     "//126-instance:module",
     "//136-git-sync-manager:module",
     "//295-cdng-contracts:module",
+    "//889-oauth-client:module",
     "//920-ng-signup:module",
     "//925-enforcement-service:module",
     "//930-ng-license-manager:module",

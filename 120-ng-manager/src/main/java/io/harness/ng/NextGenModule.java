@@ -185,6 +185,7 @@ import io.harness.ng.core.variable.services.impl.VariableServiceImpl;
 import io.harness.ng.eventsframework.EventsFrameworkModule;
 import io.harness.ng.feedback.services.FeedbackService;
 import io.harness.ng.feedback.services.impls.FeedbackServiceImpl;
+import io.harness.ng.oauth.GithubOauthClient;
 import io.harness.ng.opa.OpaService;
 import io.harness.ng.opa.OpaServiceImpl;
 import io.harness.ng.opa.entities.connector.OpaConnectorService;
@@ -295,6 +296,7 @@ import org.jooq.ExecuteListener;
 import org.mongodb.morphia.converters.TypeConverter;
 import org.springframework.core.convert.converter.Converter;
 import ru.vyarus.guice.validator.ValidationModule;
+import software.wings.security.authentication.oauth.GithubConfig;
 
 @Slf4j
 @OwnedBy(HarnessTeam.PL)
@@ -315,6 +317,12 @@ public class NextGenModule extends AbstractModule {
         .put(DelegateAsyncTaskResponse.class, "ngManager_delegateAsyncTaskResponses")
         .put(DelegateTaskProgressResponse.class, "ngManager_delegateTaskProgressResponses")
         .build();
+  }
+
+  @Provides
+  @Singleton
+  GithubConfig getGithubOauthClient(NextGenConfiguration appConfig) {
+    return appConfig.getGithubConfig();
   }
 
   @Provides
