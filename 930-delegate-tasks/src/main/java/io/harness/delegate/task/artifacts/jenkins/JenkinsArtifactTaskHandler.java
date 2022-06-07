@@ -8,7 +8,9 @@
 package io.harness.delegate.task.artifacts.jenkins;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.exception.WingsException.ExecutionContext.DELEGATE;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.logging.CommandExecutionStatus.FAILURE;
 
 import static java.util.stream.Collectors.toList;
 
@@ -28,10 +30,12 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.logging.ExceptionLogger;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.security.encryption.SecretDecryptionService;
 
+import software.wings.beans.JenkinsSubTaskType;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
 
@@ -117,9 +121,9 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
   public ArtifactTaskExecutionResponse triggerBuild(
       JenkinsArtifactDelegateRequest attributesRequest, LogCallback executionLogCallback) {
     JenkinsBuildTaskNGResponse jenkinsBuildTaskNGResponse = new JenkinsBuildTaskNGResponse();
+    ExecutionStatus executionStatus = ExecutionStatus.SUCCESS;
+    String msg = "Error occurred while starting Jenkins task\n";
     try {
-      ExecutionStatus executionStatus = ExecutionStatus.SUCCESS;
-      String msg = "Error occurred while starting Jenkins task\n";
       JenkinsInternalConfig jenkinsInternalConfig =
           JenkinsRequestResponseMapper.toJenkinsInternalConfig(attributesRequest);
       QueueReference queueReference = jenkinsRegistryUtils.trigger(
@@ -134,6 +138,7 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
         }
         log.info("Triggered Job successfully with queued Build URL {} ", queueItemUrl);
         jenkinsBuildTaskNGResponse.setQueuedBuildUrl(queueItemUrl);
+
         executionLogCallback.saveExecutionLog("Triggered Job successfully with queued Build URL : " + queueItemUrl
                 + " and remaining Time (sec): "
                 + (attributesRequest.getTimeout() - (System.currentTimeMillis() - attributesRequest.getStartTs()))
@@ -148,13 +153,25 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
       Build jenkinsBuild = jenkinsRegistryUtils.waitForJobToStartExecution(queueReference, jenkinsInternalConfig);
       jenkinsBuildTaskNGResponse.setBuildNumber(String.valueOf(jenkinsBuild.getNumber()));
       jenkinsBuildTaskNGResponse.setJobUrl(jenkinsBuild.getUrl());
+      executionLogCallback.saveExecutionLog(
+          "The Job was build successfull. Build number " + String.valueOf(jenkinsBuild.getNumber()), LogLevel.INFO,
+          CommandExecutionStatus.SUCCESS);
     } catch (WingsException e) {
+      executionLogCallback.saveExecutionLog(msg + e, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      ExceptionLogger.logProcessedMessages(e, DELEGATE, log);
       throw e;
     } catch (IOException ex) {
+      executionLogCallback.saveExecutionLog(msg + ex, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
       throw new InvalidRequestException("Failed to trigger the Jenkins Job" + ExceptionUtils.getMessage(ex), USER);
     } catch (URISyntaxException e) {
-      e.printStackTrace();
+      executionLogCallback.saveExecutionLog("Invalid URI Syntax\n" + e, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+    } catch (Exception e) {
+      executionLogCallback.saveExecutionLog(msg + e, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
+      log.error(msg, e);
+      executionStatus = ExecutionStatus.FAILED;
+      jenkinsBuildTaskNGResponse.setErrorMessage(ExceptionUtils.getMessage(e));
     }
+    jenkinsBuildTaskNGResponse.setExecutionStatus(executionStatus);
     return ArtifactTaskExecutionResponse.builder().jenkinsBuildTaskNGResponse(jenkinsBuildTaskNGResponse).build();
   }
 

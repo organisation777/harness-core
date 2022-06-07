@@ -22,6 +22,7 @@ import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
 import io.harness.logging.LogCallback;
 
 import com.google.inject.Inject;
+import java.net.URISyntaxException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -49,10 +50,14 @@ public class JenkinsArtifactTaskNG extends AbstractDelegateRunnableTask {
 
   @Override
   public ArtifactTaskResponse run(TaskParameters parameters) {
-    ArtifactTaskParameters taskParameters = (ArtifactTaskParameters) parameters;
-    CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
-    LogCallback executionLogCallback =
-        new NGDelegateLogCallback(getLogStreamingTaskClient(), "Execute", true, commandUnitsProgress);
-    return jenkinsArtifactTaskHelper.getArtifactCollectResponse(taskParameters, executionLogCallback);
+    try {
+      ArtifactTaskParameters taskParameters = (ArtifactTaskParameters) parameters;
+      CommandUnitsProgress commandUnitsProgress = CommandUnitsProgress.builder().build();
+      LogCallback executionLogCallback =
+          new NGDelegateLogCallback(getLogStreamingTaskClient(), "Execute", true, commandUnitsProgress);
+      return jenkinsArtifactTaskHelper.getArtifactCollectResponse(taskParameters, executionLogCallback);
+    } finally {
+      getLogStreamingTaskClient().closeStream("Execute");
+    }
   }
 }

@@ -22,6 +22,7 @@ import io.harness.manage.GlobalContextManager;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

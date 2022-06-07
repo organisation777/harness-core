@@ -25,7 +25,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 
 @OwnedBy(CDC)
 @Data
@@ -35,7 +37,7 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = false)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JenkinsBuildTaskNGResponse implements DelegateTaskNotifyResponseData {
-  private DelegateMetaInfo delegateMetaInfo;
+  @NonFinal @Setter private DelegateMetaInfo delegateMetaInfo;
   private ExecutionStatus executionStatus;
   private String jenkinsResult;
   private String errorMessage;
@@ -51,13 +53,4 @@ public class JenkinsBuildTaskNGResponse implements DelegateTaskNotifyResponseDat
   private String queuedBuildUrl;
   private String activityId;
   private Long timeElapsed; // time taken for task completion
-  @Override
-  public DelegateMetaInfo getDelegateMetaInfo() {
-    return null;
-  }
-
-  @Override
-  public void setDelegateMetaInfo(DelegateMetaInfo metaInfo) {
-    return;
-  }
 }
