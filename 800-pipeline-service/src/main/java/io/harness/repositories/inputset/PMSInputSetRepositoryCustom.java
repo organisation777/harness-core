@@ -14,7 +14,6 @@ import io.harness.git.model.ChangeType;
 import io.harness.pms.inputset.gitsync.InputSetYamlDTO;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 
-import com.mongodb.client.result.UpdateResult;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
