@@ -472,6 +472,21 @@ roles:
         - chaos_chaosworkflow_view
         - chaos_chaosworkflow_edit
         - chaos_chaosworkflow_delete
+        - ccm_perspective_view
+        - ccm_perspective_edit
+        - ccm_perspective_delete
+        - ccm_budget_view
+        - ccm_budget_edit
+        - ccm_budget_delete
+        - ccm_costCategory_view
+        - ccm_costCategory_edit
+        - ccm_costCategory_delete
+        - ccm_autoStoppingRule_view
+        - ccm_autoStoppingRule_edit
+        - ccm_autoStoppingRule_delete
+        - ccm_folder_view
+        - ccm_folder_edit
+        - ccm_folder_delete
       allowedScopeLevels:
         - account
       managed: true
@@ -520,6 +535,11 @@ roles:
         - chaos_chaoshub_view
         - chaos_chaosagent_view
         - chaos_chaosworkflow_view
+        - ccm_perspective_view
+        - ccm_budget_view
+        - ccm_costCategory_view
+        - ccm_autoStoppingRule_view
+        - ccm_folder_view
       allowedScopeLevels:
         - account
       managed: true
