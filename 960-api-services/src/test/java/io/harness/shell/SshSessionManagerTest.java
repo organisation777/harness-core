@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -33,7 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -53,10 +54,21 @@ public class SshSessionManagerTest extends ApiServiceTestBase {
   private LogCallback logCallback = mock(LogCallback.class);
   private SshSessionManager manager = new SshSessionManager();
 
+  @Before
+  @Owner(developers = ARVIND)
+  @Category(UnitTests.class)
+  public void before() {
+    reset(jSch, session, channel, logCallback);
+    Map<String, Session> sessions = (Map<String, Session>) ReflectionUtils.getFieldValue(manager, "sessions");
+    Map<String, List<Session>> simplexSessions =
+        (Map<String, List<Session>>) ReflectionUtils.getFieldValue(manager, "simplexSessions");
+    sessions.clear();
+    simplexSessions.clear();
+  }
+
   @Test
   @Owner(developers = ARVIND)
   @Category(UnitTests.class)
-  @Ignore(value = "Arvind Choudhary will fix this flaky test")
   public void testEvictAndDisconnectCachedSession() {
     Map<String, Session> sessions = (Map<String, Session>) ReflectionUtils.getFieldValue(manager, "sessions");
     sessions.put("e~h", session);
@@ -78,7 +90,6 @@ public class SshSessionManagerTest extends ApiServiceTestBase {
   @Test
   @Owner(developers = ARVIND)
   @Category(UnitTests.class)
-  @Ignore(value = "Arvind Choudhary will fix this flaky test")
   public void testGetSimplexSession() throws Exception {
     PowerMockito.mockStatic(SshSessionFactory.class);
     SshSessionConfig config =
