@@ -1,0 +1,59 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
+package io.harness.plancreator.steps.resourceconstraint;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import io.harness.category.element.UnitTests;
+import io.harness.plancreator.steps.common.SpecParameters;
+import io.harness.pms.yaml.ParameterField;
+import io.harness.rule.Owner;
+import io.harness.rule.OwnerRule;
+import io.harness.steps.resourcerestraint.ResourceRestraintSpecParameters;
+import io.harness.steps.resourcerestraint.beans.AcquireMode;
+import io.harness.steps.resourcerestraint.beans.HoldingScope;
+
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
+public class LockStepInfoTest {
+  @Test
+  @Owner(developers = OwnerRule.FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldVerifyRuntimeSpecParameters() {
+    LockStepInfo step = new LockStepInfo();
+    step.setScope(HoldingScope.PIPELINE);
+    ParameterField<String> pfKey = ParameterField.<String>builder().value("aKey").build();
+    step.setKey(pfKey);
+
+    SpecParameters spec = step.getSpecParameters();
+    assertThat(spec).isNotNull();
+    assertThat(spec).isInstanceOf(ResourceRestraintSpecParameters.class);
+
+    ResourceRestraintSpecParameters rrSpec = (ResourceRestraintSpecParameters) spec;
+    assertThat(rrSpec.getResourceUnit()).isEqualTo(pfKey);
+    assertThat(rrSpec.getResourceUnit().getValue()).isEqualTo("aKey");
+    assertThat(rrSpec.getHoldingScope()).isEqualTo(HoldingScope.PIPELINE);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldVerifyFixedSpecParameters() {
+    LockStepInfo step = new LockStepInfo();
+
+    SpecParameters spec = step.getSpecParameters();
+    assertThat(spec).isNotNull();
+    assertThat(spec).isInstanceOf(ResourceRestraintSpecParameters.class);
+
+    ResourceRestraintSpecParameters rrSpec = (ResourceRestraintSpecParameters) spec;
+    assertThat(rrSpec.getAcquireMode()).isEqualTo(AcquireMode.ENSURE);
+    assertThat(rrSpec.getPermits()).isEqualTo(1);
+    assertThat(rrSpec.getName()).isEqualTo("Queuing");
+  }
+}
