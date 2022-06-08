@@ -991,14 +991,8 @@ permissions:
     includedInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: ccm_perspective_create
-    name: Create a CCM Perspective
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
   - identifier: ccm_perspective_edit
-    name: Edit a CCM Perspective
+    name: Create or Edit a CCM Perspective
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:
@@ -1015,38 +1009,8 @@ permissions:
     includedInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: ccm_budget_create
-    name: Create a CCM Budget
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
   - identifier: ccm_budget_edit
-    name: Edit a CCM Budget
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
-  - identifier: ccm_budget_delete
-    name: Delete a CCM Budget
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
-  - identifier: ccm_budget_view
-    name: View a CCM Budget
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
-  - identifier: ccm_budget_create
-    name: Create a CCM Budget
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
-  - identifier: ccm_budget_edit
-    name: Edit a CCM Budget
+    name: Create or Edit a CCM Budget
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:
@@ -1063,14 +1027,8 @@ permissions:
     includedInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: ccm_costCategory_create
-    name: Create a CCM Cost Category
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
   - identifier: ccm_costCategory_edit
-    name: Edit a CCM Cost Category
+    name: Create or Edit a CCM Cost Category
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:
@@ -1087,20 +1045,20 @@ permissions:
     includedInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: ccm_autoStoppingRule_create
-    name: Create a CCM Auto Stopping Rule
-    status: ACTIVE
-    includedInAllRoles: false
-    allowedScopeLevels:
-      - account
   - identifier: ccm_autoStoppingRule_edit
-    name: Edit a CCM Auto Stopping Rule
+    name: Create or Edit a CCM Auto Stopping Rule
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:
       - account
   - identifier: ccm_autoStoppingRule_delete
     name: Delete a CCM Auto Stopping Rule
+    status: ACTIVE
+    includedInAllRoles: false
+    allowedScopeLevels:
+      - account
+  - identifier: ccm_folder_manage
+    name: Create, Edit or Delete a CCM Folder
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:

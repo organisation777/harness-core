@@ -82,6 +82,8 @@ resourceTypes:
     permissionKey: chaosworkflow
   - identifier: PERSPECTIVE
     permissionKey: perspective
+  - identifier: FOLDER
+    permissionKey: folder
   - identifier: BUDGET
     permissionKey: budget
   - identifier: COSTCATEGORY
