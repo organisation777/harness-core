@@ -17,6 +17,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
@@ -24,7 +25,8 @@ import java.util.Arrays;
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.steps.resourcerestraint.beans.HoldingScope")
 public enum HoldingScope {
-  @JsonProperty(YAML_NAME_PLAN) @Deprecated PLAN(YAML_NAME_PLAN),
+  // KEEP FOR BACKWARD COMPATIBILITY AND HIDDEN IN JSON
+  @JsonProperty(YAML_NAME_PLAN) @JsonIgnore @Deprecated PLAN(YAML_NAME_PLAN),
   @JsonProperty(YAML_NAME_PIPELINE) PIPELINE(YAML_NAME_PIPELINE),
   @JsonProperty(YAML_NAME_STAGE) STAGE(YAML_NAME_STAGE),
   @JsonProperty(YAML_NAME_STEP_GROUP) STEP_GROUP(YAML_NAME_STEP_GROUP);
