@@ -42,7 +42,6 @@ import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
 import io.harness.validation.Validator;
 
-import software.wings.beans.EntityType;
 import software.wings.beans.Event.Type;
 import software.wings.beans.Service;
 import software.wings.beans.User;
