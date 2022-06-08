@@ -10,7 +10,6 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
-
 import lombok.Getter;
 
 /**
@@ -19,6 +18,7 @@ import lombok.Getter;
  */
 @OwnedBy(HarnessTeam.PL)
 public enum FeatureName {
+  NG_GITOPS,
   APPD_CV_TASK,
   ARGO_PHASE1,
   ARGO_PHASE2_MANAGED,
@@ -86,6 +86,7 @@ public enum FeatureName {
   FFM_1512,
   FFM_1827,
   FFM_1859,
+  FFM_2134_FF_PIPELINES_TRIGGER,
   WINRM_COPY_CONFIG_OPTIMIZE,
   ECS_MULTI_LBS,
   ENTITY_AUDIT_RECORD,
@@ -139,7 +140,6 @@ public enum FeatureName {
   SEARCH(Scope.GLOBAL),
   SEARCH_REQUEST,
   SEND_LOG_ANALYSIS_COMPRESSED,
-  SEND_SLACK_JSON_NOTIFICATION_FROM_DELEGATE,
   SEND_SLACK_NOTIFICATION_FROM_DELEGATE,
   SIDE_NAVIGATION,
   SKIP_SWITCH_ACCOUNT_REAUTHENTICATION,
@@ -342,7 +342,6 @@ public enum FeatureName {
   NG_SVC_ENV_REDESIGN,
   NEW_PIPELINE_STUDIO,
   AZURE_REPO_CONNECTOR,
-  USER_GROUP_AS_EXPRESSION,
   HELM_OCI_SUPPORT,
   HELP_PANEL,
   CHAOS_ENABLED,
@@ -351,6 +350,7 @@ public enum FeatureName {
   ALLOW_USER_TYPE_FIELDS_JIRA,
   HARD_DELETE_SECRETS,
   HARD_DELETE_VARIABLES,
+  HARD_DELETE_ENTITIES,
   PIPELINE_MATRIX,
   ACTIVITY_ID_BASED_TF_BASE_DIR,
   INHERITED_USER_GROUP,
@@ -362,7 +362,13 @@ public enum FeatureName {
   ENABLE_DEFAULT_TIMEFRAME_IN_DEPLOYMENTS,
   CUSTOM_SECRET_MANAGER_NG,
   EXPORT_TF_PLAN_JSON_NG,
-  NG_FILE_STORE;
+  JDK11_DELEGATE,
+  JDK11_WATCHER,
+  NG_FILE_STORE,
+  ACCOUNT_BASIC_ROLE,
+  CVNG_TEMPLATE_MONITORED_SERVICE,
+  CVNG_TEMPLATE_VERIFY_STEP,
+  USE_PAGINATED_ENCRYPT_SERVICE; // To be only used by UI for safeguarding encrypt component changes in CG
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
