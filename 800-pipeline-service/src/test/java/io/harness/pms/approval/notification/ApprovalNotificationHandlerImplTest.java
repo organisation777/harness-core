@@ -45,7 +45,10 @@ import io.harness.steps.approval.step.harness.beans.ApproversDTO;
 import io.harness.steps.approval.step.harness.entities.HarnessApprovalInstance;
 import io.harness.usergroups.UserGroupClient;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -140,7 +143,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
                                           .setNodeGroup("STAGE")
                                           .build();
     GraphLayoutNodeDTO graphLayoutNodeDTO = GraphLayoutDtoMapper.toDto(graphLayoutNode);
-    Map<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
+    HashMap<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
     layoutNodeDTOMap.put(startingNodeId, graphLayoutNodeDTO);
 
     Ambiance ambiance = Ambiance.newBuilder()
@@ -205,7 +208,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
     graphLayoutNodeDTO.setStatus(ExecutionStatus.SUCCESS);
 
     //    graphLayoutNodeDTO.status= ExecutionStatus.SUCCESS;
-    Map<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
+    HashMap<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
     layoutNodeDTOMap.put(startingNodeId, graphLayoutNodeDTO);
 
     Ambiance ambiance = Ambiance.newBuilder()
@@ -270,7 +273,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
     graphLayoutNodeDTO.setStatus(ExecutionStatus.ASYNCWAITING);
 
     //    graphLayoutNodeDTO.status= ExecutionStatus.SUCCESS;
-    Map<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
+    HashMap<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
     layoutNodeDTOMap.put(startingNodeId, graphLayoutNodeDTO);
 
     Ambiance ambiance = Ambiance.newBuilder()
@@ -332,7 +335,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
             .setEdgeLayoutList(EdgeLayoutList.newBuilder().addNextIds("nextId").addCurrentNodeChildren("child").build())
             .build();
     GraphLayoutNodeDTO graphLayoutNodeDTO1 = GraphLayoutDtoMapper.toDto(graphLayoutNode1);
-    Map<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
+    HashMap<String, GraphLayoutNodeDTO> layoutNodeDTOMap = new HashMap<>();
     layoutNodeDTOMap.put(startingNodeId, graphLayoutNodeDTO1);
 
     GraphLayoutNode graphLayoutNode2 = GraphLayoutNode.newBuilder()
