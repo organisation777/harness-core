@@ -14,7 +14,6 @@ import io.harness.timescaledb.Tables;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -22,7 +21,6 @@ import org.jooq.SelectField;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
-@Slf4j
 public class PipelineDashboardQueryService {
   @Inject private DSLContext dsl;
 
@@ -59,8 +57,7 @@ public class PipelineDashboardQueryService {
       statusAndTime = this.dsl.select(select).from(from).where(conditions).fetch().into(StatusAndTime.class);
       return statusAndTime;
     } catch (Exception ex) {
-      log.error("Unable to fetch Dashboard data for executions", ex);
-      throw new InvalidRequestException("Unable to fetch Dashboard data for executions");
+      throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
     }
   }
 
@@ -99,8 +96,7 @@ public class PipelineDashboardQueryService {
       mean = this.dsl.select(select).from(from).where(conditions).fetch().into(long.class);
       return mean.get(0);
     } catch (Exception ex) {
-      log.error("Unable to fetch Dashboard data for executions", ex);
-      throw new InvalidRequestException("Unable to fetch Dashboard data for executions");
+      throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
     }
   }
 
@@ -137,8 +133,7 @@ public class PipelineDashboardQueryService {
       median = this.dsl.select(select).from(from).where(conditions).fetch().into(long.class);
       return median.get(0);
     } catch (Exception ex) {
-      log.error("Unable to fetch Dashboard data for executions", ex);
-      throw new InvalidRequestException("Unable to fetch Dashboard data for executions");
+      throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
     }
   }
 }
