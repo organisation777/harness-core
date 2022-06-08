@@ -138,6 +138,8 @@ import io.harness.delegate.task.artifactory.ArtifactoryDelegateTask;
 import io.harness.delegate.task.artifactory.ArtifactoryValidationHandler;
 import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
@@ -1157,6 +1159,13 @@ public class DelegateModule extends AbstractModule {
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
     artifactServiceMapBinder.addBinding(DockerArtifactDelegateRequest.class)
         .toInstance(DockerArtifactTaskHandler.class);
+
+      MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+              amazonS3ArtifactServiceMapBinder =
+              MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                      new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+      artifactServiceMapBinder.addBinding(AmazonS3ArtifactDelegateRequest.class)
+              .toInstance(AmazonS3ArtifactTaskHandler.class);
 
     MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
         jenkinsArtifactServiceMapBinder =
