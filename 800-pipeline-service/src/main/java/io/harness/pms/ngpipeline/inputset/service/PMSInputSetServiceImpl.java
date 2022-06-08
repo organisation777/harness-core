@@ -296,10 +296,6 @@ public class PMSInputSetServiceImpl implements PMSInputSetService {
     try {
       inputSetRepository.deleteAllInputSetsWhenPipelineDeleted(query);
     } catch (Exception e) {
-      log.error(
-          format("InputSets for Pipeline [%s] under Project[%s], Organization [%s] couldn't be deleted.",
-              pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()),
-          e);
       throw new InvalidRequestException(
           format("InputSets for Pipeline [%s] under Project[%s], Organization [%s] couldn't be deleted.",
               pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()),

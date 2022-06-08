@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,7 +57,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 
 @OwnedBy(PIPELINE)
 public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
@@ -285,15 +285,9 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
         .is(PIPELINE_IDENTIFIER);
     Query query = new Query(criteria);
 
-    Update update = new Update();
-    update.set("deleted", Boolean.TRUE);
-
-    doReturn(true).when(updateResult).wasAcknowledged();
-    doReturn(updateResult).when(inputSetRepository).deleteAllInputSetsWhenPipelineDeleted(query, update);
-
     pmsInputSetServiceMock.deleteInputSetsOnPipelineDeletion(pipelineEntity);
 
-    verify(inputSetRepository, times(1)).deleteAllInputSetsWhenPipelineDeleted(query, update);
+    verify(inputSetRepository, times(1)).deleteAllInputSetsWhenPipelineDeleted(query);
   }
 
   @Test
@@ -311,11 +305,9 @@ public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
         .is(PIPELINE_IDENTIFIER);
     Query query = new Query(criteria);
 
-    Update update = new Update();
-    update.set("deleted", Boolean.TRUE);
-
-    doReturn(false).when(updateResult).wasAcknowledged();
-    doReturn(updateResult).when(inputSetRepository).deleteAllInputSetsWhenPipelineDeleted(query, update);
+    doThrow(new InvalidRequestException("random exception"))
+        .when(inputSetRepository)
+        .deleteAllInputSetsWhenPipelineDeleted(query);
 
     assertThatThrownBy(() -> pmsInputSetServiceMock.deleteInputSetsOnPipelineDeletion(pipelineEntity))
         .isInstanceOf(InvalidRequestException.class)
