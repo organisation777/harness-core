@@ -211,7 +211,7 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
 
       GovernanceConfig updatedSetting =
           wingsPersistence.findAndModify(query, updateOperations, WingsPersistence.upsertReturnNewOptions);
-      updateUserGroupReference(updatedSetting, oldSetting, accountId);
+      executorService.submit(() -> updateUserGroupReference(updatedSetting, oldSetting, accountId));
 
       // push service also adds audit trail, in case of no yaml we add the entry explicitly
       if (newDeploymentFreezeEnabled) {
@@ -244,13 +244,13 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       GovernanceConfig updatedSetting, GovernanceConfig oldSetting, String accountId) {
     List<TimeRangeBasedFreezeConfig> oldTimeRangeBasedFreezeConfigs = oldSetting.getTimeRangeBasedFreezeConfigs();
     List<TimeRangeBasedFreezeConfig> newTimeRangeBasedFreezeConfigs = updatedSetting.getTimeRangeBasedFreezeConfigs();
-    Set<String> currentReferencedUserGroups = getReferencedUserGroup(oldTimeRangeBasedFreezeConfigs);
-    Set<String> updatedReferencedUserGroups = getReferencedUserGroup(newTimeRangeBasedFreezeConfigs);
+    Set<String> currentReferencedUserGroups = getReferencedUserGroupIds(oldTimeRangeBasedFreezeConfigs);
+    Set<String> updatedReferencedUserGroups = getReferencedUserGroupIds(newTimeRangeBasedFreezeConfigs);
     updateFreezeWindowReferenceInUserGroup(currentReferencedUserGroups, updatedReferencedUserGroups, accountId,
         oldSetting.getAppId(), oldSetting.getUuid());
   }
 
-  public Set<String> getReferencedUserGroup(List<TimeRangeBasedFreezeConfig> timeRangeBasedFreezeConfig) {
+  public Set<String> getReferencedUserGroupIds(List<TimeRangeBasedFreezeConfig> timeRangeBasedFreezeConfig) {
     Set<String> referencedUserGroups = new HashSet<>();
     for (TimeRangeBasedFreezeConfig entry : timeRangeBasedFreezeConfig) {
       List<String> userGroups = new ArrayList<>();
@@ -267,15 +267,15 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
   }
 
   private void updateFreezeWindowReferenceInUserGroup(
-      Set<String> previousUserGroups, Set<String> currentUserGroups, String accountId, String appId, String EntityId) {
+      Set<String> previousUserGroups, Set<String> currentUserGroups, String accountId, String appId, String entityId) {
     Set<String> parentsToRemove = Sets.difference(previousUserGroups, currentUserGroups);
     Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
 
     for (String id : parentsToRemove) {
-      userGroupService.removeParentsReference(id, accountId, appId, EntityId, "GOVERNANCE_CONFIG");
+      userGroupService.removeParentsReference(id, accountId, appId, entityId, "GOVERNANCE_CONFIG");
     }
     for (String id : parentsToAdd) {
-      userGroupService.addParentsReference(id, accountId, appId, EntityId, "GOVERNANCE_CONFIG");
+      userGroupService.addParentsReference(id, accountId, appId, entityId, "GOVERNANCE_CONFIG");
     }
   }
 
