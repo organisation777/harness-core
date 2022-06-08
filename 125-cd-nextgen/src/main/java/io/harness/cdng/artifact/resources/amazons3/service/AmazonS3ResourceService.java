@@ -7,6 +7,7 @@
 
 package io.harness.cdng.artifact.resources.amazons3.service;
 
+import io.harness.beans.IdentifierRef;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface AmazonS3ResourceService {
-  Map<String, String> getBuckets(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails);
+  Map<String, String> getBuckets(IdentifierRef connectorIdentifier, String accountId, String orgId, String projId);
 
-  List<String> getArtifactPaths(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName);
+  List<String> getArtifactPaths(IdentifierRef connectorIdentifier, String accountId, String orgId, String projId);
 }

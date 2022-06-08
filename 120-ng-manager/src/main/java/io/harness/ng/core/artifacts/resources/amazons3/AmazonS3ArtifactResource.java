@@ -11,12 +11,14 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.resources.amazons3.dtos.BucketsResponseDTO;
 import io.harness.cdng.artifact.resources.amazons3.service.AmazonS3ResourceService;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -24,6 +26,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
@@ -58,8 +61,14 @@ public class AmazonS3ArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @QueryParam("parentJobName") String parentJobName, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
-    return null;
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(amazonS3ConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
+    Map<String, String> buckets =
+        amazonS3ResourceService.getBuckets(connectorRef, accountId, orgIdentifier, projectIdentifier);
+    BucketsResponseDTO bucketsResponseDTO = BucketsResponseDTO.builder().buckets(buckets).build();
+
+    return ResponseDTO.newResponse(bucketsResponseDTO);
   }
 
   @GET
@@ -69,7 +78,7 @@ public class AmazonS3ArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
-      @PathParam("jobName") String jobName, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     return null;
   }
 }

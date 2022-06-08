@@ -9,6 +9,7 @@ package io.harness.cdng.artifact.resources.amazons3.service;
 
 import static java.util.stream.Collectors.toList;
 
+import io.harness.beans.IdentifierRef;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.security.encryption.EncryptedDataDetail;
 
@@ -30,40 +31,14 @@ public class AmazonS3ResourceServiceImpl implements AmazonS3ResourceService {
   private static final int MAX_FILES_TO_SHOW_IN_UI = 1000;
 
   @Override
-  public Map<String, String> getBuckets(AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails) {
-    List<String> bucketNames = awsS3HelperServiceDelegate.listBucketNames(awsConfig, encryptionDetails);
-    return bucketNames.stream().collect(Collectors.toMap(s -> s, s -> s));
+  public Map<String, String> getBuckets(
+      IdentifierRef connectorIdentifier, String accountId, String orgId, String projId) {
+    return null;
   }
 
   @Override
   public List<String> getArtifactPaths(
-      AwsConfig awsConfig, List<EncryptedDataDetail> encryptionDetails, String bucketName) {
-    ListObjectsV2Request listObjectsV2Request = new ListObjectsV2Request();
-    listObjectsV2Request.withBucketName(bucketName).withMaxKeys(FETCH_FILE_COUNT_IN_BUCKET);
-    ListObjectsV2Result result;
-
-    List<S3ObjectSummary> objectSummaryListFinal = new ArrayList<>();
-    do {
-      result = awsS3HelperServiceDelegate.listObjectsInS3(awsConfig, encryptionDetails, listObjectsV2Request);
-      List<S3ObjectSummary> objectSummaryList = result.getObjectSummaries();
-      if (EmptyPredicate.isNotEmpty(objectSummaryList)) {
-        objectSummaryListFinal.addAll(objectSummaryList.stream()
-                                          .filter(objectSummary -> !objectSummary.getKey().endsWith("/"))
-                                          .collect(Collectors.toList()));
-      }
-
-      listObjectsV2Request.setContinuationToken(result.getNextContinuationToken());
-    } while (result.isTruncated() && objectSummaryListFinal.size() < MAX_FILES_TO_SHOW_IN_UI);
-
-    sortDescending(objectSummaryListFinal);
-    return objectSummaryListFinal.stream().map(S3ObjectSummary::getKey).collect(toList());
-  }
-
-  private void sortDescending(List<S3ObjectSummary> objectSummaryList) {
-    if (EmptyPredicate.isEmpty(objectSummaryList)) {
-      return;
-    }
-
-    objectSummaryList.sort((o1, o2) -> o2.getLastModified().compareTo(o1.getLastModified()));
+      IdentifierRef connectorIdentifier, String accountId, String orgId, String projId) {
+    return null;
   }
 }
