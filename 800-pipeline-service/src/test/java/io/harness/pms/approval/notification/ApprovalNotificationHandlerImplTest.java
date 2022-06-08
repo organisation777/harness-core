@@ -132,7 +132,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
   public void testSendNotification1() {
     String url =
         "https://qa.harness.io/ng/#/account/zEaak-FLS425IEO7OLzMUg/cd/orgs/CV/projects/Brijesh_Dhakar/pipelines/DockerTest/executions/szmvyw4wQR2W4_iKkq9bfQ/pipeline";
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
 
     GraphLayoutNode graphLayoutNode = GraphLayoutNode.newBuilder()
                                           .setNodeIdentifier("nodeIdentifier")
@@ -192,7 +192,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
   public void testSendNotification2() {
     String url =
         "https://qa.harness.io/ng/#/account/zEaak-FLS425IEO7OLzMUg/cd/orgs/CV/projects/Brijesh_Dhakar/pipelines/DockerTest/executions/szmvyw4wQR2W4_iKkq9bfQ/pipeline";
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
 
     GraphLayoutNode graphLayoutNode = GraphLayoutNode.newBuilder()
                                           .setNodeIdentifier("nodeIdentifier")
@@ -257,7 +257,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
   public void testSendNotification3() {
     String url =
         "https://qa.harness.io/ng/#/account/zEaak-FLS425IEO7OLzMUg/cd/orgs/CV/projects/Brijesh_Dhakar/pipelines/DockerTest/executions/szmvyw4wQR2W4_iKkq9bfQ/pipeline";
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
 
     GraphLayoutNode graphLayoutNode = GraphLayoutNode.newBuilder()
                                           .setNodeIdentifier("nodeIdentifier")
@@ -322,7 +322,7 @@ public class ApprovalNotificationHandlerImplTest extends CategoryTest {
   public void testSendNotification4() {
     String url =
         "https://qa.harness.io/ng/#/account/zEaak-FLS425IEO7OLzMUg/cd/orgs/CV/projects/Brijesh_Dhakar/pipelines/DockerTest/executions/szmvyw4wQR2W4_iKkq9bfQ/pipeline";
-    PowerMockito.mockStatic(NGRestUtils.class);
+    Mockito.mockStatic(NGRestUtils.class);
 
     GraphLayoutNode graphLayoutNode1 =
         GraphLayoutNode.newBuilder()
