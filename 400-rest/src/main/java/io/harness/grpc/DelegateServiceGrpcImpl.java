@@ -7,8 +7,11 @@
 
 package io.harness.grpc;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
+import com.google.common.collect.Sets;
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
@@ -52,6 +55,7 @@ import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.NoDelegatesException;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
+import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.exception.ExceptionUtils;
 import io.harness.perpetualtask.PerpetualTaskClientContext;
 import io.harness.perpetualtask.PerpetualTaskClientContext.PerpetualTaskClientContextBuilder;
@@ -70,6 +74,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.grpc.stub.StreamObserver;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -120,8 +125,18 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
                                                        -> (ExecutionCapability) kryoSerializer.asInflatedObject(
                                                            capability.getKryoCapability().toByteArray()))
                                                    .collect(Collectors.toList());
-      List<String> taskSelectors =
-          request.getSelectorsList().stream().map(TaskSelector::getSelector).collect(Collectors.toList());
+
+      if (isNotEmpty(request.getSelectorsList())){
+        List<SelectorCapability> selectorCapabilities = request.getSelectorsList()
+                .stream()
+                .map(selector
+                        -> SelectorCapability.builder()
+                        .selectors(Sets.newHashSet(selector.getSelector()))
+                        .selectorOrigin(selector.getOrigin())
+                        .build())
+                .collect(Collectors.toList());
+        capabilities.addAll(selectorCapabilities);
+      }
 
       DelegateTaskBuilder taskBuilder =
           DelegateTask.builder()
@@ -133,7 +148,6 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
               .logStreamingAbstractions(logAbstractions)
               .workflowExecutionId(setupAbstractions.get(DelegateTaskKeys.workflowExecutionId))
               .executionCapabilities(capabilities)
-              .tags(taskSelectors)
               .selectionLogsTrackingEnabled(request.getSelectionTrackingLogEnabled())
               .eligibleToExecuteDelegateIds(new LinkedList<>(request.getEligibleToExecuteDelegateIdsList()))
               .forceExecute(request.getForceExecute())

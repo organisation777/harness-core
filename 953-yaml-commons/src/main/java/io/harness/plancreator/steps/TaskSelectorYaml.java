@@ -26,7 +26,10 @@ public class TaskSelectorYaml {
     this.delegateSelectors = delegateSelectors;
   }
   public static TaskSelector toTaskSelector(TaskSelectorYaml taskSelectorYaml) {
-    return TaskSelector.newBuilder().setSelector(taskSelectorYaml.delegateSelectors).build();
+    return TaskSelector.newBuilder()
+        .setSelector(taskSelectorYaml.delegateSelectors)
+        .setOrigin(taskSelectorYaml.origin)
+        .build();
   }
   public static List<TaskSelector> toTaskSelector(List<TaskSelectorYaml> taskSelectorYaml) {
     if (taskSelectorYaml == null) {

@@ -9,6 +9,7 @@ package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
@@ -31,7 +32,6 @@ import io.harness.selection.log.DelegateSelectionLog.DelegateSelectionLogKeys;
 import io.harness.selection.log.DelegateSelectionLogTaskMetadata;
 import io.harness.service.intfc.DelegateCache;
 
-import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.service.intfc.DelegateSelectionLogsService;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.DelegateTaskServiceClassic;
@@ -298,20 +298,25 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     if (!delegateTask.isSelectionLogsTrackingEnabled()) {
       return;
     }
-    StringBuilder builder = new StringBuilder();
+    List<String> info = new ArrayList<>();
     String delegateSelectorReceived = generateSelectionLogForSelectors(delegateTask.getExecutionCapabilities());
-    builder.append(delegateSelectorReceived).append("%n");
+    if (isNotEmpty(delegateSelectorReceived)) {
+      info.add(delegateSelectorReceived);
+    }
     delegateTask.getExecutionCapabilities().forEach(capability -> {
       if (!isEmpty(capability.getCapabilityToString())) {
-        builder.append("%n").append(capability.getCapabilityToString());
+        info.add(capability.getCapabilityToString());
       }
     });
 
+    if (isEmpty(info)) {
+      return;
+    }
     save(DelegateSelectionLog.builder()
              .accountId(delegateTask.getAccountId())
              .taskId(delegateTask.getUuid())
              .conclusion(INFO)
-             .message(builder.toString())
+             .message(info.toString())
              .eventTimestamp(System.currentTimeMillis())
              .build());
   }
@@ -345,7 +350,8 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     if (isEmpty(selectorCapabilities)) {
       return EMPTY;
     }
-    selectorCapabilities.forEach(capability -> taskSelectors.add(capability.getSelectorOrigin().concat(capability.getSelectors().toString())));
-    return "Selectors from task : " + String.join(", ", taskSelectors);
+    selectorCapabilities.forEach(
+        capability -> taskSelectors.add(capability.getSelectorOrigin().concat(capability.getSelectors().toString())));
+    return String.format("Selector(s) originated from %s ", String.join(", ", taskSelectors));
   }
 }

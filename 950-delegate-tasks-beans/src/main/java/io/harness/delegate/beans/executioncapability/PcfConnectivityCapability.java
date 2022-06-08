@@ -43,6 +43,6 @@ public class PcfConnectivityCapability implements ExecutionCapability {
 
   @Override
   public String getCapabilityToString() {
-    return !isEmpty(endpointUrl) ? String.format("Capability reach URL: %s ", endpointUrl) : null;
+    return !isEmpty(endpointUrl) ? String.format("Capability Reach URL: %s ", endpointUrl) : null;
   }
 }
