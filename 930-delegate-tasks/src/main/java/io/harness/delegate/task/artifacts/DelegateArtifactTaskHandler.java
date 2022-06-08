@@ -48,5 +48,9 @@ public abstract class DelegateArtifactTaskHandler<T extends ArtifactSourceDelega
     throw new InvalidRequestException("Operation not supported");
   }
 
+  public ArtifactTaskExecutionResponse getBuckets(T attributesRequest) {
+    throw new InvalidRequestException("Operation not supported");
+  }
+
   public abstract void decryptRequestDTOs(T dto);
 }
