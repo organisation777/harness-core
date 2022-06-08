@@ -82,7 +82,7 @@ public class DelegateAgentModule extends AbstractModule {
 
   private void configureCcmEventPublishing() {
     final String deployMode = System.getenv(DEPLOY_MODE);
-    if (!isOnPrem(deployMode)) { // && isImmutableDelegate) {
+    if (!isOnPrem(deployMode) && isImmutableDelegate) {
       final String managerHostAndPort = System.getenv("MANAGER_HOST_AND_PORT");
       if (isNotBlank(managerHostAndPort)) {
         log.info("Running immutable delegate, starting CCM event tailer");
