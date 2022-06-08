@@ -25,8 +25,8 @@ import java.util.Arrays;
 @OwnedBy(CDC)
 @RecasterAlias("io.harness.steps.resourcerestraint.beans.HoldingScope")
 public enum HoldingScope {
-  // KEEP FOR BACKWARD COMPATIBILITY AND HIDDEN IN JSON
-  @JsonProperty(YAML_NAME_PLAN) @JsonIgnore @Deprecated PLAN(YAML_NAME_PLAN),
+  // KEEP FOR BACKWARD COMPATIBILITY, HIDDEN IN YAML EDITOR
+  @JsonIgnore @Deprecated PLAN(YAML_NAME_PLAN),
   @JsonProperty(YAML_NAME_PIPELINE) PIPELINE(YAML_NAME_PIPELINE),
   @JsonProperty(YAML_NAME_STAGE) STAGE(YAML_NAME_STAGE),
   @JsonProperty(YAML_NAME_STEP_GROUP) STEP_GROUP(YAML_NAME_STEP_GROUP);
