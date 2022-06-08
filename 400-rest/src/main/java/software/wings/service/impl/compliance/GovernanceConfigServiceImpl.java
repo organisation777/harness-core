@@ -42,6 +42,7 @@ import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
 import io.harness.validation.Validator;
 
+import software.wings.beans.EntityType;
 import software.wings.beans.Event.Type;
 import software.wings.beans.Service;
 import software.wings.beans.User;
@@ -65,6 +66,7 @@ import software.wings.service.intfc.compliance.GovernanceConfigService;
 import software.wings.service.intfc.yaml.YamlPushService;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.segment.analytics.messages.TrackMessage;
@@ -244,6 +246,8 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
     List<TimeRangeBasedFreezeConfig> newTimeRangeBasedFreezeConfigs = updatedSetting.getTimeRangeBasedFreezeConfigs();
     Set<String> currentReferencedUserGroups = getReferencedUserGroup(oldTimeRangeBasedFreezeConfigs);
     Set<String> updatedReferencedUserGroups = getReferencedUserGroup(newTimeRangeBasedFreezeConfigs);
+    updateFreezeWindowReferenceInUserGroup(currentReferencedUserGroups, updatedReferencedUserGroups, accountId,
+        oldSetting.getAppId(), oldSetting.getUuid());
   }
 
   public Set<String> getReferencedUserGroup(List<TimeRangeBasedFreezeConfig> timeRangeBasedFreezeConfig) {
@@ -260,6 +264,19 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       }
     }
     return referencedUserGroups;
+  }
+
+  private void updateFreezeWindowReferenceInUserGroup(
+      Set<String> previousUserGroups, Set<String> currentUserGroups, String accountId, String appId, String EntityId) {
+    Set<String> parentsToRemove = Sets.difference(previousUserGroups, currentUserGroups);
+    Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
+
+    for (String id : parentsToRemove) {
+      userGroupService.removeParentsReference(id, accountId, appId, EntityId, "GOVERNANCE_CONFIG");
+    }
+    for (String id : parentsToAdd) {
+      userGroupService.addParentsReference(id, accountId, appId, EntityId, "GOVERNANCE_CONFIG");
+    }
   }
 
   private void checkIfOnlyOneTypeOfUserGroupIsSet(
