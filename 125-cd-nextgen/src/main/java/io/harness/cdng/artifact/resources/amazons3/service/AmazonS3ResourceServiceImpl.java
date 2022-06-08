@@ -89,9 +89,10 @@ public class AmazonS3ResourceServiceImpl implements AmazonS3ResourceService {
       return artifactTaskExecutionResponse.getBuckets();
 
     } catch (DelegateServiceDriverException ex) {
-
+      throw new HintException(
+              String.format(HintException.DELEGATE_NOT_AVAILABLE, DocumentLinksConstants.DELEGATE_INSTALLATION_LINK),
+              new DelegateNotAvailableException(ex.getCause().getMessage(), WingsException.USER));
     }
-    return null;
   }
 
   private ArtifactTaskExecutionResponse executeSyncTask(AmazonS3ArtifactDelegateRequest artifactDelegateRequest,
