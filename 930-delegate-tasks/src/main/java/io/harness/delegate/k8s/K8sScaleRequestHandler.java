@@ -87,7 +87,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
     KubernetesConfig kubernetesConfig =
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(k8sScaleRequest.getK8sInfraDelegateConfig());
 
-    init(k8sScaleRequest, k8SDelegateTaskParams, kubernetesConfig.getNamespace(),
+    init(k8sScaleRequest, k8SDelegateTaskParams, kubernetesConfig,
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));
 
     if (resourceIdToScale == null) {
@@ -139,13 +139,14 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
   }
 
   @VisibleForTesting
-  void init(K8sScaleRequest request, K8sDelegateTaskParams k8sDelegateTaskParams, String namespace,
+  void init(K8sScaleRequest request, K8sDelegateTaskParams k8sDelegateTaskParams, KubernetesConfig kubernetesConfig,
       LogCallback executionLogCallback) throws Exception {
     executionLogCallback.saveExecutionLog("Initializing..\n");
     executionLogCallback.saveExecutionLog(
         color(String.format("Release Name: [%s]", request.getReleaseName()), Yellow, Bold));
 
-    client = Kubectl.client(k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath());
+    client = Kubectl.client(
+        k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath(), kubernetesConfig);
 
     if (StringUtils.isEmpty(request.getWorkload())) {
       executionLogCallback.saveExecutionLog("\nNo Workload found to scale.");
@@ -167,7 +168,7 @@ public class K8sScaleRequestHandler extends K8sRequestHandler {
         color("\nWorkload to scale is: ", White, Bold) + color(resourceIdToScale.namespaceKindNameRef(), Cyan, Bold));
 
     if (isBlank(resourceIdToScale.getNamespace())) {
-      resourceIdToScale.setNamespace(namespace);
+      resourceIdToScale.setNamespace(kubernetesConfig.getNamespace());
     }
 
     executionLogCallback.saveExecutionLog("\nQuerying current replicas");

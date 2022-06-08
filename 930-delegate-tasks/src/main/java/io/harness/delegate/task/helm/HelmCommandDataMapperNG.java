@@ -36,6 +36,7 @@ public class HelmCommandDataMapperNG {
             .namespace(helmCommandRequestNG.getNamespace())
             .valueMap(helmChartManifestDelegateConfig.getHelmCommandFlag().getValueMap())
             .isHelmCmdFlagsNull(helmChartManifestDelegateConfig.getHelmCommandFlag() == null)
+            .kubeToken(helmCommandRequestNG.getKubernetesConfig().getAadIdToken())
             .build();
 
     if (helmCommandRequestNG instanceof HelmInstallCommandRequestNG) {

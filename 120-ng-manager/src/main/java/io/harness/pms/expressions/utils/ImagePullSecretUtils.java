@@ -37,6 +37,8 @@ import io.harness.delegate.beans.connector.azureconnector.AzureAdditionalParams;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
@@ -80,7 +82,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.mongodb.morphia.annotations.Transient;
 
 @Singleton
 @Slf4j
@@ -92,7 +93,7 @@ public class ImagePullSecretUtils {
   @Transient
   private static final String DOCKER_REGISTRY_CREDENTIAL_TEMPLATE =
       "{\"%s\":{\"username\":\"%s\",\"password\":\"%s\"}}";
-  private static final String ACR_SP_CERT_DOCKER_USERNAME = "00000000-0000-0000-0000-000000000000";
+  private static final String ACR_DUMMY_DOCKER_USERNAME = "00000000-0000-0000-0000-000000000000";
 
   public String getImagePullSecret(ArtifactOutcome artifactOutcome, Ambiance ambiance) {
     ImageDetailsBuilder imageDetailsBuilder = ImageDetails.builder();
@@ -271,50 +272,64 @@ public class ImagePullSecretUtils {
               ambiance));
         } else {
           log.info("Generating image pull credentials for SP with certificate");
-          BaseNGAccess baseNGAccess = azureHelperService.getBaseNGAccess(AmbianceUtils.getAccountId(ambiance),
-              AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
-
-          Principal principal = SecurityContextBuilder.getPrincipal();
-          if (principal == null) {
-            principal = new ServicePrincipal(NG_MANAGER.getServiceId());
-            SecurityContextBuilder.setContext(principal);
-          }
-          log.info(format("SecurityContext is %s service", principal.getName()));
-
-          List<EncryptedDataDetail> encryptionDetails =
-              azureHelperService.getEncryptionDetails(connectorConfig, baseNGAccess);
-
-          Map<AzureAdditionalParams, String> additionalParams = new HashMap<>();
-          additionalParams.put(AzureAdditionalParams.CONTAINER_REGISTRY, acrArtifactOutcome.getRegistry());
-
-          AzureTaskParams azureTaskParams = AzureTaskParams.builder()
-                                                .azureTaskType(AzureTaskType.GET_ACR_TOKEN)
-                                                .azureConnector(connectorConfig)
-                                                .encryptionDetails(encryptionDetails)
-                                                .delegateSelectors(connectorConfig.getDelegateSelectors())
-                                                .additionalParams(additionalParams)
-                                                .build();
-
-          AzureAcrTokenTaskResponse accessTokenResponse =
-              (AzureAcrTokenTaskResponse) azureHelperService.executeSyncTask(ambiance, azureTaskParams, baseNGAccess,
-                  "Azure get access token for service principal with certificate task failure due to error");
-
-          String accessToken = format("\"%s\"", accessTokenResponse.getToken());
-
-          if (log.isDebugEnabled()) {
-            log.debug(format("Token for clientId %s for ACR is: %s",
-                ((AzureManualDetailsDTO) connectorConfig.getCredential().getConfig()).getClientId(), accessToken));
-          }
-
-          imageDetailsBuilder.username(ACR_SP_CERT_DOCKER_USERNAME);
-          imageDetailsBuilder.password(accessToken);
+          log.info(format("Fetching access token for clientId: %s",
+              ((AzureManualDetailsDTO) connectorConfig.getCredential().getConfig()).getClientId()));
+          generateAcrImageDetailsBuilder(ambiance, connectorConfig, acrArtifactOutcome, imageDetailsBuilder);
         }
       } else {
-        log.info("This is a Managed Identity config. No credentials necessary for image pull.");
+        AzureInheritFromDelegateDetailsDTO config =
+            (AzureInheritFromDelegateDetailsDTO) connectorConfig.getCredential().getConfig();
+        if (config.getAuthDTO() instanceof AzureMSIAuthUADTO) {
+          log.info("Generating image pull credentials for User-Assigned MSI");
+          log.info(format("Fetching access token for clientId: %s",
+              ((AzureMSIAuthUADTO) config.getAuthDTO()).getCredentials().getClientId()));
+        } else {
+          log.info("Generating image pull credentials for System-Assigned MSI");
+        }
+        generateAcrImageDetailsBuilder(ambiance, connectorConfig, acrArtifactOutcome, imageDetailsBuilder);
       }
     } catch (Exception e) {
       throw new InvalidRequestException(e.getMessage(), e);
     }
+  }
+
+  private void generateAcrImageDetailsBuilder(Ambiance ambiance, AzureConnectorDTO connectorConfig,
+      AcrArtifactOutcome acrArtifactOutcome, ImageDetailsBuilder imageDetailsBuilder) {
+    BaseNGAccess baseNGAccess = azureHelperService.getBaseNGAccess(AmbianceUtils.getAccountId(ambiance),
+        AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
+
+    Principal principal = SecurityContextBuilder.getPrincipal();
+    if (principal == null) {
+      principal = new ServicePrincipal(NG_MANAGER.getServiceId());
+      SecurityContextBuilder.setContext(principal);
+    }
+    log.info(format("SecurityContext is %s service", principal.getName()));
+
+    List<EncryptedDataDetail> encryptionDetails =
+        azureHelperService.getEncryptionDetails(connectorConfig, baseNGAccess);
+
+    Map<AzureAdditionalParams, String> additionalParams = new HashMap<>();
+    additionalParams.put(AzureAdditionalParams.CONTAINER_REGISTRY, acrArtifactOutcome.getRegistry());
+
+    AzureTaskParams azureTaskParams = AzureTaskParams.builder()
+                                          .azureTaskType(AzureTaskType.GET_ACR_TOKEN)
+                                          .azureConnector(connectorConfig)
+                                          .encryptionDetails(encryptionDetails)
+                                          .delegateSelectors(connectorConfig.getDelegateSelectors())
+                                          .additionalParams(additionalParams)
+                                          .build();
+
+    AzureAcrTokenTaskResponse accessTokenResponse = (AzureAcrTokenTaskResponse) azureHelperService.executeSyncTask(
+        ambiance, azureTaskParams, baseNGAccess, "Azure get ACR access token task failure due to error");
+
+    String token = format("\"%s\"", accessTokenResponse.getToken());
+
+    if (log.isDebugEnabled()) {
+      log.debug(format("Fetched token: %s", token));
+    }
+
+    imageDetailsBuilder.username(ACR_DUMMY_DOCKER_USERNAME);
+    imageDetailsBuilder.password(token);
   }
 
   private String imageUrlToRegistryUrl(String imageUrl) {

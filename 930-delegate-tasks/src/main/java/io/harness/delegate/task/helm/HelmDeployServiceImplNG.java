@@ -364,7 +364,7 @@ public class HelmDeployServiceImplNG implements HelmDeployServiceNG {
   private List<ContainerInfo> getKubectlContainerInfos(HelmCommandRequestNG commandRequest,
       List<KubernetesResourceId> workloads, LogCallback logCallback, long timeoutInMillis) throws Exception {
     Kubectl client = Kubectl.client(k8sGlobalConfigService.getKubectlPath(commandRequest.isUseLatestKubectlVersion()),
-        commandRequest.getKubeConfigLocation());
+        commandRequest.getKubeConfigLocation(), kubernetesConfig);
     List<ContainerInfo> containerInfoList = new ArrayList<>();
     final Map<String, List<KubernetesResourceId>> namespacewiseResources =
         workloads.stream().collect(Collectors.groupingBy(KubernetesResourceId::getNamespace));

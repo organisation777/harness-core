@@ -9,18 +9,33 @@ package io.harness.k8s.kubectl;
 
 import static io.harness.k8s.kubectl.Utils.encloseWithQuotesIfNeeded;
 
+import io.harness.k8s.model.KubernetesConfig;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class Kubectl {
   private final String kubectlPath;
   private final String configPath;
+  private final String token;
 
   private Kubectl(String kubectlPath, String configPath) {
+    this(kubectlPath, configPath, null);
+  }
+
+  private Kubectl(String kubectlPath, String configPath, String token) {
     this.kubectlPath = kubectlPath;
     this.configPath = configPath;
+    this.token = token;
   }
 
   public static Kubectl client(String kubectlPath, String configPath) {
+    return Kubectl.client(kubectlPath, configPath, null);
+  }
+
+  public static Kubectl client(String kubectlPath, String configPath, KubernetesConfig kubernetesConfig) {
+    if (kubernetesConfig != null && kubernetesConfig.getAadIdToken() != null) {
+      return new Kubectl(kubectlPath, configPath, kubernetesConfig.getAadIdToken());
+    }
     return new Kubectl(kubectlPath, configPath);
   }
 
@@ -74,6 +89,10 @@ public class Kubectl {
 
     if (StringUtils.isNotBlank(configPath)) {
       command.append("--kubeconfig=" + encloseWithQuotesIfNeeded(configPath) + " ");
+    }
+
+    if (StringUtils.isNotBlank(token)) {
+      command.append("--token " + encloseWithQuotesIfNeeded(token) + " ");
     }
 
     return command.toString();

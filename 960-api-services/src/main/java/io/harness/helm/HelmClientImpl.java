@@ -14,12 +14,14 @@ import static io.harness.exception.WingsException.USER;
 import static io.harness.helm.HelmConstants.DEFAULT_HELM_COMMAND_TIMEOUT;
 import static io.harness.helm.HelmConstants.DEFAULT_TILLER_CONNECTION_TIMEOUT_MILLIS;
 import static io.harness.helm.HelmConstants.HELM_COMMAND_FLAG_PLACEHOLDER;
+import static io.harness.helm.HelmConstants.KUBE_TOKEN_FLAG;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_ADD_FORCE_UPDATE;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.logging.LogLevel.ERROR;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -93,6 +95,8 @@ public class HelmClientImpl implements HelmClient {
                                 .replace("${NAMESPACE}", getNamespaceFlag(helmCommandData.getNamespace()))
                                 .replace("${CHART_REFERENCE}", chartReference);
 
+    installCommand = applyKubeToken(installCommand, helmCommandData.getKubeToken());
+
     installCommand = applyCommandFlags(installCommand, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
     logHelmCommandInExecutionLogs(installCommand, helmCommandData.getLogCallback());
@@ -116,6 +120,8 @@ public class HelmClientImpl implements HelmClient {
                                 .replace("${CHART_REFERENCE}", chartReference)
                                 .replace("${OVERRIDE_VALUES}", keyValueOverrides);
 
+    upgradeCommand = applyKubeToken(upgradeCommand, helmCommandData.getKubeToken());
+
     upgradeCommand = applyCommandFlags(upgradeCommand, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
     logHelmCommandInExecutionLogs(upgradeCommand, helmCommandData.getLogCallback());
@@ -134,6 +140,8 @@ public class HelmClientImpl implements HelmClient {
     String command = getHelmCommandTemplateWithHelmPath(commandType, helmCommandData.getHelmVersion())
                          .replace("${RELEASE}", helmCommandData.getReleaseName())
                          .replace("${REVISION}", helmCommandData.getPrevReleaseVersion().toString());
+
+    command = applyKubeToken(command, helmCommandData.getKubeToken());
 
     command = applyCommandFlags(command, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
@@ -155,6 +163,8 @@ public class HelmClientImpl implements HelmClient {
     String releaseHistory = getHelmCommandTemplateWithHelmPath(commandType, helmCommandData.getHelmVersion())
                                 .replace("${FLAGS}", "--max 5")
                                 .replace("${RELEASE_NAME}", releaseName);
+
+    releaseHistory = applyKubeToken(releaseHistory, helmCommandData.getKubeToken());
 
     releaseHistory = applyCommandFlags(releaseHistory, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
@@ -179,6 +189,8 @@ public class HelmClientImpl implements HelmClient {
 
     String listRelease = getHelmCommandTemplateWithHelmPath(commandType, helmCommandData.getHelmVersion())
                              .replace("${RELEASE_NAME}", helmCommandData.getReleaseName());
+
+    listRelease = applyKubeToken(listRelease, helmCommandData.getKubeToken());
 
     listRelease = applyCommandFlags(listRelease, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
@@ -300,6 +312,8 @@ public class HelmClientImpl implements HelmClient {
     String command = getHelmCommandTemplateWithHelmPath(commandType, helmCommandData.getHelmVersion())
                          .replace("${RELEASE_NAME}", helmCommandData.getReleaseName())
                          .replace("${FLAGS}", "--purge");
+
+    command = applyKubeToken(command, helmCommandData.getKubeToken());
 
     command = applyCommandFlags(command, commandType, helmCommandData.getCommandFlags(),
         helmCommandData.isHelmCmdFlagsNull(), helmCommandData.getValueMap(), helmCommandData.getHelmVersion());
@@ -486,10 +500,33 @@ public class HelmClientImpl implements HelmClient {
 
   private void logHelmCommandInExecutionLogs(String helmCommand, LogCallback logCallback) {
     if (logCallback != null) {
-      String msg = "Executing command - " + helmCommand + "\n";
+      String msg = "Executing command - " + getPrintableCommand(helmCommand) + "\n";
       log.info(msg);
       logCallback.saveExecutionLog(msg, LogLevel.INFO);
     }
+  }
+
+  private String getPrintableCommand(String helmCommand) {
+    if (log.isDebugEnabled()) {
+      log.debug(helmCommand);
+    }
+
+    StringBuilder command = new StringBuilder(helmCommand);
+    int tokenIndex = command.indexOf(KUBE_TOKEN_FLAG);
+
+    if (tokenIndex != -1) {
+      int tokenStartIndex = command.indexOf(" ", tokenIndex);
+      int tokenEndIndex = command.indexOf(" ", tokenStartIndex + 1);
+
+      if (tokenEndIndex == -1) {
+        tokenEndIndex = command.length();
+      }
+
+      if (tokenStartIndex > -1 && tokenEndIndex > -1) {
+        command.replace(tokenStartIndex + 1, tokenEndIndex, "***");
+      }
+    }
+    return command.toString();
   }
 
   private String applyKubeConfigToCommand(String command, String kubeConfigLocation) {
@@ -498,6 +535,14 @@ public class HelmClientImpl implements HelmClient {
     } else {
       return command.replace("KUBECONFIG=${KUBECONFIG_PATH}", EMPTY).trim();
     }
+  }
+
+  private String applyKubeToken(String command, String token) {
+    if (isEmpty(token)) {
+      return command;
+    }
+
+    return format("%s %s %s", command, KUBE_TOKEN_FLAG, token);
   }
 
   private String applyCommandFlags(String command, HelmCliCommandType commandType, String commandFlags,
@@ -547,8 +592,8 @@ public class HelmClientImpl implements HelmClient {
             && (outputMessage.contains("not found") && outputMessage.contains("release"))) {
           return helmCliResponse;
         }
-        throw new HelmClientRuntimeException(
-            new HelmClientException(errorMessagePrefix + command + ". " + outputMessage, USER, commandType));
+        throw new HelmClientRuntimeException(new HelmClientException(
+            errorMessagePrefix + getPrintableCommand(command) + ". " + outputMessage, USER, commandType));
       }
       return helmCliResponse;
     } catch (InterruptedException e) {

@@ -36,9 +36,14 @@ import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.management.ManagementGroupInfo;
 import io.harness.azure.model.tag.TagDetails;
 import io.harness.azure.utility.AzureUtils;
+import io.harness.exception.AzureAuthenticationException;
 import io.harness.exception.AzureClientException;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
+import io.harness.exception.NestedExceptionUtils;
 import io.harness.serializer.JsonUtils;
+
+import software.wings.helpers.ext.azure.AksClusterCredential;
+import software.wings.helpers.ext.azure.AksClusterCredentials;
 
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Singleton;
@@ -67,6 +72,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
+import retrofit2.Call;
 import retrofit2.Response;
 import rx.Observable;
 import rx.functions.Func1;
@@ -612,6 +618,36 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
     properties.withTemplate(JsonUtils.readTree(template.getTemplateJSON()));
     properties.withParameters(JsonUtils.readTree(template.getParametersJSON()));
     return properties;
+  }
+
+  @Override
+  public String getClusterCredentials(AzureConfig azureConfig, String accessToken, String subscriptionId,
+      String resourceGroup, String aksClusterName, boolean shouldGetAdminCredentials) {
+    Call<AksClusterCredentials> request;
+    String error;
+    try {
+      if (shouldGetAdminCredentials) {
+        request = getAzureManagementRestClient(azureConfig.getAzureEnvironmentType())
+                      .listClusterAdminCredential(accessToken, subscriptionId, resourceGroup, aksClusterName);
+      } else {
+        request = getAzureManagementRestClient(azureConfig.getAzureEnvironmentType())
+                      .listClusterUserCredential(accessToken, subscriptionId, resourceGroup, aksClusterName);
+      }
+
+      Response<AksClusterCredentials> response = request.execute();
+      if (response.isSuccessful()) {
+        return response.body().getKubeconfigs().get(0).getValue();
+      }
+
+      error = response.errorBody().string();
+
+    } catch (Exception e) {
+      error = e.getMessage();
+    }
+
+    throw NestedExceptionUtils.hintWithExplanationException(
+        format("Failed to retrieve cluster %s credentials", shouldGetAdminCredentials ? "admin" : "user"),
+        "Please check assigned permissions in Azure", new AzureAuthenticationException(error));
   }
 
   @Override

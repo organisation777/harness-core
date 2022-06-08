@@ -15,6 +15,8 @@ import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.management.ManagementGroupInfo;
 import io.harness.azure.model.tag.TagDetails;
 
+import software.wings.helpers.ext.azure.AksClusterCredentials;
+
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.resources.Deployment;
 import com.microsoft.azure.management.resources.implementation.DeploymentExtendedInner;
@@ -179,6 +181,9 @@ public interface AzureManagementClient {
   PagedList<DeploymentOperationInner> getDeploymentOperations(ARMDeploymentSteadyStateContext context);
 
   String getARMDeploymentOutputs(ARMDeploymentSteadyStateContext context);
+
+  String getClusterCredentials(AzureConfig azureConfig, String accessToken, String subscriptionId, String resourceGroup,
+      String aksClusterName, boolean shouldGetAdminCredentials);
 
   List<TagDetails> listTags(AzureConfig azureConfig, String subscriptionId);
 }

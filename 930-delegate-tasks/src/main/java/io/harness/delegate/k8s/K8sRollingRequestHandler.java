@@ -205,7 +205,8 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
     executionLogCallback.saveExecutionLog(color(String.format("Release Name: [%s]", releaseName), Yellow, Bold));
     kubernetesConfig =
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(request.getK8sInfraDelegateConfig());
-    client = Kubectl.client(k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath());
+    client = Kubectl.client(
+        k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath(), kubernetesConfig);
 
     String releaseHistoryData = k8sTaskHelperBase.getReleaseHistoryData(kubernetesConfig, request.getReleaseName());
     releaseHistory = (StringUtils.isEmpty(releaseHistoryData)) ? ReleaseHistory.createNew()

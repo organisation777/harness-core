@@ -18,6 +18,7 @@ import static io.harness.eraro.ErrorCode.ACCESS_DENIED;
 import static io.harness.eraro.ErrorCode.INVALID_CREDENTIAL;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.writeUtf8StringToFile;
+import static io.harness.k8s.K8sConstants.AZURE_KUBE_CONFIG_TEMPLATE;
 import static io.harness.k8s.K8sConstants.CLIENT_ID_KEY;
 import static io.harness.k8s.K8sConstants.CLIENT_SECRET_KEY;
 import static io.harness.k8s.K8sConstants.GCP_KUBE_CONFIG_TEMPLATE;
@@ -475,7 +476,7 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     final File kubeConfigDir = Files.createTempDir();
     try (ByteArrayOutputStream errStream = new ByteArrayOutputStream()) {
       persistKubernetesConfig(kubernetesConfig, kubeConfigDir.getPath());
-      final Kubectl client = getKubectlClient(useNewKubectlVersion);
+      final Kubectl client = getKubectlClient(useNewKubectlVersion, kubernetesConfig);
 
       for (final String workloadType : Arrays.asList(
                Kind.ReplicaSet.name(), Kind.StatefulSet.name(), Kind.DaemonSet.name(), Kind.Deployment.name())) {
@@ -522,9 +523,9 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
   }
 
   @VisibleForTesting
-  Kubectl getKubectlClient(boolean useNewKubectlVersion) {
-    return Kubectl.client(
-        k8sGlobalConfigService.getKubectlPath(useNewKubectlVersion), K8sConstants.KUBECONFIG_FILENAME);
+  Kubectl getKubectlClient(boolean useNewKubectlVersion, KubernetesConfig kubernetesConfig) {
+    return Kubectl.client(k8sGlobalConfigService.getKubectlPath(useNewKubectlVersion), K8sConstants.KUBECONFIG_FILENAME,
+        kubernetesConfig);
   }
 
   private void cleanupDir(File kubeConfigDir) {
@@ -2131,6 +2132,10 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
       return generateKubeConfigStringForGcp(config);
     }
 
+    if (KubernetesClusterAuthType.AZURE_OAUTH == config.getAuthType()) {
+      return generateKubeConfigStringForAzure(config);
+    }
+
     String insecureSkipTlsVerify = isEmpty(config.getCaCert()) ? "insecure-skip-tls-verify: true" : "";
     String certificateAuthorityData =
         isNotEmpty(config.getCaCert()) ? "certificate-authority-data: " + new String(config.getCaCert()) : "";
@@ -2166,6 +2171,26 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
         .replace("${INSECURE_SKIP_TLS_VERIFY}", insecureSkipTlsVerify)
         .replace("${CERTIFICATE_AUTHORITY_DATA}", certificateAuthorityData)
         .replace("${NAMESPACE}", namespace);
+  }
+
+  private String generateKubeConfigStringForAzure(KubernetesConfig config) {
+    String insecureSkipTlsVerify = isEmpty(config.getCaCert()) ? "insecure-skip-tls-verify: true" : "";
+    String certificateAuthorityData =
+        isNotEmpty(config.getCaCert()) ? "certificate-authority-data: " + new String(config.getCaCert()) : "";
+    String namespace = isNotEmpty(config.getNamespace()) ? "namespace: " + config.getNamespace() : "";
+
+    return AZURE_KUBE_CONFIG_TEMPLATE.replace("${MASTER_URL}", config.getMasterUrl())
+        .replace("${INSECURE_SKIP_TLS_VERIFY}", insecureSkipTlsVerify)
+        .replace("${CERTIFICATE_AUTHORITY_DATA}", certificateAuthorityData)
+        .replace("${NAMESPACE}", namespace)
+        .replace("${CLUSTER_NAME}", config.getClusterName())
+        .replace("${CLUSTER_USER}", config.getClusterUser())
+        .replace("${CURRENT_CONTEXT}", config.getCurrentContext())
+        .replace("${APISERVER_ID}", config.getApiServerId())
+        .replace("${CLIENT_ID}", config.getClientId())
+        .replace("${CONFIG_MODE}", config.getConfigMode())
+        .replace("${ENVIRONMENT}", config.getEnvironment())
+        .replace("${TENANT_ID}", config.getTenantId());
   }
 
   private void encodeCharsIfNeeded(KubernetesConfig config) {

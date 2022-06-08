@@ -154,7 +154,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     final Kubectl client = Kubectl.client("kubectl", "kubeconfig");
     Kubectl mockClient = Mockito.spy(client);
     GetCommand mockGetCommand = Mockito.spy(client.get());
-    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean());
+    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean(), any());
     doReturn(mockGetCommand).when(mockClient).get();
     doReturn(new ProcessResult(1, null))
         .when(mockGetCommand)
@@ -169,7 +169,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     final Kubectl client = Kubectl.client("kubectl", "kubeconfig");
     Kubectl mockClient = Mockito.spy(client);
     GetCommand mockGetCommand = Mockito.spy(client.get());
-    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean());
+    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean(), any());
     doReturn(mockGetCommand).when(mockClient).get();
     List<String> executeCommands = new ArrayList<>();
     setupGetCommand(mockGetCommand, executeCommands, Kind.Deployment);
@@ -187,7 +187,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     final Kubectl client = Kubectl.client("kubectl", "kubeconfig");
     Kubectl mockClient = Mockito.spy(client);
     GetCommand mockGetCommand = Mockito.spy(client.get());
-    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean());
+    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean(), any());
     doReturn(mockGetCommand).when(mockClient).get();
     List<String> executeCommands = new ArrayList<>();
     setupGetCommand(mockGetCommand, executeCommands, Kind.DaemonSet);
@@ -204,7 +204,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     final Kubectl client = Kubectl.client("kubectl", "kubeconfig");
     Kubectl mockClient = Mockito.spy(client);
     GetCommand mockGetCommand = Mockito.spy(client.get());
-    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean());
+    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean(), any());
     doReturn(mockGetCommand).when(mockClient).get();
     List<String> executeCommands = new ArrayList<>();
     setupGetCommand(mockGetCommand, executeCommands, Kind.StatefulSet);
@@ -220,7 +220,7 @@ public class KubernetesContainerServiceTest extends CategoryTest {
     final Kubectl client = Kubectl.client("kubectl", "kubeconfig");
     Kubectl mockClient = Mockito.spy(client);
     GetCommand mockGetCommand = Mockito.spy(client.get());
-    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean());
+    doReturn(mockClient).when(kubernetesContainerService).getKubectlClient(anyBoolean(), any());
     doReturn(mockGetCommand).when(mockClient).get();
     List<String> executeCommands = new ArrayList<>();
     setupGetCommand(mockGetCommand, executeCommands, Kind.ReplicaSet);

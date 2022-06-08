@@ -16,9 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.zeroturnaround.exec.ProcessResult;
 import org.zeroturnaround.exec.StartedProcess;
 
+@Slf4j
 public abstract class AbstractExecutable implements Executable {
   @Override
   public ProcessResult execute(String directory, OutputStream output, OutputStream error, boolean printCommand)
@@ -46,11 +48,34 @@ public abstract class AbstractExecutable implements Executable {
 
   public static String getPrintableCommand(String command) {
     int index = command.indexOf("kubectl --kubeconfig");
+
+    StringBuilder commandString = new StringBuilder();
     if (index != -1) {
-      return command.substring(index);
+      commandString.append(command.substring(index));
+    } else {
+      commandString.append(command.substring(command.indexOf("oc --kubeconfig")));
     }
 
-    return command.substring(command.indexOf("oc --kubeconfig"));
+    if (log.isDebugEnabled()) {
+      log.debug(commandString.toString());
+    }
+
+    int tokenIndex = commandString.indexOf("--token");
+
+    if (tokenIndex != -1) {
+      int tokenStartIndex = commandString.indexOf(" ", tokenIndex);
+      int tokenEndIndex = commandString.indexOf(" ", tokenStartIndex + 1);
+
+      if (tokenEndIndex == -1) {
+        tokenEndIndex = command.length();
+      }
+
+      if (tokenStartIndex > -1 && tokenEndIndex > -1) {
+        commandString.replace(tokenStartIndex + 1, tokenEndIndex, "***");
+      }
+    }
+
+    return commandString.toString();
   }
 
   private void addGcpCredentialsToEnvironmentIfExist(String directory, Map<String, String> environment) {

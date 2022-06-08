@@ -101,6 +101,7 @@ public class InfrastructureMapper {
                 service, environmentOutcome, k8sAzureInfrastructure.getInfrastructureKeyValues()))
             .subscription(k8sAzureInfrastructure.getSubscriptionId().getValue())
             .resourceGroup(k8sAzureInfrastructure.getResourceGroup().getValue())
+            .useClusterAdminCredentials(k8sAzureInfrastructure.getUseClusterAdminCredentials().getValue())
             .build();
 
       case InfrastructureKind.PDC:

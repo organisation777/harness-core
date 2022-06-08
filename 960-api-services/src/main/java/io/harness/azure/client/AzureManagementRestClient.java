@@ -7,11 +7,17 @@
 
 package io.harness.azure.client;
 
+import io.harness.azure.model.AzureConstants;
+
+import software.wings.helpers.ext.azure.AksClusterCredentials;
+
 import okhttp3.ResponseBody;
+import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
+import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 import retrofit2.http.Url;
@@ -27,6 +33,24 @@ public interface AzureManagementRestClient {
   @GET
   Observable<Response<ResponseBody>> listNext(
       @Header("Authorization") String bearerAuthHeader, @Url String nextUrl, @Query("api-version") String appVersion);
+
+  @POST("subscriptions/{" + AzureConstants.SUBSCRIPTION + "}/resourceGroups/{" + AzureConstants.RESOURCE_GROUP
+      + "}/providers/Microsoft.ContainerService/managedClusters/{" + AzureConstants.AKS_CLUSTER_NAME
+      + "}/listClusterUserCredential?api-version=2022-02-01")
+  Call<AksClusterCredentials>
+  listClusterUserCredential(@Header("Authorization") String accessToken,
+      @Path(value = AzureConstants.SUBSCRIPTION) String subscription,
+      @Path(value = AzureConstants.RESOURCE_GROUP) String resourceGroup,
+      @Path(value = AzureConstants.AKS_CLUSTER_NAME) String aksClusterName);
+
+  @POST("subscriptions/{" + AzureConstants.SUBSCRIPTION + "}/resourceGroups/{" + AzureConstants.RESOURCE_GROUP
+      + "}/providers/Microsoft.ContainerService/managedClusters/{" + AzureConstants.AKS_CLUSTER_NAME
+      + "}/listClusterAdminCredential?api-version=2022-02-01")
+  Call<AksClusterCredentials>
+  listClusterAdminCredential(@Header("Authorization") String accessToken,
+      @Path(value = AzureConstants.SUBSCRIPTION) String subscription,
+      @Path(value = AzureConstants.RESOURCE_GROUP) String resourceGroup,
+      @Path(value = AzureConstants.AKS_CLUSTER_NAME) String aksClusterName);
 
   @GET("subscriptions/{subscriptionId}/tagNames?api-version=2020-10-01")
   Observable<Response<ResponseBody>> listTags(

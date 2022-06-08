@@ -203,7 +203,8 @@ public class K8sBGRequestHandler extends K8sRequestHandler {
     kubernetesConfig =
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(request.getK8sInfraDelegateConfig());
 
-    client = Kubectl.client(k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath());
+    client = Kubectl.client(
+        k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath(), kubernetesConfig);
     String releaseHistoryData =
         k8sTaskHelperBase.getReleaseHistoryDataFromConfigMap(kubernetesConfig, request.getReleaseName());
     releaseHistory = (StringUtils.isEmpty(releaseHistoryData)) ? ReleaseHistory.createNew()

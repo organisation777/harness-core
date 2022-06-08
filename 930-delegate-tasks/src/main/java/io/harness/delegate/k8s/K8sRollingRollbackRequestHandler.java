@@ -107,8 +107,8 @@ public class K8sRollingRollbackRequestHandler extends K8sRequestHandler {
 
     rollbackHandlerConfig.setKubernetesConfig(
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(rollbackRequest.getK8sInfraDelegateConfig()));
-    rollbackHandlerConfig.setClient(
-        Kubectl.client(k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath()));
+    rollbackHandlerConfig.setClient(Kubectl.client(k8sDelegateTaskParams.getKubectlPath(),
+        k8sDelegateTaskParams.getKubeconfigPath(), rollbackHandlerConfig.getKubernetesConfig()));
 
     rollbackBaseHandler.init(rollbackHandlerConfig, rollbackRequest.getReleaseName(), logCallback);
   }

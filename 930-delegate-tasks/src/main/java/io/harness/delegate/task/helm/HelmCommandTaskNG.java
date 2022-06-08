@@ -34,6 +34,7 @@ import io.harness.exception.ExplanationException;
 import io.harness.exception.HintException;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.k8s.K8sGlobalConfigService;
+import io.harness.k8s.model.KubernetesConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
@@ -163,10 +164,12 @@ public class HelmCommandTaskNG extends AbstractDelegateRunnableTask {
   private void init(HelmCommandRequestNG commandRequestNG, LogCallback logCallback) {
     commandRequestNG.setLogCallback(logCallback);
     logCallback.saveExecutionLog("Creating KubeConfig", LogLevel.INFO, CommandExecutionStatus.RUNNING);
-    String configLocation = containerDeploymentDelegateBaseHelper.createKubeConfig(
-        containerDeploymentDelegateBaseHelper.createKubernetesConfig(commandRequestNG.getK8sInfraDelegateConfig()));
+    KubernetesConfig kubernetesConfig =
+        containerDeploymentDelegateBaseHelper.createKubernetesConfig(commandRequestNG.getK8sInfraDelegateConfig());
+    String configLocation = containerDeploymentDelegateBaseHelper.createKubeConfig(kubernetesConfig);
     commandRequestNG.setKubeConfigLocation(configLocation);
     commandRequestNG.setOcPath(k8sGlobalConfigService.getOcPath());
+    commandRequestNG.setKubernetesConfig(kubernetesConfig);
     logCallback.saveExecutionLog(
         "Setting KubeConfig\nKUBECONFIG_PATH=" + configLocation, LogLevel.INFO, CommandExecutionStatus.RUNNING);
 

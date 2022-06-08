@@ -38,6 +38,7 @@ public final class HelmConstants {
   public static final String VALUES_YAML = "values.yaml";
   public static final String CHARTS_YAML_KEY = "Chart.yaml";
   public static final String CHART_VERSION = "${CHART_VERSION}";
+  public static final String KUBE_TOKEN_FLAG = "--kube-token";
 
   // Add more command types as needed
   enum CommandType { REPO_ADD, REPO_UPDATE }

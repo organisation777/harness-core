@@ -130,8 +130,8 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
     k8sApplyHandlerConfig.setKubernetesConfig(
         containerDeploymentDelegateBaseHelper.createKubernetesConfig(request.getK8sInfraDelegateConfig()));
 
-    k8sApplyHandlerConfig.setClient(
-        Kubectl.client(k8sDelegateTaskParams.getKubectlPath(), k8sDelegateTaskParams.getKubeconfigPath()));
+    k8sApplyHandlerConfig.setClient(Kubectl.client(k8sDelegateTaskParams.getKubectlPath(),
+        k8sDelegateTaskParams.getKubeconfigPath(), k8sApplyHandlerConfig.getKubernetesConfig()));
 
     List<String> applyFilePaths =
         request.getFilePaths().stream().map(String::trim).filter(StringUtils::isNotBlank).collect(Collectors.toList());
