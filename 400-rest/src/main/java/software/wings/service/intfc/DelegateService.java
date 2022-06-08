@@ -224,4 +224,6 @@ public interface DelegateService extends OwnedByAccount {
 
   DelegateApprovalResponse approveDelegatesUsingToken(
       String accountId, String delegateTokenName, DelegateApproval action) throws InvalidRequestException;
+
+  void checkUniquenessOfDelegateName(String accountId, String delegateName, boolean isNg);
 }
