@@ -254,6 +254,7 @@ public class AzureAsyncTaskHelper {
                    .stream()
                    .map(this::toAzureHost)
                    .collect(Collectors.toList()))
+        .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
         .build();
   }
 

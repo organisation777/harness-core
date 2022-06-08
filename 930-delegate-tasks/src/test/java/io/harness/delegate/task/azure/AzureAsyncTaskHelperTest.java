@@ -36,6 +36,7 @@ import io.harness.azure.client.AzureKubernetesClient;
 import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.model.AzureAuthenticationType;
 import io.harness.azure.model.AzureConfig;
+import io.harness.azure.model.VirtualMachineData;
 import io.harness.azure.model.tag.TagDetails;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
@@ -44,6 +45,8 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
 import io.harness.delegate.beans.azure.response.AzureDeploymentSlotsResponse;
+import io.harness.delegate.beans.azure.response.AzureHostResponse;
+import io.harness.delegate.beans.azure.response.AzureHostsResponse;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
@@ -510,6 +513,29 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
     assertThat(azureAcrTokenTaskResponse).isNotNull();
     assertThat(azureAcrTokenTaskResponse.getToken()).isNotNull();
     assertThat(azureAcrTokenTaskResponse.getToken()).isEqualTo(acrRefreshToken);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testListHosts() {
+    // Given
+    when(azureManagementClient.listHosts(any(), eq("subscriptionId"), eq("resourceGroup"), any()))
+        .thenReturn(Collections.singletonList(VirtualMachineData.builder().hostName("vm-hostname").build()));
+
+    // When
+    AzureHostsResponse response = azureAsyncTaskHelper.listHosts(Collections.emptyList(),
+        getAzureConnectorDTOWithSecretType(AzureSecretType.SECRET_KEY), "subscriptionId", "resourceGroup",
+        Collections.emptyMap());
+
+    // Then
+    assertThat(response).isNotNull();
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
+    assertThat(response.getHosts())
+        .isNotNull()
+        .hasSize(1)
+        .flatExtracting(AzureHostResponse::getHostName)
+        .containsExactly("vm-hostname");
   }
 
   private void testValidateSuccessConnectionWithServicePrincipal(
