@@ -7,13 +7,13 @@
 
 package io.harness.azure.model.image;
 
-import static io.harness.azure.model.AzureMachineImageArtifact.OSType.LINUX;
-import static io.harness.azure.model.AzureMachineImageArtifact.OSType.WINDOWS;
+import static io.harness.azure.model.AzureOSType.LINUX;
+import static io.harness.azure.model.AzureOSType.WINDOWS;
 
 import io.harness.azure.model.AzureMachineImageArtifact;
 import io.harness.azure.model.AzureMachineImageArtifact.MachineImageReference;
 import io.harness.azure.model.AzureMachineImageArtifact.MachineImageReference.OsState;
-import io.harness.azure.model.AzureMachineImageArtifact.OSType;
+import io.harness.azure.model.AzureOSType;
 
 import com.microsoft.azure.management.compute.ImageReference;
 import com.microsoft.azure.management.compute.LinuxConfiguration;
@@ -37,7 +37,7 @@ public class SharedGalleryImage extends AzureMachineImage {
     }
     // only applied on generalized images
     VirtualMachineScaleSetOSProfile osProfile = inner.virtualMachineProfile().osProfile();
-    OSType osType = image.getOsType();
+    AzureOSType osType = image.getOsType();
     if (LINUX == osType) {
       osProfile.withLinuxConfiguration(new LinuxConfiguration());
       osProfile.linuxConfiguration().withDisablePasswordAuthentication(false);
