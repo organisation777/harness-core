@@ -140,6 +140,7 @@ import io.harness.delegate.task.artifacts.ArtifactSourceDelegateRequest;
 import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactTaskNG;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
@@ -1539,6 +1540,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.BUILD_SOURCE_TASK).toInstance(BuildSourceTask.class);
     mapBinder.addBinding(TaskType.DOCKER_ARTIFACT_TASK_NG).toInstance(DockerArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.JENKINS_ARTIFACT_TASK_NG).toInstance(JenkinsArtifactTaskNG.class);
+      mapBinder.addBinding(TaskType.AMAZON_S3_GET_PLANS).toInstance(AmazonS3ArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.GCR_ARTIFACT_TASK_NG).toInstance(GcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ECR_ARTIFACT_TASK_NG).toInstance(EcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ACR_ARTIFACT_TASK_NG).toInstance(AcrArtifactTaskNG.class);
