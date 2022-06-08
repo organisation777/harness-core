@@ -992,7 +992,7 @@ permissions:
     allowedScopeLevels:
       - account
   - identifier: ccm_perspective_edit
-    name: Create or Edit a CCM Perspective
+    name: Create, Edit or Move a CCM Perspective
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:
@@ -1057,8 +1057,20 @@ permissions:
     includedInAllRoles: false
     allowedScopeLevels:
       - account
-  - identifier: ccm_folder_manage
-    name: Create, Edit or Delete a CCM Folder
+  - identifier: ccm_folder_view
+    name: View a CCM Folder
+    status: ACTIVE
+    includedInAllRoles: false
+    allowedScopeLevels:
+      - account
+  - identifier: ccm_folder_edit
+    name: Create or Edit a CCM Folder
+    status: ACTIVE
+    includedInAllRoles: false
+    allowedScopeLevels:
+      - account
+  - identifier: ccm_folder_delete
+    name: Delete a CCM Folder
     status: ACTIVE
     includedInAllRoles: false
     allowedScopeLevels:
