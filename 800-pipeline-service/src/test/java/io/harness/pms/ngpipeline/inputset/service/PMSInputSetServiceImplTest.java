@@ -42,7 +42,6 @@ import io.harness.utils.PageUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
-import com.mongodb.client.result.UpdateResult;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -62,7 +61,6 @@ import org.springframework.data.mongodb.core.query.Query;
 public class PMSInputSetServiceImplTest extends PipelineServiceTestBase {
   @Inject PMSInputSetServiceImpl pmsInputSetService;
   @InjectMocks PMSInputSetServiceImpl pmsInputSetServiceMock;
-  @Mock private UpdateResult updateResult;
   @Mock private PMSInputSetRepository inputSetRepository;
   @Mock private GitSyncSdkService gitSyncSdkService;
 
