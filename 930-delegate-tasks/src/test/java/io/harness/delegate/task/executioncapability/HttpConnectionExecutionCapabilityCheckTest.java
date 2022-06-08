@@ -141,7 +141,7 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_Valid() {
-    List<KeyValuePair> temp = new ArrayList<KeyValuePair>();
+    List<KeyValuePair> temp = new ArrayList<>();
 
     when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
     when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
@@ -169,7 +169,7 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_NotValid() {
-    List<KeyValuePair> temp = new ArrayList<KeyValuePair>();
+    List<KeyValuePair> temp = new ArrayList<>();
 
     when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
     when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
@@ -197,7 +197,7 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_Headers_Valid() {
-    List<KeyValuePair> temp = new ArrayList<KeyValuePair>();
+    List<KeyValuePair> temp = new ArrayList<>();
 
     when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
     when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
@@ -226,7 +226,7 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_Headers_NotValid() {
-    List<KeyValuePair> temp = new ArrayList<KeyValuePair>();
+    List<KeyValuePair> temp = new ArrayList<>();
 
     when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
     when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
