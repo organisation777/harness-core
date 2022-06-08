@@ -43,7 +43,7 @@ import io.harness.azure.model.AzureMachineImageArtifact;
 import io.harness.azure.model.AzureMachineImageArtifact.ImageType;
 import io.harness.azure.model.AzureMachineImageArtifact.MachineImageReference;
 import io.harness.azure.model.AzureMachineImageArtifact.MachineImageReference.OsState;
-import io.harness.azure.model.AzureMachineImageArtifact.OSType;
+import io.harness.azure.model.AzureOSType;
 import io.harness.azure.model.AzureUserAuthVMInstanceData;
 import io.harness.azure.model.AzureVMSSAutoScaleSettingsData;
 import io.harness.azure.model.AzureVMSSTagsData;
@@ -439,7 +439,7 @@ public class AzureVMSSSetupTaskHandler extends AzureVMSSTaskHandler {
         INFO);
     return AzureMachineImageArtifact.builder()
         .imageType(ImageType.valueOf(azureMachineImageArtifactDTO.getImageType().name()))
-        .osType(OSType.valueOf(azureMachineImageArtifactDTO.getImageOSType().name()))
+        .osType(AzureOSType.valueOf(azureMachineImageArtifactDTO.getImageOSType().name()))
         .imageReference(MachineImageReference.builder()
                             .id(galleryImageId)
                             .publisher(publisher)

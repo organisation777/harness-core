@@ -12,6 +12,7 @@ import io.harness.azure.context.AzureClientContext;
 import io.harness.azure.model.AzureARMRGTemplateExportOptions;
 import io.harness.azure.model.AzureARMTemplate;
 import io.harness.azure.model.AzureConfig;
+import io.harness.azure.model.AzureOSType;
 import io.harness.azure.model.VirtualMachineData;
 import io.harness.azure.model.management.ManagementGroupInfo;
 import io.harness.azure.model.tag.TagDetails;
@@ -184,6 +185,6 @@ public interface AzureManagementClient {
 
   List<TagDetails> listTags(AzureConfig azureConfig, String subscriptionId);
 
-  List<VirtualMachineData> listHosts(
-      AzureConfig azureConfig, String subscriptionId, String resourceGroup, Map<String, String> tags);
+  List<VirtualMachineData> listHosts(AzureConfig azureConfig, String subscriptionId, String resourceGroup,
+      AzureOSType osType, Map<String, String> tags);
 }

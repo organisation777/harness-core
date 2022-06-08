@@ -18,11 +18,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AzureMachineImageArtifact {
   private ImageType imageType;
-  private OSType osType;
+  private AzureOSType osType;
 
   private MachineImageReference imageReference;
-
-  public enum OSType { LINUX, WINDOWS }
 
   public enum ImageType {
     IMAGE_GALLERY,

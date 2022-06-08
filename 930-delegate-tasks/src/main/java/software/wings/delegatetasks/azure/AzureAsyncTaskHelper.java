@@ -26,6 +26,7 @@ import io.harness.azure.client.AzureContainerRegistryClient;
 import io.harness.azure.client.AzureKubernetesClient;
 import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.model.AzureConfig;
+import io.harness.azure.model.AzureOSType;
 import io.harness.azure.model.VirtualMachineData;
 import io.harness.azure.model.kube.AzureKubeConfig;
 import io.harness.azure.model.tag.TagDetails;
@@ -244,13 +245,13 @@ public class AzureAsyncTaskHelper {
   }
 
   public AzureHostsResponse listHosts(List<EncryptedDataDetail> encryptionDetails, AzureConnectorDTO azureConnector,
-      String subscriptionId, String resourceGroup, Map<String, String> tags) {
+      String subscriptionId, String resourceGroup, AzureOSType osType, Map<String, String> tags) {
     AzureConfig azureConfig = AcrRequestResponseMapper.toAzureInternalConfig(azureConnector.getCredential(),
         encryptionDetails, azureConnector.getCredential().getAzureCredentialType(),
         azureConnector.getAzureEnvironmentType(), secretDecryptionService);
 
     return AzureHostsResponse.builder()
-        .hosts(azureManagementClient.listHosts(azureConfig, subscriptionId, resourceGroup, tags)
+        .hosts(azureManagementClient.listHosts(azureConfig, subscriptionId, resourceGroup, osType, tags)
                    .stream()
                    .map(this::toAzureHost)
                    .collect(Collectors.toList()))

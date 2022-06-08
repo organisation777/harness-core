@@ -35,6 +35,7 @@ import io.harness.azure.model.ARMScopeType;
 import io.harness.azure.model.AzureARMRGTemplateExportOptions;
 import io.harness.azure.model.AzureARMTemplate;
 import io.harness.azure.model.AzureConfig;
+import io.harness.azure.model.AzureOSType;
 import io.harness.azure.model.VirtualMachineData;
 import io.harness.azure.model.management.ManagementGroupInfo;
 import io.harness.azure.model.tag.TagDetails;
@@ -49,7 +50,6 @@ import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.containerservice.OSType;
 import com.microsoft.azure.management.resources.Deployment;
 import com.microsoft.azure.management.resources.DeploymentMode;
 import com.microsoft.azure.management.resources.DeploymentProperties;
@@ -634,10 +634,8 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
   }
 
   @Override
-  public List<VirtualMachineData> listHosts(
-      AzureConfig azureConfig, String subscriptionId, String resourceGroup, Map<String, String> tags) {
-    final OSType osType = OSType.LINUX; // this should be parameter
-
+  public List<VirtualMachineData> listHosts(AzureConfig azureConfig, String subscriptionId, String resourceGroup,
+      AzureOSType osType, Map<String, String> tags) {
     List<VirtualMachine> virtualMachines =
         getAzureClient(azureConfig, subscriptionId).virtualMachines().listByResourceGroup(resourceGroup);
 
@@ -654,14 +652,14 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
         .collect(Collectors.toList());
   }
 
-  private boolean filterOsType(VirtualMachine virtualMachine, OSType osType) {
+  private boolean filterOsType(VirtualMachine virtualMachine, AzureOSType osType) {
     if (virtualMachine.osProfile() == null) {
       // unknown OS, remove vm from stream
       return false;
     }
 
-    return OSType.WINDOWS.equals(osType) && virtualMachine.osProfile().windowsConfiguration() != null
-        || OSType.LINUX.equals(osType) && virtualMachine.osProfile().linuxConfiguration() != null;
+    return AzureOSType.WINDOWS.equals(osType) && virtualMachine.osProfile().windowsConfiguration() != null
+        || AzureOSType.LINUX.equals(osType) && virtualMachine.osProfile().linuxConfiguration() != null;
   }
 
   private boolean isVmRunning(VirtualMachine virtualMachine) {

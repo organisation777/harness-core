@@ -33,6 +33,7 @@ import io.harness.azure.model.AzureARMTemplate;
 import io.harness.azure.model.AzureARMTemplate.AzureARMTemplateBuilder;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.AzureDeploymentMode;
+import io.harness.azure.model.AzureOSType;
 import io.harness.azure.model.VirtualMachineData;
 import io.harness.category.element.UnitTests;
 import io.harness.network.Http;
@@ -639,8 +640,8 @@ public class AzureManagementClientImplTest extends CategoryTest {
     when(azure.virtualMachines()).thenReturn(mockedVirtualMachines);
 
     // When
-    List<VirtualMachineData> result =
-        azureManagementClient.listHosts(getAzureConfig(), "subscriptionId", "resourceGroup", Collections.emptyMap());
+    List<VirtualMachineData> result = azureManagementClient.listHosts(
+        getAzureConfig(), "subscriptionId", "resourceGroup", AzureOSType.LINUX, Collections.emptyMap());
 
     // Then
     assertThat(result)
@@ -662,8 +663,8 @@ public class AzureManagementClientImplTest extends CategoryTest {
     when(azure.virtualMachines()).thenReturn(mockedVirtualMachines);
 
     // When
-    List<VirtualMachineData> result =
-        azureManagementClient.listHosts(getAzureConfig(), "subscriptionId", "resourceGroup", Collections.emptyMap());
+    List<VirtualMachineData> result = azureManagementClient.listHosts(
+        getAzureConfig(), "subscriptionId", "resourceGroup", AzureOSType.LINUX, Collections.emptyMap());
 
     // Then
     assertThat(result).isNotNull().isEmpty();

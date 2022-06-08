@@ -36,6 +36,7 @@ import io.harness.azure.client.AzureComputeClient;
 import io.harness.azure.client.AzureNetworkClient;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.AzureMachineImageArtifact;
+import io.harness.azure.model.AzureOSType;
 import io.harness.azure.model.AzureUserAuthVMInstanceData;
 import io.harness.azure.model.AzureVMSSAutoScaleSettingsData;
 import io.harness.azure.model.AzureVMSSTagsData;
@@ -287,7 +288,7 @@ public class AzureVMSSSetupTaskHandlerTest extends WingsBaseTest {
                         .sku("TestSku")
                         .build())
                 .imageType(AzureMachineImageArtifact.ImageType.IMAGE_GALLERY)
-                .osType(AzureMachineImageArtifact.OSType.LINUX)
+                .osType(AzureOSType.LINUX)
                 .build());
   }
 
