@@ -33,6 +33,7 @@ import io.harness.azure.model.AzureARMTemplate;
 import io.harness.azure.model.AzureARMTemplate.AzureARMTemplateBuilder;
 import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.AzureDeploymentMode;
+import io.harness.azure.model.VirtualMachineData;
 import io.harness.category.element.UnitTests;
 import io.harness.network.Http;
 import io.harness.rule.Owner;
@@ -43,6 +44,11 @@ import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.management.Azure;
+import com.microsoft.azure.management.compute.LinuxConfiguration;
+import com.microsoft.azure.management.compute.OSProfile;
+import com.microsoft.azure.management.compute.PowerState;
+import com.microsoft.azure.management.compute.VirtualMachine;
+import com.microsoft.azure.management.compute.VirtualMachines;
 import com.microsoft.azure.management.resources.Deployment;
 import com.microsoft.azure.management.resources.DeploymentMode;
 import com.microsoft.azure.management.resources.DeploymentPropertiesExtended;
@@ -62,6 +68,7 @@ import com.microsoft.azure.management.resources.implementation.ResourceManagemen
 import com.microsoft.azure.management.resources.implementation.ResourceManager;
 import com.microsoft.rest.LogLevel;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -616,6 +623,58 @@ public class AzureManagementClientImplTest extends CategoryTest {
     doReturn(extendedInner).when(deploymentsInner).getAtTenantScope(eq(deploymentName));
     armDeploymentOutputs = azureManagementClient.getARMDeploymentOutputs(context);
     assertThat(armDeploymentOutputs).isNotEmpty();
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.FILIP)
+  @Category(UnitTests.class)
+  public void testListHosts() {
+    // Given
+    PagedList<VirtualMachine> pageList = getPageList();
+    pageList.add(aVirtualMachineWithName("vm-hostname-1"));
+    pageList.add(aVirtualMachineWithName("vm-hostname-2"));
+
+    VirtualMachines mockedVirtualMachines = mock(VirtualMachines.class);
+    when(mockedVirtualMachines.listByResourceGroup(eq("resourceGroup"))).thenReturn(pageList);
+    when(azure.virtualMachines()).thenReturn(mockedVirtualMachines);
+
+    // When
+    List<VirtualMachineData> result =
+        azureManagementClient.listHosts(getAzureConfig(), "subscriptionId", "resourceGroup", Collections.emptyMap());
+
+    // Then
+    assertThat(result)
+        .isNotNull()
+        .hasSize(2)
+        .extracting(VirtualMachineData::getHostName)
+        .containsExactlyInAnyOrder("vm-hostname-1", "vm-hostname-2");
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.FILIP)
+  @Category(UnitTests.class)
+  public void testListHostsNoHosts() {
+    // Given
+    PagedList<VirtualMachine> pageList = getPageList();
+
+    VirtualMachines mockedVirtualMachines = mock(VirtualMachines.class);
+    when(mockedVirtualMachines.listByResourceGroup(eq("resourceGroup"))).thenReturn(pageList);
+    when(azure.virtualMachines()).thenReturn(mockedVirtualMachines);
+
+    // When
+    List<VirtualMachineData> result =
+        azureManagementClient.listHosts(getAzureConfig(), "subscriptionId", "resourceGroup", Collections.emptyMap());
+
+    // Then
+    assertThat(result).isNotNull().isEmpty();
+  }
+
+  private VirtualMachine aVirtualMachineWithName(String name) {
+    final VirtualMachine virtualMachine = mock(VirtualMachine.class);
+    when(virtualMachine.name()).thenReturn(name);
+    when(virtualMachine.powerState()).thenReturn(PowerState.RUNNING);
+    when(virtualMachine.osProfile()).thenReturn(new OSProfile().withLinuxConfiguration(new LinuxConfiguration()));
+    return virtualMachine;
   }
 
   private DeploymentExtendedInner mockDeploymentExtendedInnerForStatus() {
