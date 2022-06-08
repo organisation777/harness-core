@@ -146,6 +146,9 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
         log.error("The Job was not triggered successfully with queued Build URL {} ", queueItemUrl);
         executionStatus = ExecutionStatus.FAILED;
         jenkinsBuildTaskNGResponse.setErrorMessage(msg);
+        executionLogCallback.saveExecutionLog(
+            "The Job was not triggered successfully with queued Build URL {} " + queueItemUrl, LogLevel.ERROR,
+            CommandExecutionStatus.FAILURE);
       }
       JenkinsCustomServer jenkinsServer = JenkinsClient.getJenkinsServer(jenkinsInternalConfig);
       Build jenkinsBuild = jenkinsRegistryUtils.waitForJobToStartExecution(queueReference, jenkinsInternalConfig);
@@ -167,6 +170,7 @@ public class JenkinsArtifactTaskHandler extends DelegateArtifactTaskHandler<Jenk
       log.error(msg, e);
       executionStatus = ExecutionStatus.FAILED;
       jenkinsBuildTaskNGResponse.setErrorMessage(ExceptionUtils.getMessage(e));
+      executionLogCallback.saveExecutionLog(msg + e, LogLevel.ERROR, CommandExecutionStatus.FAILURE);
     }
     jenkinsBuildTaskNGResponse.setExecutionStatus(executionStatus);
     return ArtifactTaskExecutionResponse.builder().jenkinsBuildTaskNGResponse(jenkinsBuildTaskNGResponse).build();
