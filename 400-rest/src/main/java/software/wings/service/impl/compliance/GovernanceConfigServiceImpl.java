@@ -209,6 +209,7 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
 
       GovernanceConfig updatedSetting =
           wingsPersistence.findAndModify(query, updateOperations, WingsPersistence.upsertReturnNewOptions);
+      updateUserGroupReference(updatedSetting, oldSetting, accountId);
 
       // push service also adds audit trail, in case of no yaml we add the entry explicitly
       if (newDeploymentFreezeEnabled) {
@@ -235,6 +236,30 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       populateWindowsStatus(updatedSetting, accountId);
       return updatedSetting;
     }
+  }
+
+  private void updateUserGroupReference(
+      GovernanceConfig updatedSetting, GovernanceConfig oldSetting, String accountId) {
+    List<TimeRangeBasedFreezeConfig> oldTimeRangeBasedFreezeConfigs = oldSetting.getTimeRangeBasedFreezeConfigs();
+    List<TimeRangeBasedFreezeConfig> newTimeRangeBasedFreezeConfigs = updatedSetting.getTimeRangeBasedFreezeConfigs();
+    Set<String> currentReferencedUserGroups = getReferencedUserGroup(oldTimeRangeBasedFreezeConfigs);
+    Set<String> updatedReferencedUserGroups = getReferencedUserGroup(newTimeRangeBasedFreezeConfigs);
+  }
+
+  public Set<String> getReferencedUserGroup(List<TimeRangeBasedFreezeConfig> timeRangeBasedFreezeConfig) {
+    Set<String> referencedUserGroups = new HashSet<>();
+    for (TimeRangeBasedFreezeConfig entry : timeRangeBasedFreezeConfig) {
+      List<String> userGroups = new ArrayList<>();
+      if (entry.getUserGroupSelection() == null) {
+        userGroups = entry.getUserGroups();
+      } else if (entry.getUserGroupSelection() instanceof CustomUserGroupFilter) {
+        userGroups = ((CustomUserGroupFilter) entry.getUserGroupSelection()).getUserGroups();
+      }
+      for (String id : userGroups) {
+        referencedUserGroups.add(id);
+      }
+    }
+    return referencedUserGroups;
   }
 
   private void checkIfOnlyOneTypeOfUserGroupIsSet(
