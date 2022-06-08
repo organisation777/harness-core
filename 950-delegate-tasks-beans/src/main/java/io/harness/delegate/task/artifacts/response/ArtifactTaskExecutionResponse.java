@@ -15,6 +15,8 @@ import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.helpers.ext.jenkins.JobDetails;
 
 import java.util.List;
+import java.util.Map;
+
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -30,4 +32,5 @@ public class ArtifactTaskExecutionResponse {
   List<BuildDetails> buildDetails;
   List<JobDetails> jobDetails;
   List<String> artifactPath;
+  Map<String, String> buckets;
 }
