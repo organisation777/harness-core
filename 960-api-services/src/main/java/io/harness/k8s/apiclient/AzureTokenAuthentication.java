@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.util.credentials.Authentication;
 import java.io.IOException;
-import java.util.function.Supplier;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

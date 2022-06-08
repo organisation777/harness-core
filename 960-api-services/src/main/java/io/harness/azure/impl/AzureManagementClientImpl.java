@@ -42,7 +42,6 @@ import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.serializer.JsonUtils;
 
-import software.wings.helpers.ext.azure.AksClusterCredential;
 import software.wings.helpers.ext.azure.AksClusterCredentials;
 
 import com.google.common.reflect.TypeToken;

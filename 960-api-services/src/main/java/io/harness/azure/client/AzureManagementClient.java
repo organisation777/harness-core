@@ -15,8 +15,6 @@ import io.harness.azure.model.AzureConfig;
 import io.harness.azure.model.management.ManagementGroupInfo;
 import io.harness.azure.model.tag.TagDetails;
 
-import software.wings.helpers.ext.azure.AksClusterCredentials;
-
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.resources.Deployment;
 import com.microsoft.azure.management.resources.implementation.DeploymentExtendedInner;
