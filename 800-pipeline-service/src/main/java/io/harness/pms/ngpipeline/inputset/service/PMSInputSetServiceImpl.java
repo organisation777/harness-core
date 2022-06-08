@@ -36,7 +36,6 @@ import io.harness.repositories.inputset.PMSInputSetRepository;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mongodb.client.result.UpdateResult;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -297,9 +296,10 @@ public class PMSInputSetServiceImpl implements PMSInputSetService {
     try {
       inputSetRepository.deleteAllInputSetsWhenPipelineDeleted(query);
     } catch (Exception e) {
-      log.error(format("InputSets for Pipeline [%s] under Project[%s], Organization [%s] couldn't be deleted.",
-                      pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()),
-              e);
+      log.error(
+          format("InputSets for Pipeline [%s] under Project[%s], Organization [%s] couldn't be deleted.",
+              pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()),
+          e);
       throw new InvalidRequestException(
           format("InputSets for Pipeline [%s] under Project[%s], Organization [%s] couldn't be deleted.",
               pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()),
