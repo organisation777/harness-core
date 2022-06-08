@@ -146,7 +146,7 @@ import io.harness.ng.core.event.ConnectorEntityCRUDStreamListener;
 import io.harness.ng.core.event.EnvironmentGroupEntityCrudStreamListener;
 import io.harness.ng.core.event.MessageListener;
 import io.harness.ng.core.event.MessageProcessor;
-import io.harness.ng.core.event.ProjectEntityCRUDStreamListener;
+import io.harness.ng.core.event.EntityCRUDStreamListener;
 import io.harness.ng.core.event.SecretEntityCRUDStreamListener;
 import io.harness.ng.core.event.UserGroupEntityCRUDStreamListener;
 import io.harness.ng.core.event.UserMembershipReconciliationMessageProcessor;
@@ -785,7 +785,7 @@ public class NextGenModule extends AbstractModule {
     bind(MessageListener.class).annotatedWith(Names.named(ACCOUNT_ENTITY + ENTITY_CRUD)).to(AccountSetupListener.class);
     bind(MessageListener.class)
         .annotatedWith(Names.named(PROJECT_ENTITY + ENTITY_CRUD))
-        .to(ProjectEntityCRUDStreamListener.class);
+        .to(EntityCRUDStreamListener.class);
     bind(MessageListener.class)
         .annotatedWith(Names.named(CONNECTOR_ENTITY + ENTITY_CRUD))
         .to(ConnectorEntityCRUDStreamListener.class);

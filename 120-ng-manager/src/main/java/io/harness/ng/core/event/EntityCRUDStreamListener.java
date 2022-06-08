@@ -37,12 +37,12 @@ import org.springframework.data.mongodb.core.query.Criteria;
 @OwnedBy(PL)
 @Slf4j
 @Singleton
-public class ProjectEntityCRUDStreamListener implements MessageListener {
+public class EntityCRUDStreamListener implements MessageListener {
   private final ProjectService projectService;
   private final EnvironmentService environmentService;
 
   @Inject
-  public ProjectEntityCRUDStreamListener(ProjectService projectService, EnvironmentService environmentService) {
+  public EntityCRUDStreamListener(ProjectService projectService, EnvironmentService environmentService) {
     this.projectService = projectService;
     this.environmentService = environmentService;
   }
