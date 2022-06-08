@@ -21,12 +21,12 @@ import io.harness.steps.resourcerestraint.beans.HoldingScope;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-public class LockStepInfoTest {
+public class QueueStepInfoTest {
   @Test
   @Owner(developers = OwnerRule.FERNANDOD)
   @Category(UnitTests.class)
   public void shouldVerifyRuntimeSpecParameters() {
-    LockStepInfo step = new LockStepInfo();
+    QueueStepInfo step = new QueueStepInfo();
     step.setScope(HoldingScope.PIPELINE);
     ParameterField<String> pfKey = ParameterField.<String>builder().value("aKey").build();
     step.setKey(pfKey);
@@ -45,7 +45,7 @@ public class LockStepInfoTest {
   @Owner(developers = OwnerRule.FERNANDOD)
   @Category(UnitTests.class)
   public void shouldVerifyFixedSpecParameters() {
-    LockStepInfo step = new LockStepInfo();
+    QueueStepInfo step = new QueueStepInfo();
 
     SpecParameters spec = step.getSpecParameters();
     assertThat(spec).isNotNull();

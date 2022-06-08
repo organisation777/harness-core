@@ -13,14 +13,14 @@ import io.harness.steps.StepSpecTypeConstants;
 import com.google.common.collect.Sets;
 import java.util.Set;
 
-public class LockStepPlanCreator extends PMSStepPlanCreatorV2<LockStepNode> {
+public class QueueStepPlanCreator extends PMSStepPlanCreatorV2<QueueStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
-    return Sets.newHashSet(StepSpecTypeConstants.LOCK);
+    return Sets.newHashSet(StepSpecTypeConstants.QUEUE);
   }
 
   @Override
-  public Class<LockStepNode> getFieldClass() {
-    return LockStepNode.class;
+  public Class<QueueStepNode> getFieldClass() {
+    return QueueStepNode.class;
   }
 }

@@ -31,31 +31,31 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@JsonTypeName(StepSpecTypeConstants.LOCK)
-@TypeAlias("LockStepNode")
+@JsonTypeName(StepSpecTypeConstants.QUEUE)
+@TypeAlias("QueueStepNode")
 @OwnedBy(PIPELINE)
-@RecasterAlias("io.harness.plancreator.steps.resourceconstraint.LockStepNode")
-public class LockStepNode extends PmsAbstractStepNode {
-  @JsonProperty("type") @NotNull StepType type = StepType.Lock;
+@RecasterAlias("io.harness.plancreator.steps.resourceconstraint.QueueStepNode")
+public class QueueStepNode extends PmsAbstractStepNode {
+  @JsonProperty("type") @NotNull StepType type = StepType.Queue;
 
   @NotNull
   @JsonProperty("spec")
   @JsonTypeInfo(use = NAME, property = "type", include = EXTERNAL_PROPERTY, visible = true)
-  LockStepInfo lockStepInfo;
+  QueueStepInfo queueStepInfo;
 
   @Override
   public String getType() {
-    return StepSpecTypeConstants.LOCK;
+    return StepSpecTypeConstants.QUEUE;
   }
 
   @Override
   public StepSpecType getStepSpecType() {
-    return lockStepInfo;
+    return queueStepInfo;
   }
 
   // WILL RE-ITERATE
   enum StepType {
-    Lock(StepSpecTypeConstants.LOCK);
+    Queue(StepSpecTypeConstants.QUEUE);
     @Getter final String name;
     StepType(String name) {
       this.name = name;

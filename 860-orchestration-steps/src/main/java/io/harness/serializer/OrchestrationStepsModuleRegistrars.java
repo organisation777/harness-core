@@ -20,7 +20,7 @@ import io.harness.plancreator.steps.barrier.BarrierStepNode;
 import io.harness.plancreator.steps.http.HttpStepNode;
 import io.harness.plancreator.steps.internal.FlagConfigurationStepNode;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
-import io.harness.plancreator.steps.resourceconstraint.LockStepNode;
+import io.harness.plancreator.steps.resourceconstraint.QueueStepNode;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.serializer.kryo.CommonEntitiesKryoRegistrar;
 import io.harness.serializer.kryo.DelegateServiceBeansKryoRegistrar;
@@ -51,7 +51,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.mongodb.morphia.converters.TypeConverter;
 import org.springframework.core.convert.converter.Converter;
@@ -164,17 +163,18 @@ public class OrchestrationStepsModuleRegistrars {
                                            .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
-                   .entityType(EntityType.LOCK_STEP)
+                   .entityType(EntityType.QUEUE_STEP)
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(false)
                    .availableAtAccountLevel(false)
-                   .clazz(LockStepNode.class)
-                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
-                                           .namespace(SchemaNamespaceConstants.PMS)
-                                           .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
-                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
-                                           .featureFlags(List.of(FeatureName.PIPELINE_QUEUE_STEP.name()))
-                                           .build())
+                   .clazz(QueueStepNode.class)
+                   .yamlSchemaMetadata(
+                       YamlSchemaMetadata.builder()
+                           .namespace(SchemaNamespaceConstants.PMS)
+                           .modulesSupported(Arrays.asList(ModuleType.CD, ModuleType.PMS))
+                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                           .featureFlags(Collections.singletonList(FeatureName.PIPELINE_QUEUE_STEP.name()))
+                           .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.SHELL_SCRIPT_STEP)

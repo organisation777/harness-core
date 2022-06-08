@@ -2600,7 +2600,7 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "LockStepInfo": {
+    "QueueStepInfo": {
       "allOf": [
         {
           "$ref": "#/definitions/StepSpecType"
@@ -5443,14 +5443,14 @@
           "if": {
             "properties": {
               "type": {
-                "const": "Lock"
+                "const": "Queue"
               }
             }
           },
           "then": {
             "properties": {
               "spec": {
-                "$ref": "#/definitions/LockStepInfo"
+                "$ref": "#/definitions/QueueStepInfo"
               }
             }
           }

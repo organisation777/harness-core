@@ -17,7 +17,7 @@ import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.utils.PmsConstants;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.StepSpecTypeConstants;
-import io.harness.steps.resourcerestraint.LockStep;
+import io.harness.steps.resourcerestraint.QueueStep;
 import io.harness.steps.resourcerestraint.ResourceRestraintFacilitator;
 import io.harness.steps.resourcerestraint.ResourceRestraintSpecParameters;
 import io.harness.steps.resourcerestraint.beans.AcquireMode;
@@ -33,18 +33,18 @@ import org.springframework.data.annotation.TypeAlias;
 
 @Data
 @EqualsAndHashCode
-@JsonTypeName(StepSpecTypeConstants.LOCK)
-@TypeAlias("lockStepInfo")
-@RecasterAlias("io.harness.plancreator.steps.resourceconstraint.LockStepInfo")
+@JsonTypeName(StepSpecTypeConstants.QUEUE)
+@TypeAlias("queueStepInfo")
+@RecasterAlias("io.harness.plancreator.steps.resourceconstraint.QueueStepInfo")
 @OwnedBy(HarnessTeam.PIPELINE)
-public class LockStepInfo implements PMSStepInfo {
+public class QueueStepInfo implements PMSStepInfo {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> key;
   @NotNull @ApiModelProperty(dataType = "io.harness.steps.resourcerestraint.beans.HoldingScope") HoldingScope scope;
 
   @JsonIgnore
   @Override
   public StepType getStepType() {
-    return LockStep.STEP_TYPE;
+    return QueueStep.STEP_TYPE;
   }
 
   @JsonIgnore

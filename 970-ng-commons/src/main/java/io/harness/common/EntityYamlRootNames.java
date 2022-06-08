@@ -100,7 +100,7 @@ public class EntityYamlRootNames {
   public static final String BUILD_AND_PUSH_ECR = "BuildAndPushECR";
   public static final String BUILD_AND_PUSH_DOCKER_REGISTRY = "BuildAndPushDockerRegistry";
   public static final String NG_FILE = "NgFile";
-  public static final String LOCK = "Lock";
+  public static final String QUEUE = "Lock";
   public static final String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
   public static final String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
   public static final String SERVERLESS_AWS_LAMBDA_DEPLOY = "ServerlessAwsLambdaDeploy";

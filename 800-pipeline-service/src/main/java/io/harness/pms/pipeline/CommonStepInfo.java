@@ -89,10 +89,10 @@ public class CommonStepInfo {
           .setType("Barrier")
           .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Barrier").build())
           .build();
-  StepInfo lockStepInfo = StepInfo.newBuilder()
-                              .setName("Lock")
-                              .setType("Lock")
-                              .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Lock").build())
+  StepInfo queueStepInfo = StepInfo.newBuilder()
+                              .setName("Queue")
+                              .setType("Queue")
+                              .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("FlowControl/Queue").build())
                               .setFeatureFlag(FeatureName.PIPELINE_QUEUE_STEP.name())
                               .build();
   StepInfo serviceNowApprovalStepInfo =
@@ -150,7 +150,7 @@ public class CommonStepInfo {
     stepInfos.add(jiraCreateStepInfo);
     stepInfos.add(jiraUpdateStepInfo);
     stepInfos.add(barrierStepInfo);
-    stepInfos.add(lockStepInfo);
+    stepInfos.add(queueStepInfo);
     stepInfos.add(serviceNowApprovalStepInfo);
     stepInfos.add(policyStepInfo);
     stepInfos.add(serviceNowCreateStepInfo);

@@ -9,7 +9,7 @@ package io.harness.steps.resourcerestraint;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.plancreator.steps.resourceconstraint.LockStepNode;
+import io.harness.plancreator.steps.resourceconstraint.QueueStepNode;
 import io.harness.pms.contracts.plan.YamlExtraProperties;
 import io.harness.pms.contracts.plan.YamlProperties;
 import io.harness.pms.sdk.core.pipeline.variables.GenericStepVariableCreator;
@@ -23,21 +23,21 @@ import java.util.List;
 import java.util.Set;
 
 @OwnedBy(HarnessTeam.PIPELINE)
-public class LockStepVariableCreator extends GenericStepVariableCreator<LockStepNode> {
+public class QueueStepVariableCreator extends GenericStepVariableCreator<QueueStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
     Set<String> strings = new HashSet<>();
-    strings.add(StepSpecTypeConstants.LOCK);
+    strings.add(StepSpecTypeConstants.QUEUE);
     return strings;
   }
 
   @Override
-  public Class<LockStepNode> getFieldClass() {
-    return LockStepNode.class;
+  public Class<QueueStepNode> getFieldClass() {
+    return QueueStepNode.class;
   }
 
   @Override
-  public YamlExtraProperties getStepExtraProperties(String fqnPrefix, String localNamePrefix, LockStepNode config) {
+  public YamlExtraProperties getStepExtraProperties(String fqnPrefix, String localNamePrefix, QueueStepNode config) {
     YamlExtraProperties stepExtraProperties = super.getStepExtraProperties(fqnPrefix, localNamePrefix, config);
 
     ResourceRestraintOutcome rrOutcome = ResourceRestraintOutcome.builder().build();

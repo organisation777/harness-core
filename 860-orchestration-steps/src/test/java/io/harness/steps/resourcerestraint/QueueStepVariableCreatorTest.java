@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.plancreator.steps.resourceconstraint.LockStepNode;
+import io.harness.plancreator.steps.resourceconstraint.QueueStepNode;
 import io.harness.pms.contracts.plan.YamlExtraProperties;
 import io.harness.pms.contracts.plan.YamlProperties;
 import io.harness.rule.Owner;
@@ -26,12 +26,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @OwnedBy(HarnessTeam.PIPELINE)
-public class LockStepVariableCreatorTest {
-  private LockStepVariableCreator variableCreator;
+public class QueueStepVariableCreatorTest {
+  private QueueStepVariableCreator variableCreator;
 
   @Before
   public void setup() {
-    variableCreator = new LockStepVariableCreator();
+    variableCreator = new QueueStepVariableCreator();
   }
 
   @Test
@@ -40,7 +40,7 @@ public class LockStepVariableCreatorTest {
   public void shouldValidateSupportedStepTypes() {
     Set<String> supported = variableCreator.getSupportedStepTypes();
     assertThat(supported).hasSize(1);
-    assertThat(supported).containsOnly(StepSpecTypeConstants.LOCK);
+    assertThat(supported).containsOnly(StepSpecTypeConstants.QUEUE);
   }
 
   @Test
@@ -48,7 +48,7 @@ public class LockStepVariableCreatorTest {
   @Category(UnitTests.class)
   public void shouldCreateExtraPropertiesWithResourceRestraintOutcome() {
     YamlExtraProperties extraProperties =
-        variableCreator.getStepExtraProperties("fqn", "localName", new LockStepNode());
+        variableCreator.getStepExtraProperties("fqn", "localName", new QueueStepNode());
     List<YamlProperties> outputProperties = extraProperties.getOutputPropertiesList();
     assertThat(outputProperties).hasSize(1);
     assertYamlProperties(outputProperties.get(0), "fqn.output.resourceUnit", "localName.output.resourceUnit", true);
@@ -59,7 +59,7 @@ public class LockStepVariableCreatorTest {
   @Category(UnitTests.class)
   public void shouldCreateExtraPropertiesWithSuperExtraProperties() {
     YamlExtraProperties extraProperties =
-        variableCreator.getStepExtraProperties("fqn", "localName", new LockStepNode());
+        variableCreator.getStepExtraProperties("fqn", "localName", new QueueStepNode());
     List<YamlProperties> properties = extraProperties.getPropertiesList();
     assertThat(properties).hasSize(2);
     assertYamlProperties(properties.get(0), "fqn.startTs", "localName.startTs", false);
