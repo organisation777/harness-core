@@ -8,9 +8,6 @@
 package io.harness.cdng.artifact.resources.amazons3.service;
 
 import io.harness.beans.IdentifierRef;
-import io.harness.security.encryption.EncryptedDataDetail;
-
-import software.wings.beans.AwsConfig;
 
 import java.util.List;
 import java.util.Map;
