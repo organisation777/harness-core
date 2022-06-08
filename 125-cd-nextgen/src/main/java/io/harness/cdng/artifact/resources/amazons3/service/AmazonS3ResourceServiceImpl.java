@@ -15,6 +15,10 @@ import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
+import io.harness.delegate.task.artifacts.ArtifactDelegateRequestUtils;
+import io.harness.delegate.task.artifacts.ArtifactSourceType;
+import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.BaseNGAccess;
@@ -55,6 +59,10 @@ public class AmazonS3ResourceServiceImpl implements AmazonS3ResourceService {
     BaseNGAccess baseNGAccess = getBaseNGAccess(accountId, orgId, projId);
 
     List<EncryptedDataDetail> encryptionDetails = getEncryptionDetails(amazonS3Connector, baseNGAccess);
+
+    AmazonS3ArtifactDelegateRequest amazonS3ArtifactDelegateRequest =
+            ArtifactDelegateRequestUtils.getAmazonS3DelegateRequest(connectorIdentifier.getIdentifier(), amazonS3Connector,
+                    encryptionDetails, ArtifactSourceType.JENKINS, null, null, null, null);
 
     return null;
   }

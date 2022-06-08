@@ -20,6 +20,7 @@ import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.jenkins.JenkinsConnectorDTO;
 import io.harness.delegate.beans.connector.nexusconnector.NexusConnectorDTO;
+import io.harness.delegate.task.artifacts.amazons3.AmazonS3ArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
@@ -173,6 +174,22 @@ public class ArtifactDelegateRequestUtils {
         .jobName(jobName)
         .artifactPaths(artifactPath)
         .build();
+  }
+
+  public AmazonS3ArtifactDelegateRequest getAmazonS3DelegateRequest(String connectorRef,
+                                                                    AwsConnectorDTO awsConnectorDTO, List<EncryptedDataDetail> encryptedDataDetails,
+                                                                    ArtifactSourceType sourceType, List<JobDetails> jobDetails, String parentJobName, String jobName,
+                                                                    List<String> artifactPath) {
+    return AmazonS3ArtifactDelegateRequest.builder()
+            .connectorRef(connectorRef)
+            .awsConnectorDTO(awsConnectorDTO)
+            .encryptedDataDetails(encryptedDataDetails)
+            .sourceType(sourceType)
+            .jobDetails(jobDetails)
+            .parentJobName(parentJobName)
+            .jobName(jobName)
+            .artifactPaths(artifactPath)
+            .build();
   }
 
   private String trim(String str) {

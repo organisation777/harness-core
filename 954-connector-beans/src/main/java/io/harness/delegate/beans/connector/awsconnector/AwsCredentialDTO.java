@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.harness.beans.DecryptableEntity;
 import io.swagger.annotations.ApiModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.Valid;
@@ -20,6 +21,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -27,7 +31,7 @@ import lombok.experimental.FieldDefaults;
 @ApiModel("AwsCredential")
 @JsonDeserialize(using = AwsCredentialDTODeserializer.class)
 @Schema(name = "AwsCredential", description = "This contains details of the AWS connector credential")
-public class AwsCredentialDTO {
+public class AwsCredentialDTO implements DecryptableEntity {
   @Valid CrossAccountAccessDTO crossAccountAccess;
   @NotNull @JsonProperty("type") AwsCredentialType awsCredentialType;
   @JsonProperty("spec")
@@ -43,4 +47,9 @@ public class AwsCredentialDTO {
     this.config = config;
     this.crossAccountAccess = crossAccountAccess;
   }
+
+    @Override
+    public List<Field> getSecretReferenceFields() {
+        return null;
+    }
 }
