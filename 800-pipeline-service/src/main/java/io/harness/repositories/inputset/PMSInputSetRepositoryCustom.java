@@ -49,12 +49,12 @@ public interface PMSInputSetRepositoryCustom {
   InputSetEntity update(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update);
 
-  InputSetEntity deleteForOldGitSync(InputSetEntity entityToDelete, InputSetYamlDTO yamlDTO);
+  void deleteForOldGitSync(InputSetEntity entityToDelete, InputSetYamlDTO yamlDTO);
 
-  InputSetEntity delete(
+  void delete(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, String identifier);
 
-  UpdateResult deleteAllInputSetsWhenPipelineDeleted(Query query, Update update);
+  void deleteAllInputSetsWhenPipelineDeleted(Query query);
 
   boolean existsByAccountIdAndOrgIdentifierAndProjectIdentifierAndPipelineIdentifierAndDeletedNot(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted);
