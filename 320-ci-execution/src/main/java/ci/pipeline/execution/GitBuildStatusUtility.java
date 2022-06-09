@@ -278,20 +278,22 @@ public class GitBuildStatusUtility {
   }
 
   private String getAzureRepoStatus(Status status) {
-    if (status == Status.ERRORED) {
-      return AZURE_REPO_ERROR;
+    switch (status) {
+      case ERRORED:
+        return AZURE_REPO_ERROR;
+      case ABORTED:
+      case FAILED:
+      case EXPIRED:
+        return AZURE_REPO_FAILED;
+      case SUCCEEDED:
+      case IGNORE_FAILED:
+        return AZURE_REPO_SUCCESS;
+      case RUNNING:
+      case QUEUED:
+        return AZURE_REPO_PENDING;
+      default:
+        return UNSUPPORTED;
     }
-    if (status == Status.ABORTED || status == Status.FAILED || status == Status.EXPIRED) {
-      return AZURE_REPO_FAILED;
-    }
-    if (status == Status.SUCCEEDED || status == Status.IGNORE_FAILED) {
-      return AZURE_REPO_SUCCESS;
-    }
-    if (status == Status.RUNNING || status == Status.QUEUED) {
-      return AZURE_REPO_PENDING;
-    }
-
-    return UNSUPPORTED;
   }
 
   private String getGitLabStatus(Status status) {
