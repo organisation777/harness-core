@@ -104,7 +104,7 @@ public class JenkinsArtifactResource {
 
   @GET
   @Path("job/{jobName}/details")
-  @ApiOperation(value = "Gets Jenkins builds", nickname = "getBuilds For Jenkins")
+  @ApiOperation(value = "Gets Jenkins Job paramter", nickname = "getJobParameters for Jenkins")
   public ResponseDTO<List<JobParameter>> getJobParameters(@QueryParam("connectorRef") String jenkinsConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
