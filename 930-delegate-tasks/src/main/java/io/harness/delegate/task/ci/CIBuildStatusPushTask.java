@@ -369,8 +369,8 @@ public class CIBuildStatusPushTask extends AbstractDelegateRunnableTask {
           secretDecryptionService.decrypt(azureRepoTokenSpecDTO, gitConnector.getEncryptedDataDetails());
           return new String(azureRepoTokenSpecDTO.getTokenRef().getDecryptedValue());
         } else {
-          throw new CIStageExecutionException(
-              format("Unsupported access type %s for gitlab status", azureRepoConnectorDTO.getApiAccess().getType()));
+          throw new CIStageExecutionException(format(
+              "Unsupported access type %s for Azure repo status", azureRepoConnectorDTO.getApiAccess().getType()));
         }
       default:
         throw new CIStageExecutionException(format("Unsupported scm type %s for git status", gitSCMType));
