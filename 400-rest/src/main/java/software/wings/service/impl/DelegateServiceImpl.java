@@ -1964,7 +1964,6 @@ public class DelegateServiceImpl implements DelegateService {
         false);
 
     File yaml = File.createTempFile(HARNESS_DELEGATE_VALUES_YAML, YAML);
-    log.info("Calling old helm values API, path of file {} ", yaml.getAbsolutePath());
     saveProcessedTemplate(params, yaml, "delegate-helm-values.yaml.ftl");
     delegateTelemetryPublisher.sendTelemetryTrackEvents(accountId, HELM_DELEGATE, false, DELEGATE_CREATED_EVENT);
     return yaml;
