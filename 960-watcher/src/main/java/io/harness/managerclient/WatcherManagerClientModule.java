@@ -12,27 +12,20 @@ import io.harness.security.TokenGenerator;
 import com.google.inject.AbstractModule;
 
 public class WatcherManagerClientModule extends AbstractModule {
-  private final String managerBaseUrl;
-  private final String accountId;
-  private final String accountSecret;
-  private final String clientCertificateFilePath;
-  private final String clientCertificateKeyFilePath;
+  private String managerBaseUrl;
+  private String accountId;
+  private String accountSecret;
 
-  public WatcherManagerClientModule(String managerBaseUrl, String accountId, String accountSecret,
-      String clientCertificateFilePath, String clientCertificateKeyFilePath) {
+  public WatcherManagerClientModule(String managerBaseUrl, String accountId, String accountSecret) {
     this.managerBaseUrl = managerBaseUrl;
     this.accountId = accountId;
     this.accountSecret = accountSecret;
-    this.clientCertificateFilePath = clientCertificateFilePath;
-    this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
   }
 
   @Override
   protected void configure() {
     TokenGenerator tokenGenerator = new TokenGenerator(accountId, accountSecret);
     bind(TokenGenerator.class).toInstance(tokenGenerator);
-    bind(ManagerClientV2.class)
-        .toProvider(new WatcherManagerClientV2Factory(
-            managerBaseUrl, tokenGenerator, this.clientCertificateFilePath, this.clientCertificateKeyFilePath));
+    bind(ManagerClientV2.class).toProvider(new WatcherManagerClientV2Factory(managerBaseUrl, tokenGenerator));
   }
 }

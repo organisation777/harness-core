@@ -56,6 +56,9 @@ append_config "clientToolsDownloadDisabled" $CLIENT_TOOLS_DOWNLOAD_DISABLED
 append_config "clientCertificateFilePath" $CLIENT_CERTIFICATE_PATH
 append_config "clientCertificateKeyFilePath" $CLIENT_CERTIFICATE_KEY_PATH
 
+# Intended for debugging, has to be set explicitly as its never set in generated yaml.
+append_config "trustAllCertificates" ${TRUST_ALL_CERTIFICATES:-false}
+
 # 3. Start the delegate
 JAVA_OPTS=${JAVA_OPTS//UseCGroupMemoryLimitForHeap/UseContainerSupport}
 exec java $JAVA_OPTS $PROXY_SYS_PROPS -Xmx4096m -XX:+IgnoreUnrecognizedVMOptions -XX:+HeapDumpOnOutOfMemoryError -Xloggc:mygclogfilename.gc -XX:+UseParallelGC -XX:MaxGCPauseMillis=500 -Dfile.encoding=UTF-8 -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true -DLANG=en_US.UTF-8 -jar delegate.jar server config.yml

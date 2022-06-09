@@ -11,8 +11,6 @@ import io.harness.network.FibonacciBackOff;
 import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.TokenGenerator;
-import io.harness.security.X509KeyManagerBuilder;
-import io.harness.security.X509SslContextBuilder;
 import io.harness.security.X509TrustManagerBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,29 +19,23 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Provider;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request.Builder;
-import org.apache.commons.lang3.StringUtils;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
 @Slf4j
 public class WatcherManagerClientV2Factory implements Provider<ManagerClientV2> {
-  private final String baseUrl;
-  private final TokenGenerator tokenGenerator;
-  private final String clientCertificateFilePath;
-  private final String clientCertificateKeyFilePath;
+  private String baseUrl;
+  private TokenGenerator tokenGenerator;
 
-  WatcherManagerClientV2Factory(String baseUrl, TokenGenerator tokenGenerator, String clientCertificateFilePath,
-      String clientCertificateKeyFilePath) {
+  WatcherManagerClientV2Factory(String baseUrl, TokenGenerator tokenGenerator) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = tokenGenerator;
-    this.clientCertificateFilePath = clientCertificateFilePath;
-    this.clientCertificateKeyFilePath = clientCertificateKeyFilePath;
   }
 
   @Override
@@ -53,7 +45,7 @@ public class WatcherManagerClientV2Factory implements Provider<ManagerClientV2> 
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());
     Retrofit retrofit = new Retrofit.Builder()
-                            .baseUrl(this.baseUrl)
+                            .baseUrl(baseUrl)
                             .client(getUnsafeOkHttpClient())
                             .addConverterFactory(JacksonConverterFactory.create(objectMapper))
                             .build();
@@ -62,25 +54,19 @@ public class WatcherManagerClientV2Factory implements Provider<ManagerClientV2> 
 
   private OkHttpClient getUnsafeOkHttpClient() {
     try {
-      X509TrustManager trustManager = new X509TrustManagerBuilder().trustAllCertificates().build();
-      X509SslContextBuilder sslContextBuilder = new X509SslContextBuilder().trustManager(trustManager);
-
-      if (StringUtils.isNotEmpty(this.clientCertificateFilePath)
-          && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath)) {
-        X509KeyManager keyManager =
-            new X509KeyManagerBuilder()
-                .withClientCertificateFromFile(this.clientCertificateFilePath, this.clientCertificateKeyFilePath)
-                .build();
-        sslContextBuilder.keyManager(keyManager);
-      }
-
-      SSLContext sslContext = sslContextBuilder.build();
+      // Install the all-trusting trust manager
+      X509TrustManager[] trustManagers =
+          new X509TrustManager[] {new X509TrustManagerBuilder().trustAllCertificates().build()};
+      final SSLContext sslContext = SSLContext.getInstance("SSL");
+      sslContext.init(null, trustManagers, new java.security.SecureRandom());
+      // Create an ssl socket factory with our all-trusting manager
+      final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
       return Http.getOkHttpClientWithProxyAuthSetup()
           .connectionPool(new ConnectionPool())
           .retryOnConnectionFailure(true)
-          .addInterceptor(new WatcherAuthInterceptor(this.tokenGenerator))
-          .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
+          .addInterceptor(new WatcherAuthInterceptor(tokenGenerator))
+          .sslSocketFactory(sslSocketFactory, trustManagers[0])
           .addInterceptor(chain -> {
             Builder request = chain.request().newBuilder().addHeader("User-Agent", "watcher");
             return chain.proceed(request.build());

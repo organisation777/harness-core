@@ -322,14 +322,6 @@ if [ ! -z "$CF_CLI7_PATH" ] && ! `grep cfCli7Path config-delegate.yml > /dev/nul
   echo "cfCli7Path: $CF_CLI7_PATH" >> config-delegate.yml
 fi
 
-if [ ! -z "$CLIENT_CERTIFICATE_PATH" ] && ! `grep clientCertificateFilePath config-delegate.yml > /dev/null` ; then
-  echo "clientCertificateFilePath: $CLIENT_CERTIFICATE_PATH" >> config-delegate.yml
-fi
-
-if [ ! -z "$CLIENT_CERTIFICATE_KEY_PATH" ] && ! `grep clientCertificateKeyFilePath config-delegate.yml > /dev/null` ; then
-  echo "clientCertificateKeyFilePath: $CLIENT_CERTIFICATE_KEY_PATH" >> config-delegate.yml
-fi
-
 rm -f -- *.bak
 
 export SCM_VERSION=542f4642
