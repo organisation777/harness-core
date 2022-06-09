@@ -11,6 +11,7 @@ import static io.harness.beans.sweepingoutputs.CISweepingOutputNames.CODEBASE;
 import static io.harness.common.CIExecutionConstants.PATH_SEPARATOR;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.delegate.beans.connector.ConnectorType.AZURE_REPO;
 import static io.harness.delegate.beans.connector.ConnectorType.BITBUCKET;
 import static io.harness.delegate.beans.connector.ConnectorType.GITHUB;
 import static io.harness.delegate.beans.connector.ConnectorType.GITLAB;
@@ -30,6 +31,8 @@ import io.harness.beans.sweepingoutputs.CodebaseSweepingOutput;
 import io.harness.beans.sweepingoutputs.ContextElement;
 import io.harness.beans.sweepingoutputs.StageDetails;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
+import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
@@ -53,6 +56,7 @@ import io.harness.remote.client.RestClientUtils;
 import io.harness.service.DelegateGrpcClientWrapper;
 import io.harness.states.codebase.CodeBaseTaskStep;
 import io.harness.states.codebase.CodeBaseTaskStepParameters;
+import io.harness.stateutils.buildstate.CodebaseUtils;
 import io.harness.stateutils.buildstate.ConnectorUtils;
 
 import com.google.inject.Inject;
@@ -60,6 +64,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.net.URL;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -80,8 +86,13 @@ public class GitBuildStatusUtility {
   private static final String GITLAB_CANCELED = "canceled";
   private static final String GITLAB_PENDING = "pending";
   private static final String GITLAB_SUCCESS = "success";
+  private static final String AZURE_REPO_ERROR = "error";
+  private static final String AZURE_REPO_FAILED = "failed";
+  private static final String AZURE_REPO_PENDING = "pending";
+  private static final String AZURE_REPO_SUCCESS = "succeeded";
   private static final String DASH = "-";
   private static final int IDENTIFIER_LENGTH = 30;
+  private static final List<ConnectorType> validConnectors = Arrays.asList(GITHUB, GITLAB, BITBUCKET, AZURE_REPO);
 
   @Inject GitClientHelper gitClientHelper;
   @Inject private ConnectorUtils connectorUtils;
@@ -171,24 +182,16 @@ public class GitBuildStatusUtility {
       Ambiance ambiance, BuildStatusUpdateParameter buildStatusUpdateParameter, Status status, String commitSha) {
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
     ConnectorDetails gitConnector = getGitConnector(ngAccess, buildStatusUpdateParameter.getConnectorIdentifier());
+    validateSCMType(gitConnector.getConnectorType());
 
-    boolean isAccountLevelConnector = isAccountLevelConnector(gitConnector, buildStatusUpdateParameter.getRepoName());
-
+    String projectName = buildStatusUpdateParameter.getProjectName();
     String repoName = buildStatusUpdateParameter.getRepoName();
-    String url = retrieveURL(gitConnector);
-    if (!url.endsWith("/")) {
-      url = url + "/";
-    }
-    String ownerName;
-    String finalRepo;
-    if (!isAccountLevelConnector) {
-      finalRepo = gitClientHelper.getGitRepo(url);
-      ownerName = gitClientHelper.getGitOwner(url, false);
-    } else {
-      finalRepo = gitClientHelper.getGitRepo(url + repoName);
-      // Append the url and use the repo level connector owner parsing logic
-      ownerName = gitClientHelper.getGitOwner(url + repoName, false);
-    }
+    String url = CodebaseUtils.getCompleteURLFromConnector(gitConnector, projectName, repoName);
+
+    url = StringUtils.join(StringUtils.stripEnd(url, PATH_SEPARATOR), PATH_SEPARATOR);
+
+    String finalRepo = GitClientHelper.getGitRepo(url);
+    String ownerName = GitClientHelper.getGitOwner(url, false);
 
     GitSCMType gitSCMType = retrieveSCMType(gitConnector);
     return CIBuildStatusPushParameters.builder()
@@ -225,47 +228,17 @@ public class GitBuildStatusUtility {
       return GitSCMType.BITBUCKET;
     } else if (gitConnector.getConnectorType() == GITLAB) {
       return GitSCMType.GITLAB;
+    } else if (gitConnector.getConnectorType() == AZURE_REPO) {
+      return GitSCMType.AZURE_REPO;
     } else {
       throw new CIStageExecutionException("scmType " + gitConnector.getConnectorType() + "is not supported");
     }
   }
 
-  private String retrieveURL(ConnectorDetails gitConnector) {
-    if (gitConnector.getConnectorType() == GITHUB) {
-      GithubConnectorDTO gitConfigDTO = (GithubConnectorDTO) gitConnector.getConnectorConfig();
-      return gitConfigDTO.getUrl();
-    } else if (gitConnector.getConnectorType() == BITBUCKET) {
-      BitbucketConnectorDTO gitConfigDTO = (BitbucketConnectorDTO) gitConnector.getConnectorConfig();
-      return gitConfigDTO.getUrl();
-    } else if (gitConnector.getConnectorType() == GITLAB) {
-      GitlabConnectorDTO gitConfigDTO = (GitlabConnectorDTO) gitConnector.getConnectorConfig();
-      return gitConfigDTO.getUrl();
-    } else {
-      throw new CIStageExecutionException("scmType " + gitConnector.getConnectorType() + "is not supported");
+  private void validateSCMType(ConnectorType connectorType) {
+    if (!validConnectors.contains(connectorType)) {
+      throw new CIStageExecutionException("scmType " + connectorType + "is not supported");
     }
-  }
-
-  private boolean isAccountLevelConnector(ConnectorDetails gitConnector, String repoName) {
-    if (gitConnector.getConnectorType() == GITHUB) {
-      GithubConnectorDTO gitConfigDTO = (GithubConnectorDTO) gitConnector.getConnectorConfig();
-      if (gitConfigDTO.getConnectionType() == ACCOUNT) {
-        return true;
-      }
-    } else if (gitConnector.getConnectorType() == BITBUCKET) {
-      BitbucketConnectorDTO gitConfigDTO = (BitbucketConnectorDTO) gitConnector.getConnectorConfig();
-      if (gitConfigDTO.getConnectionType() == ACCOUNT) {
-        return true;
-      }
-    } else if (gitConnector.getConnectorType() == GITLAB) {
-      GitlabConnectorDTO gitConfigDTO = (GitlabConnectorDTO) gitConnector.getConnectorConfig();
-      if (gitConfigDTO.getConnectionType() == ACCOUNT) {
-        return true;
-      }
-    } else {
-      throw new CIStageExecutionException("scmType " + gitConnector.getConnectorType() + "is not supported");
-    }
-
-    return false;
   }
 
   private String retrieveBuildStatusState(GitSCMType gitSCMType, Status status) {
@@ -276,6 +249,8 @@ public class GitBuildStatusUtility {
         return getGitLabStatus(status);
       case BITBUCKET:
         return getBitBucketStatus(status);
+      case AZURE_REPO:
+        return getAzureRepoStatus(status);
       default:
         unhandled(gitSCMType);
         return UNSUPPORTED;
@@ -297,6 +272,23 @@ public class GitBuildStatusUtility {
     }
     if (status == Status.QUEUED) {
       return GITHUB_PENDING;
+    }
+
+    return UNSUPPORTED;
+  }
+
+  private String getAzureRepoStatus(Status status) {
+    if (status == Status.ERRORED) {
+      return AZURE_REPO_ERROR;
+    }
+    if (status == Status.ABORTED || status == Status.FAILED || status == Status.EXPIRED) {
+      return AZURE_REPO_FAILED;
+    }
+    if (status == Status.SUCCEEDED || status == Status.IGNORE_FAILED) {
+      return AZURE_REPO_SUCCESS;
+    }
+    if (status == Status.RUNNING || status == Status.QUEUED) {
+      return AZURE_REPO_PENDING;
     }
 
     return UNSUPPORTED;
