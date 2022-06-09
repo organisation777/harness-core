@@ -21,7 +21,7 @@ import io.harness.steps.resourcerestraint.QueueStep;
 import io.harness.steps.resourcerestraint.ResourceRestraintFacilitator;
 import io.harness.steps.resourcerestraint.ResourceRestraintSpecParameters;
 import io.harness.steps.resourcerestraint.beans.AcquireMode;
-import io.harness.steps.resourcerestraint.beans.HoldingScope;
+import io.harness.steps.resourcerestraint.beans.QueueHoldingScope;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -39,7 +39,9 @@ import org.springframework.data.annotation.TypeAlias;
 @OwnedBy(HarnessTeam.PIPELINE)
 public class QueueStepInfo implements PMSStepInfo {
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> key;
-  @NotNull @ApiModelProperty(dataType = "io.harness.steps.resourcerestraint.beans.HoldingScope") HoldingScope scope;
+  @NotNull
+  @ApiModelProperty(dataType = "io.harness.steps.resourcerestraint.beans.QueueHoldingScope")
+  QueueHoldingScope scope;
 
   @JsonIgnore
   @Override
@@ -66,7 +68,7 @@ public class QueueStepInfo implements PMSStepInfo {
   public SpecParameters getSpecParameters() {
     return ResourceRestraintSpecParameters.builder()
         .resourceUnit(key)
-        .holdingScope(scope)
+        .holdingScope(scope.getHoldingScope())
         .name(PmsConstants.QUEUING_RC_NAME)
         .permits(PmsConstants.QUEUING_RC_PERMITS)
         .acquireMode(AcquireMode.ENSURE)

@@ -17,6 +17,7 @@ import io.harness.rule.OwnerRule;
 import io.harness.steps.resourcerestraint.ResourceRestraintSpecParameters;
 import io.harness.steps.resourcerestraint.beans.AcquireMode;
 import io.harness.steps.resourcerestraint.beans.HoldingScope;
+import io.harness.steps.resourcerestraint.beans.QueueHoldingScope;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -27,7 +28,7 @@ public class QueueStepInfoTest {
   @Category(UnitTests.class)
   public void shouldVerifyRuntimeSpecParameters() {
     QueueStepInfo step = new QueueStepInfo();
-    step.setScope(HoldingScope.PIPELINE);
+    step.setScope(QueueHoldingScope.PIPELINE);
     ParameterField<String> pfKey = ParameterField.<String>builder().value("aKey").build();
     step.setKey(pfKey);
 
