@@ -8,8 +8,11 @@
 package io.harness.ngtriggers.resource;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
-
-import static io.harness.rule.OwnerRule.*;
+import static io.harness.rule.OwnerRule.HARSH;
+import static io.harness.rule.OwnerRule.MATT;
+import static io.harness.rule.OwnerRule.NAMAN;
+import static io.harness.rule.OwnerRule.ROHITKARELIA;
+import static io.harness.rule.OwnerRule.SRIDHAR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
