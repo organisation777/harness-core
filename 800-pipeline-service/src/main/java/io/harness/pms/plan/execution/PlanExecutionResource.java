@@ -85,7 +85,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 
-@Tag(name = "Pipeline Execution", description = "This contains APIs for Executing a Pipeline")
+@Tag(name = "Pipeline Execute", description = "This contains APIs for Executing a Pipeline")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {

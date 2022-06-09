@@ -173,8 +173,9 @@ public class ExecutionDetailsResource {
   @Path("/v2/{planExecutionId}")
   @ApiOperation(value = "Gets Execution Detail V2", nickname = "getExecutionDetailV2")
   @Operation(operationId = "getExecutionDetailV2",
-      description = "Returns the Pipeline Execution Details for a Given PlanExecution ID",
-      summary = "Fetch Pipeline Execution Details",
+      description =
+          "Returns the Pipeline Execution Details for a Given PlanExecution ID",
+      summary = "Fetch Execution Details",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -230,7 +231,7 @@ public class ExecutionDetailsResource {
   @ApiOperation(value = "Gets Execution Detail", nickname = "getExecutionDetail")
   @Operation(operationId = "getExecutionDetail",
       description = "Returns the Pipeline Execution Details for a Given PlanExecution ID",
-      summary = "Fetch Pipeline Execution Details",
+      summary = "Fetch Execution Details",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

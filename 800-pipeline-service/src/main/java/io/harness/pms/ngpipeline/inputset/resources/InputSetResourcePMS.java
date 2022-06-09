@@ -142,7 +142,7 @@ public class InputSetResourcePMS {
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_VIEW)
   @Operation(operationId = "getInputSet",
       description = "Returns Input Set for a Given Identifier (Throws an Error if no Input Set Exists)",
-      summary = "Fetch Input Set",
+      summary = "Fetch an Input Set",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -242,7 +242,7 @@ public class InputSetResourcePMS {
   @ApiOperation(value = "Create an InputSet For Pipeline", nickname = "createInputSetForPipeline")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
   @Operation(operationId = "postInputSet", description = "Creates an Input Set for a Pipeline",
-      summary = "Create Input Set",
+      summary = "Create an Input Set",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -337,7 +337,7 @@ public class InputSetResourcePMS {
   @ApiOperation(value = "Update an InputSet by identifier", nickname = "updateInputSetForPipeline")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_CREATE_AND_EDIT)
   @Operation(operationId = "putInputSet", description = "Updates the Input Set for a Pipeline",
-      summary = "Update Input Set",
+      summary = "Update an Input Set",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -443,7 +443,7 @@ public class InputSetResourcePMS {
   @ApiOperation(value = "Delete an InputSet by identifier", nickname = "deleteInputSetForPipeline")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_DELETE)
   @Operation(operationId = "deleteInputSet", description = "Deletes the Input Set by Identifier",
-      summary = "Delete Input Set",
+      summary = "Delete an Input Set",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
