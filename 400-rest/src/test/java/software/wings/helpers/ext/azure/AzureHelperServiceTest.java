@@ -182,12 +182,10 @@ public class AzureHelperServiceTest extends WingsBaseTest {
 
     AzureManagementRestClient azureManagementRestClient = mock(AzureManagementRestClient.class);
     doReturn(azureManagementRestClient).when(spyAzureDelegateHelperService).getAzureManagementRestClient(any());
-    Call<io.harness.azure.model.tag.AzureListTagsResponse> responseCall =
-        (Call<io.harness.azure.model.tag.AzureListTagsResponse>) mock(Call.class);
+    Call<AzureListTagsResponse> responseCall = (Call<AzureListTagsResponse>) mock(Call.class);
     doReturn(responseCall).when(azureManagementRestClient).listTags(anyString(), anyString());
 
-    io.harness.azure.model.tag.AzureListTagsResponse azureListTagsResponse =
-        new io.harness.azure.model.tag.AzureListTagsResponse();
+    AzureListTagsResponse azureListTagsResponse = new AzureListTagsResponse();
     io.harness.azure.model.tag.TagDetails tagDetails = new TagDetails();
     tagDetails.setTagName("tagName");
     io.harness.azure.model.tag.TagValue tagValue = new TagValue();
