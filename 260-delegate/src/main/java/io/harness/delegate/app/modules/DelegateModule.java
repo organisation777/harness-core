@@ -115,6 +115,7 @@ import io.harness.delegate.message.MessengerType;
 import io.harness.delegate.provider.DelegateConfigurationServiceProviderImpl;
 import io.harness.delegate.provider.DelegatePropertiesServiceProviderImpl;
 import io.harness.delegate.serverless.ServerlessAwsLambdaDeployCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessAwsLambdaPrepareRollbackCommandTaskHandler;
 import io.harness.delegate.serverless.ServerlessAwsLambdaRollbackCommandTaskHandler;
 import io.harness.delegate.serverless.ServerlessCommandTaskHandler;
 import io.harness.delegate.service.DelegateAgentService;
@@ -1253,6 +1254,8 @@ public class DelegateModule extends AbstractModule {
         .to(ServerlessAwsLambdaDeployCommandTaskHandler.class);
     serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_ROLLBACK.name())
         .to(ServerlessAwsLambdaRollbackCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_PREPARE_ROLLBACK.name())
+        .to(ServerlessAwsLambdaPrepareRollbackCommandTaskHandler.class);
 
     registerSecretManagementBindings();
     registerConnectorValidatorsBindings();

@@ -2149,3 +2149,8 @@
 980027:io.harness.exception.runtime.serverless.ServerlessCommandExecutionException
 980028:io.harness.exception.AzureAKSException
 9800001:io.harness.beans.RecasterMap
+29305:io.harness.delegate.task.serverless.request.ServerlessPrepareRollbackDataRequest
+29306:io.harness.delegate.task.serverless.response.ServerlessPrepareRollbackDataResponse
+29307:io.harness.delegate.beans.serverless.ServerlessPrepareRollbackDataResult
+29308:io.harness.delegate.beans.serverless.ServerlessAwsLambdaPrepareRollbackDataResult
+
