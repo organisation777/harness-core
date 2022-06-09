@@ -22,9 +22,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(NON_EMPTY)
 @OwnedBy(HarnessTeam.CI)
-public class CIScmDetails {
-    private String scmUrl;
-    private String scmProvider;
-    private String scmAuthType;
-    private String scmHostType;
+public class TIBuildDetails {
+    private String buildTool;
+    private String language;
 }

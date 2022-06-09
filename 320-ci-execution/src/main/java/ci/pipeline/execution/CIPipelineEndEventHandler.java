@@ -11,6 +11,9 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
+import io.harness.ci.pipeline.executions.beans.CIImageDetails;
+import io.harness.ci.pipeline.executions.beans.CIInfraDetails;
+import io.harness.ci.pipeline.executions.beans.TIBuildDetails;
 import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.k8s.model.ImageDetails;
@@ -51,11 +54,13 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   private static final String SCM_AUTH_METHOD = "scm_auth_method";
   private static final String SCM_HOST_TYPE = "scm_host_type";
 
-  private static final String INFRA_TYPE = "infra_type";
-  private static final String INFRA_OS_TYPE = "infra_os_type";
-  private static final String INFRA_HOST_TYPE = "infra_host_type";
+  private static final String INFRA_TYPE_LIST = "infra_type_list";
+  private static final String INFRA_OS_LIST = "infra_os_list";
+  private static final String INFRA_HOST_LIST = "infra_host_list";
 
   private static final String IMAGES = "images";
+  private static final String TI_BUILD_TOOL = "ti_build_tool";
+  private static final String TI_LANGUAGE = "ti_language";
 
   @Override
   public void handleEvent(OrchestrationEvent event) {
@@ -93,29 +98,53 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     ciBuiltMap.put(REPO_NAME, moduleInfo.getRepoName());
 
     // SCM Vendor details
-    ciBuiltMap.put(URL, moduleInfo.getScmDetails().getScmUrl());
-    ciBuiltMap.put(SCM_PROVIDER, moduleInfo.getScmDetails().getScmProvider());
-    ciBuiltMap.put(SCM_AUTH_METHOD, moduleInfo.getScmDetails().getScmAuthType());
-    ciBuiltMap.put(SCM_HOST_TYPE, moduleInfo.getScmDetails().getScmHostType());
+    // Since we only support one codebase, SCM details will be sent as values instead of list
+    if (moduleInfo.getScmDetailsList() != null && moduleInfo.getScmDetailsList().size() != 0) {
+      ciBuiltMap.put(URL, moduleInfo.getScmDetailsList().get(0).getScmUrl());
+      ciBuiltMap.put(SCM_PROVIDER, moduleInfo.getScmDetailsList().get(0).getScmProvider());
+      ciBuiltMap.put(SCM_AUTH_METHOD, moduleInfo.getScmDetailsList().get(0).getScmAuthType());
+      ciBuiltMap.put(SCM_HOST_TYPE, moduleInfo.getScmDetailsList().get(0).getScmHostType());  
+    }
     ciBuiltMap.put(USED_CODEBASE, false);
-    if (ciBuiltMap.get(URL) != null) {
+    if (ciBuiltMap.getOrDefault(URL, null) != null) {
       ciBuiltMap.put(USED_CODEBASE, true);
     }
 
     // Image details
     HashMap<String, List<String>> imagesMap = new HashMap<>();
-    for (ImageDetails image: moduleInfo.getImages()) {
-      String imageName = image.getName();
-      String imageTag = image.getTag();
+    for (CIImageDetails image: moduleInfo.getImageDetailsList()) {
+      String imageName = image.getImageName();
+      String imageTag = image.getImageTag();
       imagesMap.computeIfAbsent(imageName, k -> new ArrayList<String>());
       imagesMap.get(imageName).add(imageTag);
     }
     ciBuiltMap.put(IMAGES, imagesMap);
 
     // Infrastructure details
-    ciBuiltMap.put(INFRA_TYPE, moduleInfo.getInfraDetails().getInfraType());
-    ciBuiltMap.put(INFRA_OS_TYPE, moduleInfo.getInfraDetails().getInfraOSType());
-    ciBuiltMap.put(INFRA_HOST_TYPE, moduleInfo.getInfraDetails().getInfraHostType());
+    List<String> infraTypeList = new ArrayList<String>();
+    List<String> infraOsTypeList = new ArrayList<String>();
+    List<String> infraHostTypeList = new ArrayList<String>();
+    for (CIInfraDetails infraDetails : moduleInfo.getInfraDetailsList()) {
+      infraTypeList.add(infraDetails.getInfraType());
+      infraOsTypeList.add(infraDetails.getInfraOSType());
+      infraHostTypeList.add(infraDetails.getInfraHostType());
+    }
+    ciBuiltMap.put(INFRA_TYPE_LIST, infraTypeList);
+    ciBuiltMap.put(INFRA_OS_LIST, infraOsTypeList);
+    ciBuiltMap.put(INFRA_HOST_LIST, infraHostTypeList);
+
+    // Test Intelligence details
+    if (moduleInfo.getTiBuildDetailsList() != null && moduleInfo.getTiBuildDetailsList().size() != 0) {
+      List<String> tiBuildToolList = new ArrayList<String>();
+      List<String> tiLanguageList = new ArrayList<String>();
+
+      for (TIBuildDetails tiBuildDetails : moduleInfo.getTiBuildDetailsList()){
+        tiBuildToolList.add(tiBuildDetails.getBuildTool());
+        tiLanguageList.add(tiBuildDetails.getLanguage());
+      }
+      ciBuiltMap.put(TI_BUILD_TOOL, tiBuildToolList);
+      ciBuiltMap.put(TI_LANGUAGE, tiLanguageList);
+    }
 
     telemetryReporter.sendTrackEvent(CI_EXECUTED, identity, accountId, ciBuiltMap,
         Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,

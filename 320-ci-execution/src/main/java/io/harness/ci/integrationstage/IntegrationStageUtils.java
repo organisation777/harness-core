@@ -50,8 +50,10 @@ import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
+import io.harness.ci.pipeline.executions.beans.CIImageDetails;
 import io.harness.ci.pipeline.executions.beans.CIInfraDetails;
 import io.harness.ci.pipeline.executions.beans.CIScmDetails;
+import io.harness.ci.pipeline.executions.beans.TIBuildDetails;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
@@ -369,8 +371,35 @@ public class IntegrationStageUtils {
     return null;
   }
 
-  public static List<ImageDetails> getImagesFromInitializeStepInfo(InitializeStepInfo initializeStepInfo) {
-    List<ImageDetails> images = new ArrayList<ImageDetails>();
+  public static List<TIBuildDetails> getTiBuildDetails(InitializeStepInfo initializeStepInfo) {
+    List<TIBuildDetails> tiBuildDetailsList = new ArrayList<TIBuildDetails>();
+
+    List<ExecutionWrapperConfig> executionWrapperConfigs = initializeStepInfo.getExecutionElementConfig().getSteps();
+    for (ExecutionWrapperConfig executionWrapper : executionWrapperConfigs) {
+
+      if (executionWrapper == null || executionWrapper.getStep() == null || executionWrapper.getStep().isNull()) {
+        continue;
+      }
+
+      StepElementConfig stepElementConfig = getStepElementConfig(executionWrapper);
+      if (!(stepElementConfig.getStepSpecType() instanceof CIStepInfo)) {
+        continue;
+      }
+      CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
+      if(ciStepInfo.getStepType() == RunTestsStep.STEP_TYPE) {
+        RunTestsStepInfo runTestsStepInfo = (RunTestsStepInfo) ciStepInfo;
+        TIBuildDetails tiBuildDetails = TIBuildDetails.builder()
+                .buildTool(runTestsStepInfo.getBuildTool().getValue().getYamlName())
+                .language(runTestsStepInfo.getLanguage().getValue().getYamlName())
+                .build();
+        tiBuildDetailsList.add(tiBuildDetails);
+      }
+    }
+    return tiBuildDetailsList;
+  }
+  
+  public static List<CIImageDetails> getCiImageDetails(InitializeStepInfo initializeStepInfo) {
+    List<CIImageDetails> imageDetailsList = new ArrayList<CIImageDetails>();
 
     List<ExecutionWrapperConfig> executionWrapperConfigs = initializeStepInfo.getExecutionElementConfig().getSteps();
     for (ExecutionWrapperConfig executionWrapper : executionWrapperConfigs) {
@@ -385,14 +414,19 @@ public class IntegrationStageUtils {
       }
       CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
       if(ciStepInfo.getStepType() == RunStep.STEP_TYPE) {
-        images.add(getImageInfo(((RunStepInfo) ciStepInfo).getImage().getValue()));
+        imageDetailsList.add(getCiImageDetails(((RunStepInfo) ciStepInfo).getImage().getValue()));
       } else if (ciStepInfo.getStepType() == RunTestsStep.STEP_TYPE) {
-        images.add(getImageInfo(((RunTestsStepInfo) ciStepInfo).getImage().getValue()));
+        imageDetailsList.add(getCiImageDetails(((RunTestsStepInfo) ciStepInfo).getImage().getValue()));
       } else if (ciStepInfo.getStepType() == PluginStepInfo.STEP_TYPE) {
-        images.add(getImageInfo(((PluginStepInfo) ciStepInfo).getImage().getValue()));
+        imageDetailsList.add(getCiImageDetails(((PluginStepInfo) ciStepInfo).getImage().getValue()));
       }
     }
-    return images;
+    return imageDetailsList;
+  }
+
+  public CIImageDetails getCiImageDetails(String image) {
+    ImageDetails imagedetails = getImageInfo(image);
+    return CIImageDetails.builder().imageName(imagedetails.getName()).imageTag(imagedetails.getTag()).build();
   }
 
   public ImageDetails getImageInfo(String image) {
