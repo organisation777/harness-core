@@ -15,7 +15,6 @@ import static io.harness.delegate.beans.connector.ConnectorType.AZURE_REPO;
 import static io.harness.delegate.beans.connector.ConnectorType.BITBUCKET;
 import static io.harness.delegate.beans.connector.ConnectorType.GITHUB;
 import static io.harness.delegate.beans.connector.ConnectorType.GITLAB;
-import static io.harness.delegate.beans.connector.scm.GitConnectionType.ACCOUNT;
 import static io.harness.govern.Switch.unhandled;
 import static io.harness.pms.execution.utils.StatusUtils.isFinalStatus;
 import static io.harness.steps.StepUtils.buildAbstractions;
@@ -32,10 +31,6 @@ import io.harness.beans.sweepingoutputs.ContextElement;
 import io.harness.beans.sweepingoutputs.StageDetails;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.connector.ConnectorType;
-import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
-import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
-import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
-import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.task.ci.CIBuildStatusPushParameters;
 import io.harness.delegate.task.ci.GitSCMType;
 import io.harness.encryption.Scope;
@@ -94,7 +89,6 @@ public class GitBuildStatusUtility {
   private static final int IDENTIFIER_LENGTH = 30;
   private static final List<ConnectorType> validConnectors = Arrays.asList(GITHUB, GITLAB, BITBUCKET, AZURE_REPO);
 
-  @Inject GitClientHelper gitClientHelper;
   @Inject private ConnectorUtils connectorUtils;
   @Inject private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
   @Inject @Named("ngBaseUrl") private String ngBaseUrl;
