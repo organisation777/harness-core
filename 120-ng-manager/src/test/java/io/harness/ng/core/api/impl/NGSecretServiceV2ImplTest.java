@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.secrets.SSHConfigValidationTaskResponse;
@@ -79,7 +80,7 @@ public class NGSecretServiceV2ImplTest extends CategoryTest {
   private OutboxService outboxService;
   private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   private TransactionTemplate transactionTemplate;
-
+  private SecretPermissionValidator secretPermissionValidator;
   @Before
   public void setup() {
     secretRepository = mock(SecretRepository.class);
@@ -88,13 +89,13 @@ public class NGSecretServiceV2ImplTest extends CategoryTest {
     outboxService = mock(OutboxService.class);
     transactionTemplate = mock(TransactionTemplate.class);
     taskSetupAbstractionHelper = new TaskSetupAbstractionHelper();
-
+    secretPermissionValidator = mock(SecretPermissionValidator.class);
     SshKeySpecDTOHelper sshKeySpecDTOHelper = mock(SshKeySpecDTOHelper.class);
     WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper = mock(WinRmCredentialsSpecDTOHelper.class);
 
     secretServiceV2 = new NGSecretServiceV2Impl(secretRepository, delegateGrpcClientWrapper, sshKeySpecDTOHelper,
         ngSecretActivityService, outboxService, transactionTemplate, taskSetupAbstractionHelper,
-        winRmCredentialsSpecDTOHelper);
+        winRmCredentialsSpecDTOHelper, secretPermissionValidator);
     secretServiceV2Spy = spy(secretServiceV2);
   }
 

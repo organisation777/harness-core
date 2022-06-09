@@ -10,11 +10,14 @@ package io.harness.repositories.ng.core.custom;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.dto.ResourceScopeAndIdentifierDTO;
 import io.harness.ng.core.models.Secret;
+import io.harness.ng.core.models.Secret.SecretKeys;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,5 +43,25 @@ public class SecretRepositoryCustomImpl implements SecretRepositoryCustom {
   @Override
   public long count(Criteria criteria) {
     return mongoTemplate.count(new Query(criteria), Secret.class);
+  }
+
+  @Override
+  public List<ResourceScopeAndIdentifierDTO> findAllWithScopeAndIdentifierOnly(Criteria criteria) {
+    Query query = new Query(criteria);
+    query.fields()
+        .include(SecretKeys.identifier)
+        .include(SecretKeys.accountIdentifier)
+        .include(SecretKeys.orgIdentifier)
+        .include(SecretKeys.projectIdentifier);
+    return mongoTemplate.find(query, Secret.class)
+        .stream()
+        .map(secret
+            -> ResourceScopeAndIdentifierDTO.builder()
+                   .accountIdentifier(secret.getAccountIdentifier())
+                   .orgIdentifier(secret.getOrgIdentifier())
+                   .projectIdentifier(secret.getProjectIdentifier())
+                   .identifier(secret.getIdentifier())
+                   .build())
+        .collect(Collectors.toList());
   }
 }

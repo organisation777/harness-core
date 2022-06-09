@@ -10,8 +10,10 @@ package io.harness.repositories.ng.core.custom;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ng.core.dto.ResourceScopeAndIdentifierDTO;
 import io.harness.ng.core.models.Secret;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -20,4 +22,5 @@ import org.springframework.data.mongodb.core.query.Criteria;
 public interface SecretRepositoryCustom {
   Page<Secret> findAll(Criteria criteria, Pageable pageable);
   long count(Criteria criteria);
+  List<ResourceScopeAndIdentifierDTO> findAllWithScopeAndIdentifierOnly(Criteria criteria);
 }

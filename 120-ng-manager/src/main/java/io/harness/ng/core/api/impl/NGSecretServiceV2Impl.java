@@ -14,8 +14,13 @@ import static io.harness.delegate.beans.NgSetupFields.OWNER;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
+import static io.harness.secrets.SecretPermissions.SECRET_RESOURCE_TYPE;
+import static io.harness.secrets.SecretPermissions.SECRET_VIEW_PERMISSION;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
 
+import io.harness.accesscontrol.NGAccessDeniedException;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.DelegateTaskRequest.DelegateTaskRequestBuilder;
@@ -33,6 +38,7 @@ import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.activityhistory.NGActivityType;
 import io.harness.ng.core.api.NGSecretActivityService;
 import io.harness.ng.core.api.NGSecretServiceV2;
+import io.harness.ng.core.dto.ResourceScopeAndIdentifierDTO;
 import io.harness.ng.core.dto.secrets.SSHKeySpecDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.WinRmCredentialsSpecDTO;
@@ -66,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -89,13 +96,15 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
   private final TransactionTemplate transactionTemplate;
   private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
   private final TaskSetupAbstractionHelper taskSetupAbstractionHelper;
+  private final SecretPermissionValidator secretPermissionValidator;
 
   @Inject
   public NGSecretServiceV2Impl(SecretRepository secretRepository, DelegateGrpcClientWrapper delegateGrpcClientWrapper,
       SshKeySpecDTOHelper sshKeySpecDTOHelper, NGSecretActivityService ngSecretActivityService,
       OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
       TaskSetupAbstractionHelper taskSetupAbstractionHelper,
-      WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper) {
+      WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper,
+      SecretPermissionValidator secretPermissionValidator) {
     this.secretRepository = secretRepository;
     this.outboxService = outboxService;
     this.delegateGrpcClientWrapper = delegateGrpcClientWrapper;
@@ -104,6 +113,7 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
     this.transactionTemplate = transactionTemplate;
     this.taskSetupAbstractionHelper = taskSetupAbstractionHelper;
     this.winRmCredentialsSpecDTOHelper = winRmCredentialsSpecDTOHelper;
+    this.secretPermissionValidator = secretPermissionValidator;
   }
 
   @Override
@@ -328,8 +338,32 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
 
   @Override
   public Page<Secret> list(Criteria criteria, int page, int size) {
-    return secretRepository.findAll(
-        criteria, PageUtils.getPageRequest(page, size, Collections.singletonList(SecretKeys.createdAt + ",desc")));
+    List<ResourceScopeAndIdentifierDTO> secrets = secretRepository.findAllWithScopeAndIdentifierOnly(criteria);
+    Criteria permittedCriteria = new Criteria().orOperator(secrets.stream()
+                                                               .filter(this::checkAccess)
+                                                               .map(secret
+                                                                   -> Criteria.where(SecretKeys.identifier)
+                                                                          .is(secret.getIdentifier())
+                                                                          .and(SecretKeys.accountIdentifier)
+                                                                          .is(secret.getAccountIdentifier())
+                                                                          .and(SecretKeys.orgIdentifier)
+                                                                          .is(secret.getOrgIdentifier())
+                                                                          .and(SecretKeys.projectIdentifier)
+                                                                          .is(secret.getProjectIdentifier()))
+                                                               .toArray(Criteria[] ::new));
+    return secretRepository.findAll(permittedCriteria,
+        PageUtils.getPageRequest(page, size, Collections.singletonList(SecretKeys.createdAt + ",desc")));
+  }
+
+  private boolean checkAccess(ResourceScopeAndIdentifierDTO secret) {
+    try {
+      secretPermissionValidator.checkForAccessOrThrow(
+          ResourceScope.of(secret.getAccountIdentifier(), secret.getOrgIdentifier(), secret.getProjectIdentifier()),
+          Resource.of(SECRET_RESOURCE_TYPE, secret.getIdentifier()), SECRET_VIEW_PERMISSION, null);
+      return true;
+    } catch (NGAccessDeniedException ex) {
+      return false;
+    }
   }
 
   @Override
