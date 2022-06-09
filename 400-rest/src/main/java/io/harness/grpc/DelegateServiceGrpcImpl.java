@@ -7,11 +7,9 @@
 
 package io.harness.grpc;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 
-import com.google.common.collect.Sets;
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
@@ -48,7 +46,6 @@ import io.harness.delegate.TaskProgressRequest;
 import io.harness.delegate.TaskProgressResponse;
 import io.harness.delegate.TaskProgressUpdatesRequest;
 import io.harness.delegate.TaskProgressUpdatesResponse;
-import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.DelegateProgressData;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
@@ -68,13 +65,13 @@ import io.harness.service.intfc.DelegateTaskService;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.DelegateTaskServiceClassic;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.grpc.stub.StreamObserver;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -126,14 +123,15 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
                                                            capability.getKryoCapability().toByteArray()))
                                                    .collect(Collectors.toList());
 
-      if (isNotEmpty(request.getSelectorsList())){
-        List<SelectorCapability> selectorCapabilities = request.getSelectorsList()
+      if (isNotEmpty(request.getSelectorsList())) {
+        List<SelectorCapability> selectorCapabilities =
+            request.getSelectorsList()
                 .stream()
                 .map(selector
-                        -> SelectorCapability.builder()
-                        .selectors(Sets.newHashSet(selector.getSelector()))
-                        .selectorOrigin(selector.getOrigin())
-                        .build())
+                    -> SelectorCapability.builder()
+                           .selectors(Sets.newHashSet(selector.getSelector()))
+                           .selectorOrigin(selector.getOrigin())
+                           .build())
                 .collect(Collectors.toList());
         capabilities.addAll(selectorCapabilities);
       }
