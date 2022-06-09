@@ -8,9 +8,12 @@
 package io.harness.ngtriggers.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.HARSH;
+import static io.harness.rule.OwnerRule.MATT;
+import static io.harness.rule.OwnerRule.SRIDHAR;
 
-import static io.harness.rule.OwnerRule.*;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
