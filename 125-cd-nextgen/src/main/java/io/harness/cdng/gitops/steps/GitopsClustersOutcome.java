@@ -43,16 +43,17 @@ public class GitopsClustersOutcome implements Outcome, ExecutionSweepingOutput {
   }
 
   public GitopsClustersOutcome appendCluster(
-      @NotNull String env, @NotNull String clusterName, List<NGVariable> variables) {
-    final Map<String, Object> outputVars = emptyIfNull(variables).stream().collect(
-        Collectors.toMap(NGVariable::getName, v -> v.getCurrentValue().fetchFinalValue()));
-    clustersData.add(ClusterData.builder().env(env).clusterName(clusterName).variables(outputVars).build());
+      String envGroup, @NotNull String env, @NotNull String clusterName, Map<String, Object> variables) {
+    clustersData.add(
+        ClusterData.builder().envGroup(envGroup).env(env).clusterName(clusterName).variables(variables).build());
     return this;
   }
 
   @Data
   @Builder
-  private static class ClusterData {
+  @JsonTypeName("clusterData")
+  @RecasterAlias("io.harness.cdng.gitops.steps.GitopsClustersOutcome.ClusterData")
+  public static class ClusterData {
     String envGroup;
     String env;
     String clusterName;

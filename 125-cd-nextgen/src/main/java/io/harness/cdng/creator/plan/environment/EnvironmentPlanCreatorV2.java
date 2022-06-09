@@ -96,7 +96,10 @@ public class EnvironmentPlanCreatorV2 extends ChildrenPlanCreator<EnvironmentPla
       planCreationResponseMap.putAll(InfrastructurePmsPlanCreator.createPlanForInfraSectionV2(infraField.getNode(),
           infraDefPlanNode.getUuid(), infrastructureDefinitionConfig, kryoSerializer, infraSectionUuid));
     } else {
-      PlanNode gitopsNode = ClusterPlanCreatorUtils.getGitopsClustersStepPlanNode(config);
+      String infraSectionUuid = (String) kryoSerializer.asInflatedObject(
+          ctx.getDependency().getMetadataMap().get(YamlTypes.INFRA_SECTION_UUID).toByteArray());
+      PlanNode gitopsNode = InfrastructurePmsPlanCreator.createPlanForGitopsClusters(
+          ctx.getCurrentField(), infraSectionUuid, config, kryoSerializer);
       planCreationResponseMap.put(gitopsNode.getUuid(), PlanCreationResponse.builder().planNode(gitopsNode).build());
     }
     return planCreationResponseMap;

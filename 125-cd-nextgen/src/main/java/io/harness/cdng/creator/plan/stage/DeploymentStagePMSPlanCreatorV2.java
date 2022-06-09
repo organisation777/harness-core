@@ -236,7 +236,7 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
       planCreationResponseMap.putAll(InfrastructurePmsPlanCreator.createPlanForInfraSectionV1(
           infraNode, infraDefPlanNode.getUuid(), pipelineInfrastructure, kryoSerializer, infraNode.getUuid()));
     } else if (envGroupYaml != null) {
-      final boolean gitOpsEnabled = isGitopsEnabled(ctx, stageNode.getDeploymentStageConfig().getService());
+      final boolean gitOpsEnabled = isGitopsEnabled(stageNode.getDeploymentStageConfig());
       EnvGroupPlanCreatorConfig config =
           envGroupPlanCreatorHelper.createEnvGroupPlanCreatorConfig(ctx.getMetadata(), envGroupYaml);
       envGroupPlanCreatorHelper.addEnvironmentGroupDependency(planCreationResponseMap, config,

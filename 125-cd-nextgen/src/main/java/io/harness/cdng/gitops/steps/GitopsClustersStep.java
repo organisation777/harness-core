@@ -7,16 +7,19 @@
 
 package io.harness.cdng.gitops.steps;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.logging.CommandExecutionStatus.FAILURE;
+import static io.harness.logging.CommandExecutionStatus.SUCCESS;
+import static io.harness.logging.LogLevel.INFO;
 import static io.harness.pms.execution.utils.AmbianceUtils.getAccountId;
 import static io.harness.pms.execution.utils.AmbianceUtils.getOrgIdentifier;
 import static io.harness.pms.execution.utils.AmbianceUtils.getProjectIdentifier;
-
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
+import io.harness.beans.common.VariablesSweepingOutput;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
 import io.harness.cdng.gitops.service.ClusterService;
@@ -26,6 +29,7 @@ import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.gitops.models.Cluster;
 import io.harness.gitops.models.ClusterQuery;
 import io.harness.gitops.remote.GitopsResourceClient;
+import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logstreaming.LogStreamingStepClientFactory;
 import io.harness.logstreaming.NGLogCallback;
@@ -34,11 +38,17 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
 import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
+import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepResponseBuilder;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.steps.StepUtils;
 import io.harness.steps.executable.SyncExecutableWithRbac;
 
 import com.google.common.collect.ImmutableMap;
@@ -67,8 +77,9 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
   @Inject private EnvironmentGroupService environmentGroupService;
   @Inject private GitopsResourceClient gitopsResourceClient;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputResolver;
+  @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
 
-  private LogCallback logger;
+  private LogCallback logger = null;
 
   public static final StepType STEP_TYPE = StepType.newBuilder()
                                                .setType(ExecutionNodeType.GITOPS_CLUSTERS.getName())
@@ -81,20 +92,42 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
   @Override
   public StepResponse executeSyncAfterRbac(Ambiance ambiance, ClusterStepParameters stepParameters,
       StepInputPackage inputPackage, PassThroughData passThroughData) {
+    final StepResponseBuilder stepResponseBuilder = StepResponse.builder();
+    CommandExecutionStatus status = FAILURE;
     if (logger == null) {
-      logger = new NGLogCallback(new LogStreamingStepClientFactory(), ambiance, "gitops-clusters", true);
+      logger = new NGLogCallback(logStreamingStepClientFactory, ambiance, null, true);
     }
     log.info("Starting execution for GitopsClustersStep [{}]", stepParameters);
 
-    Map<String, IndividualClusterInternal> validatedClusters = validatedClusters(ambiance, stepParameters);
-    GitopsClustersOutcome outcome = toOutCome(validatedClusters);
-    executionSweepingOutputResolver.consume(ambiance, GITOPS_SWEEPING_OUTCOME, outcome, StepOutcomeGroup.STAGE.name());
-    return StepResponse.builder().status(Status.SUCCEEDED).build();
+    OptionalSweepingOutput optionalSweepingOutput = executionSweepingOutputResolver.resolveOptional(
+        ambiance, RefObjectUtils.getOutcomeRefObject(YAMLFieldNameConstants.SERVICE_VARIABLES));
+
+    final Map<String, Object> variables = optionalSweepingOutput.isFound()
+        ? ((VariablesSweepingOutput) optionalSweepingOutput.getOutput())
+        : new HashMap<>();
+
+    try {
+      Map<String, IndividualClusterInternal> validatedClusters = validatedClusters(ambiance, stepParameters);
+      final GitopsClustersOutcome outcome = toOutcome(validatedClusters, variables);
+      executionSweepingOutputResolver.consume(
+          ambiance, GITOPS_SWEEPING_OUTCOME, outcome, StepOutcomeGroup.STAGE.name());
+      stepResponseBuilder.stepOutcome(StepOutcome.builder().name("gitops").outcome(outcome).build());
+      status = SUCCESS;
+    } finally {
+      logger.saveExecutionLog("Completed", INFO, status);
+    }
+
+    return stepResponseBuilder.status(Status.SUCCEEDED).build();
   }
 
   @Override
   public Class<ClusterStepParameters> getStepParametersClass() {
     return ClusterStepParameters.class;
+  }
+
+  @Override
+  public List<String> getLogKeys(Ambiance ambiance) {
+    return StepUtils.generateLogKeys(ambiance, null);
   }
 
   private Map<String, IndividualClusterInternal> validatedClusters(Ambiance ambiance, ClusterStepParameters params) {
@@ -156,7 +189,7 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
       throw new InvalidRequestException(format("Failed to fetch clusters from gitops. %s",
           response.errorBody() != null ? response.errorBody().string() : ""));
     } catch (IOException e) {
-      throw new InvalidRequestException("Failed to fetch clusters from gitops. %s", e);
+      throw new InvalidRequestException(format("Failed to fetch clusters from gitops. %s", e.getMessage()));
     }
   }
 
@@ -203,13 +236,14 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
         Collectors.toMap(IndividualClusterInternal::getClusterRef, Function.identity()));
   }
 
-  private GitopsClustersOutcome toOutCome(Map<String, IndividualClusterInternal> validatedClusters) {
+  private GitopsClustersOutcome toOutcome(
+      Map<String, IndividualClusterInternal> validatedClusters, Map<String, Object> variables) {
     final GitopsClustersOutcome outcome = new GitopsClustersOutcome(new ArrayList<>());
 
     for (String clusterId : validatedClusters.keySet()) {
       IndividualClusterInternal clusterInternal = validatedClusters.get(clusterId);
       outcome.appendCluster(clusterInternal.getEnvGroupRef(), clusterInternal.getEnvRef(),
-          clusterInternal.getOriginalCluster().getName());
+          clusterInternal.getOriginalCluster().getName(), variables);
     }
 
     return outcome;

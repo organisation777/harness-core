@@ -39,7 +39,7 @@ public class ClusterPlanCreatorUtilTest extends CategoryTest {
                                               .variables(asList(new StringNGVariable()))
                                               .gitOpsClusterRefs(asList("c1", "c2"))
                                               .build();
-    PlanNode planNode = ClusterPlanCreatorUtils.getGitopsClustersStepPlanNode(config);
+    PlanNode planNode = ClusterPlanCreatorUtils.getGitopsClustersStepPlanNodeBuilder("someuuid", config).build();
 
     ClusterStepParameters stepParameters = (ClusterStepParameters) planNode.getStepParameters();
 

@@ -18,7 +18,6 @@ import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.gitops.steps.ClusterStepParameters;
 import io.harness.cdng.gitops.steps.GitopsClustersStep;
-import io.harness.data.structure.UUIDGenerator;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
@@ -27,25 +26,23 @@ import io.harness.pms.yaml.ParameterField;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.validation.constraints.NotNull;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.GITOPS)
 @UtilityClass
 public class ClusterPlanCreatorUtils {
-  @NotNull
-  public PlanNode getGitopsClustersStepPlanNode(EnvironmentPlanCreatorConfig envConfig) {
+  public PlanNode.PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
+      String infraSectionUuid, EnvironmentPlanCreatorConfig envConfig) {
     return PlanNode.builder()
-        .uuid(UUIDGenerator.generateUuid())
+        .uuid(infraSectionUuid)
         .name(PlanCreatorConstants.GITOPS_INFRA_NODE_NAME)
-        .identifier(PlanCreatorConstants.SPEC_IDENTIFIER)
+        .identifier(PlanCreatorConstants.GITOPS_INFRA_NODE_NAME)
         .stepType(GitopsClustersStep.STEP_TYPE)
         .stepParameters(getStepParams(envConfig))
         .facilitatorObtainment(
             FacilitatorObtainment.newBuilder()
                 .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
-                .build())
-        .build();
+                .build());
   }
 
   private ClusterStepParameters getStepParams(EnvironmentPlanCreatorConfig envConfig) {
