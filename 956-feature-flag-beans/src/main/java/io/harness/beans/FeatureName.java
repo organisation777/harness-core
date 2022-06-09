@@ -10,6 +10,7 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
+
 import lombok.Getter;
 
 /**
@@ -112,6 +113,7 @@ public enum FeatureName {
   OPA_GIT_GOVERNANCE,
   OPA_PIPELINE_GOVERNANCE,
   OPA_CONNECTOR_GOVERNANCE,
+  OPA_SECRET_GOVERNANCE,
   PCF_OLD_APP_RESIZE,
   LOCAL_DELEGATE_CONFIG_OVERRIDE,
   LOGS_V2_247,
