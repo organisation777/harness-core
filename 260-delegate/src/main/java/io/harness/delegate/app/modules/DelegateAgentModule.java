@@ -91,7 +91,7 @@ public class DelegateAgentModule extends AbstractModule {
                 .queueFilePath(configuration.getQueueFilePath())
                 .publishTarget(extractTarget(managerHostAndPort))
                 .publishAuthority(DelegateGrpcConfigExtractor.extractAndPrepareAuthority(
-                    managerHostAndPort, "events", configuration.isMtls()))
+                    managerHostAndPort, "events", configuration.isGrpcAuthorityModificationDisabled()))
                 .clientCertificateFilePath(configuration.getClientCertificateFilePath())
                 .clientCertificateKeyFilePath(configuration.getClientCertificateKeyFilePath())
                 .trustAllCertificates(configuration.isTrustAllCertificates())

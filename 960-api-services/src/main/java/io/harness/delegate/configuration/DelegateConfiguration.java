@@ -64,8 +64,16 @@ public class DelegateConfiguration {
   private String clientCertificateKeyFilePath;
 
   /*
-   * If set to true, the delegate doesn't verify the certificate of the SAAS endpoint.
-   * This setting can only be set in the config directly and is meant for local testing only.
+   * If true, the delegate will send the unmodified authority in grpc calls instead of a service specific authority.
+   *
+   * Note: This setting is used for delegates connecting via the delegate-gateway and can be removed after migration.
+   */
+  private boolean grpcAuthorityModificationDisabled;
+
+  /*
+   * If true, the delegate doesn't verify the certificate of the SAAS endpoint.
+   *
+   * Note: This setting is meant for development only.
    */
   private boolean trustAllCertificates;
 
@@ -80,10 +88,5 @@ public class DelegateConfiguration {
 
   public String getQueueFilePath() {
     return Optional.ofNullable(queueFilePath).orElse(EventPublisherConstants.DEFAULT_QUEUE_FILE_PATH);
-  }
-
-  public boolean isMtls() {
-    return StringUtils.isNotEmpty(this.clientCertificateFilePath)
-        && StringUtils.isNotEmpty(this.clientCertificateKeyFilePath);
   }
 }

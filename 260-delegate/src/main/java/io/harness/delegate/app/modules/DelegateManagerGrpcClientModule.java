@@ -27,10 +27,10 @@ public class DelegateManagerGrpcClientModule extends AbstractManagerGrpcClientMo
     return ManagerGrpcClientModule.Config.builder()
         .target(Optional.ofNullable(configuration.getManagerTarget())
                     .orElseGet(() -> extractTarget(configuration.getManagerUrl())))
-        .authority(
-            Optional.ofNullable(configuration.getManagerAuthority())
-                .orElseGet(
-                    () -> extractAndPrepareAuthority(configuration.getManagerUrl(), "manager", configuration.isMtls())))
+        .authority(Optional.ofNullable(configuration.getManagerAuthority())
+                       .orElseGet(()
+                                      -> extractAndPrepareAuthority(configuration.getManagerUrl(), "manager",
+                                          configuration.isGrpcAuthorityModificationDisabled())))
         .scheme(extractScheme(configuration.getManagerUrl()))
         .accountId(configuration.getAccountId())
         .accountSecret(configuration.getDelegateToken())

@@ -55,7 +55,7 @@ echo "doUpgrade: false" >> config.yml
 append_config "clientToolsDownloadDisabled" $CLIENT_TOOLS_DOWNLOAD_DISABLED
 append_config "clientCertificateFilePath" $CLIENT_CERTIFICATE_PATH
 append_config "clientCertificateKeyFilePath" $CLIENT_CERTIFICATE_KEY_PATH
-
+append_config "grpcAuthorityModificationDisabled" ${GRPC_AUTHORITY_MODIFICATION_DISABLED:-false}
 # Intended for debugging, has to be set explicitly as its never set in generated yaml.
 append_config "trustAllCertificates" ${TRUST_ALL_CERTIFICATES:-false}
 

@@ -57,7 +57,7 @@ public class DelegateGrpcConfigExtractorTest extends CategoryTest {
   @Test
   @Owner(developers = AVMOHAN)
   @Category(UnitTests.class)
-  public void shouldExtractOriginalAuthorityForMtls() throws Exception {
+  public void shouldExtractOriginalAuthorityWhenForceFlagIsSet() throws Exception {
     String managerUrl = "https://pr.harness.io";
     assertThat(DelegateGrpcConfigExtractor.extractAndPrepareAuthority(managerUrl, "events", true))
         .isEqualTo("pr.harness.io");
