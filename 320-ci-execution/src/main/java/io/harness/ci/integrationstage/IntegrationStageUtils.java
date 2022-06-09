@@ -10,6 +10,7 @@ package io.harness.ci.integrationstage;
 import static io.harness.beans.execution.WebhookEvent.Type.BRANCH;
 import static io.harness.beans.execution.WebhookEvent.Type.PR;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveOSType;
+import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.*;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
 import static io.harness.common.CIExecutionConstants.AZURE_REPO_BASE_URL;
 import static io.harness.common.CIExecutionConstants.GIT_URL_SUFFIX;
@@ -42,12 +43,15 @@ import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.beans.steps.CIStepInfo;
+import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
+import io.harness.ci.pipeline.executions.beans.CIInfraDetails;
+import io.harness.ci.pipeline.executions.beans.CIScmDetails;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
@@ -77,6 +81,8 @@ import io.harness.pms.contracts.triggers.TriggerPayload;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
+import io.harness.states.RunStep;
+import io.harness.states.RunTestsStep;
 import io.harness.stateutils.buildstate.CodebaseUtils;
 import io.harness.stateutils.buildstate.ConnectorUtils;
 import io.harness.util.WebhookTriggerProcessorUtils;
@@ -363,6 +369,32 @@ public class IntegrationStageUtils {
     return null;
   }
 
+  public static List<ImageDetails> getImagesFromInitializeStepInfo(InitializeStepInfo initializeStepInfo) {
+    List<ImageDetails> images = new ArrayList<ImageDetails>();
+
+    List<ExecutionWrapperConfig> executionWrapperConfigs = initializeStepInfo.getExecutionElementConfig().getSteps();
+    for (ExecutionWrapperConfig executionWrapper : executionWrapperConfigs) {
+
+      if (executionWrapper == null || executionWrapper.getStep() == null || executionWrapper.getStep().isNull()) {
+        continue;
+      }
+
+      StepElementConfig stepElementConfig = getStepElementConfig(executionWrapper);
+      if (!(stepElementConfig.getStepSpecType() instanceof CIStepInfo)) {
+        continue;
+      }
+      CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
+      if(ciStepInfo.getStepType() == RunStep.STEP_TYPE) {
+        images.add(getImageInfo(((RunStepInfo) ciStepInfo).getImage().getValue()));
+      } else if (ciStepInfo.getStepType() == RunTestsStep.STEP_TYPE) {
+        images.add(getImageInfo(((RunTestsStepInfo) ciStepInfo).getImage().getValue()));
+      } else if (ciStepInfo.getStepType() == PluginStepInfo.STEP_TYPE) {
+        images.add(getImageInfo(((PluginStepInfo) ciStepInfo).getImage().getValue()));
+      }
+    }
+    return images;
+  }
+
   public ImageDetails getImageInfo(String image) {
     String tag = "";
     String name = image;
@@ -553,5 +585,36 @@ public class IntegrationStageUtils {
       }
     }
     return null;
+  }
+
+  public static CIInfraDetails getCiInfraDetails(Infrastructure infrastructure) {
+    String infraType = infrastructure.getType().getYamlName();
+    String infraOSType = null;
+    String infraHostType = null;
+
+    if (infrastructure.getType() == KUBERNETES_DIRECT) {
+      infraOSType = getK8OS(infrastructure).toString();
+      infraHostType = "Self Hosted";
+    } else if (infrastructure.getType() == VM) {
+      infraOSType = VmInitializeStepUtils.getVmOS(infrastructure).toString();
+      infraHostType = "Self Hosted";
+    } else if (infrastructure.getType() == KUBERNETES_HOSTED) {
+      infraOSType = getK8OS(infrastructure).toString();
+      infraHostType = "Harness Hosted";
+    }
+
+    return CIInfraDetails.builder()
+            .infraType(infraType)
+            .infraOSType(infraOSType)
+            .infraHostType(infraHostType)
+            .build();
+  }
+
+  public static CIScmDetails getCiScmDetails(ConnectorUtils connectorUtils, ConnectorDetails connectorDetails) {
+    return CIScmDetails.builder()
+            .scmProvider(connectorDetails.getConnectorType().getDisplayName())
+            .scmAuthType(connectorUtils.getScmAuthType(connectorDetails))
+            .scmHostType(connectorUtils.getScmHostType(connectorDetails))
+            .build();
   }
 }

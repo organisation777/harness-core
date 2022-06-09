@@ -13,6 +13,7 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
+import io.harness.k8s.model.ImageDetails;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -26,8 +27,11 @@ import io.harness.telemetry.TelemetryReporter;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 @Singleton
 public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
@@ -42,6 +46,16 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   private static final String BUILD_TYPE = "build_type";
   private static final String PRIVATE_REPO = "private_repo";
   private static final String REPO_NAME = "repo_name";
+
+  private static final String SCM_PROVIDER = "scm_provider";
+  private static final String SCM_AUTH_METHOD = "scm_auth_method";
+  private static final String SCM_HOST_TYPE = "scm_host_type";
+
+  private static final String INFRA_TYPE = "infra_type";
+  private static final String INFRA_OS_TYPE = "infra_os_type";
+  private static final String INFRA_HOST_TYPE = "infra_host_type";
+
+  private static final String IMAGES = "images";
 
   @Override
   public void handleEvent(OrchestrationEvent event) {
@@ -72,38 +86,39 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
       Ambiance ambiance, OrchestrationEvent event, CIPipelineModuleInfo moduleInfo, String identity, String accountId) {
     HashMap<String, Object> ciBuiltMap = new HashMap<>();
 
-    StepElementParameters stepElementParameters = (StepElementParameters) event.getResolvedStepParameters();
-    InitializeStepInfo initializeStepInfo = (InitializeStepInfo) stepElementParameters.getSpec();
-    BaseNGAccess baseNGAccess = retrieveBaseNGAccess(ambiance);
-    if (initializeStepInfo != null && initializeStepInfo.getCiCodebase() != null) {
-      ciBuiltMap.put(USED_CODEBASE, true);
-      if (isNotEmpty(initializeStepInfo.getCiCodebase().getConnectorRef().getValue())) {
-        ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(
-            baseNGAccess, initializeStepInfo.getCiCodebase().getConnectorRef().getValue());
-        ciBuiltMap.put(URL, connectorUtils.retrieveURL(connectorDetails));
-      }
-    } else {
-      ciBuiltMap.put(USED_CODEBASE, false);
-    }
-
+    // Git details
     ciBuiltMap.put(BRANCH, moduleInfo.getBranch());
     ciBuiltMap.put(BUILD_TYPE, moduleInfo.getBuildType());
     ciBuiltMap.put(PRIVATE_REPO, moduleInfo.getIsPrivateRepo());
     ciBuiltMap.put(REPO_NAME, moduleInfo.getRepoName());
+
+    // SCM Vendor details
+    ciBuiltMap.put(URL, moduleInfo.getScmDetails().getScmUrl());
+    ciBuiltMap.put(SCM_PROVIDER, moduleInfo.getScmDetails().getScmProvider());
+    ciBuiltMap.put(SCM_AUTH_METHOD, moduleInfo.getScmDetails().getScmAuthType());
+    ciBuiltMap.put(SCM_HOST_TYPE, moduleInfo.getScmDetails().getScmHostType());
+    ciBuiltMap.put(USED_CODEBASE, false);
+    if (ciBuiltMap.get(URL) != null) {
+      ciBuiltMap.put(USED_CODEBASE, true);
+    }
+
+    // Image details
+    HashMap<String, List<String>> imagesMap = new HashMap<>();
+    for (ImageDetails image: moduleInfo.getImages()) {
+      String imageName = image.getName();
+      String imageTag = image.getTag();
+      imagesMap.computeIfAbsent(imageName, k -> new ArrayList<String>());
+      imagesMap.get(imageName).add(imageTag);
+    }
+    ciBuiltMap.put(IMAGES, imagesMap);
+
+    // Infrastructure details
+    ciBuiltMap.put(INFRA_TYPE, moduleInfo.getInfraDetails().getInfraType());
+    ciBuiltMap.put(INFRA_OS_TYPE, moduleInfo.getInfraDetails().getInfraOSType());
+    ciBuiltMap.put(INFRA_HOST_TYPE, moduleInfo.getInfraDetails().getInfraHostType());
+
     telemetryReporter.sendTrackEvent(CI_EXECUTED, identity, accountId, ciBuiltMap,
         Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
         io.harness.telemetry.TelemetryOption.builder().sendForCommunity(false).build());
-  }
-
-  private BaseNGAccess retrieveBaseNGAccess(Ambiance ambiance) {
-    String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
-    String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
-    String accountId = AmbianceUtils.getAccountId(ambiance);
-
-    return BaseNGAccess.builder()
-        .accountIdentifier(accountId)
-        .orgIdentifier(orgIdentifier)
-        .projectIdentifier(projectIdentifier)
-        .build();
   }
 }

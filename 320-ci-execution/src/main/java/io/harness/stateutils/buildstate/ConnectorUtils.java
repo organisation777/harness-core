@@ -84,6 +84,7 @@ import io.harness.exception.ConnectorNotFoundException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.ff.CIFeatureFlagService;
+import io.harness.git.GitClientHelper;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.NGAccess;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -345,6 +346,36 @@ public class ConnectorUtils {
       return false;
     } else {
       throw new CIStageExecutionException("scmType " + gitConnector.getConnectorType() + "is not supported");
+    }
+  }
+
+  public String getScmAuthType(ConnectorDetails gitConnector) {
+    if (gitConnector.getConnectorType() == GITHUB) {
+      GithubConnectorDTO gitConfigDTO = (GithubConnectorDTO) gitConnector.getConnectorConfig();
+      return gitConfigDTO.getAuthentication().getAuthType().getDisplayName();
+    } else if (gitConnector.getConnectorType() == BITBUCKET) {
+      BitbucketConnectorDTO gitConfigDTO = (BitbucketConnectorDTO) gitConnector.getConnectorConfig();
+      return gitConfigDTO.getAuthentication().getAuthType().getDisplayName();
+    } else if (gitConnector.getConnectorType() == GITLAB) {
+      GitlabConnectorDTO gitConfigDTO = (GitlabConnectorDTO) gitConnector.getConnectorConfig();
+      return gitConfigDTO.getAuthentication().getAuthType().getDisplayName();
+    } else if (gitConnector.getConnectorType() == CODECOMMIT){
+      AwsCodeCommitConnectorDTO gitConfigDTO = (AwsCodeCommitConnectorDTO) gitConnector.getConnectorConfig();
+      return gitConfigDTO.getAuthentication().getAuthType().getDisplayName();
+    } else if (gitConnector.getConnectorType() == GIT){
+      GitConfigDTO gitConfigDTO = (GitConfigDTO) gitConnector.getConnectorConfig();
+      return gitConfigDTO.getGitAuthType().getDisplayName();
+    } else {
+      throw new CIStageExecutionException("scmType " + gitConnector.getConnectorType() + "is not supported");
+    }
+  }
+
+  public String getScmHostType(ConnectorDetails gitConnector) {
+    String url = retrieveURL(gitConnector);
+    if (GitClientHelper.isGithubSAAS(url) || GitClientHelper.isGitlabSAAS(url) || GitClientHelper.isBitBucketSAAS(url) || GitClientHelper.isAzureRepoSAAS(url)) {
+      return "SaaS";
+    } else {
+      return "On-prem";
     }
   }
 
