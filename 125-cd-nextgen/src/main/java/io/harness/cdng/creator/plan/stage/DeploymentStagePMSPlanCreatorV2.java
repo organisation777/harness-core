@@ -168,18 +168,18 @@ public class DeploymentStagePMSPlanCreatorV2 extends AbstractStagePlanCreator<De
       YamlField specField =
           Preconditions.checkNotNull(ctx.getCurrentField().getNode().getField(YAMLFieldNameConstants.SPEC));
 
-      String infraSectionUuid = "service-" + UUIDGenerator.generateUuid();
+      String postServiceStepUuid = "service-" + UUIDGenerator.generateUuid();
       String environmentUuid = "environment-" + UUIDGenerator.generateUuid();
-      String envGroupUuid = "environmentgroup-" + UUIDGenerator.generateUuid();
+      //      String envGroupUuid = "environmentgroup-" + UUIDGenerator.generateUuid();
 
       // Spec node is also added in this method
-      YamlField serviceField =
-          addServiceDependency(planCreationResponseMap, specField, stageNode, ctx, environmentUuid, infraSectionUuid);
+      YamlField serviceField = addServiceDependency(
+          planCreationResponseMap, specField, stageNode, ctx, environmentUuid, postServiceStepUuid);
 
       PipelineInfrastructure pipelineInfrastructure = stageNode.getDeploymentStageConfig().getInfrastructure();
       String serviceSpecNodeUuid = ServicePlanCreatorHelper.fetchServiceSpecUuid(serviceField);
       addEnvAndInfraDependency(ctx, stageNode, planCreationResponseMap, specField, pipelineInfrastructure,
-          infraSectionUuid, environmentUuid, serviceSpecNodeUuid, envGroupUuid);
+          postServiceStepUuid, environmentUuid, serviceSpecNodeUuid, environmentUuid);
 
       // Add dependency for execution
       YamlField executionField = specField.getNode().getField(YAMLFieldNameConstants.EXECUTION);

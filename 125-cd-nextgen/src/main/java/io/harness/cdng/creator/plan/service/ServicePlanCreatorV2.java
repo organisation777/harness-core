@@ -7,6 +7,8 @@
 
 package io.harness.cdng.creator.plan.service;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
@@ -65,7 +67,7 @@ public class ServicePlanCreatorV2 extends ChildrenPlanCreator<NGServiceV2InfoCon
 
     YamlField serviceField = ctx.getCurrentField();
     YamlField serviceDefField = serviceField.getNode().getField(YamlTypes.SERVICE_DEFINITION);
-    if (serviceDefField == null || EmptyPredicate.isEmpty(serviceDefField.getNode().getUuid())) {
+    if (serviceDefField == null || isEmpty(serviceDefField.getNode().getUuid())) {
       throw new InvalidRequestException("ServiceDefinition node is invalid in service - " + config.getIdentifier());
     }
 

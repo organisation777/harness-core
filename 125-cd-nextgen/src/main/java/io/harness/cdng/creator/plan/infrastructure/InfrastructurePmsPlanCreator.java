@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.advisers.RollbackCustomAdviser;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.creator.plan.gitops.ClusterPlanCreatorUtils;
+import io.harness.cdng.envGroup.yaml.EnvGroupPlanCreatorConfig;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.infra.steps.InfraSectionStepParameters;
 import io.harness.cdng.infra.steps.InfrastructureSectionStep;
@@ -119,6 +120,16 @@ public class InfrastructurePmsPlanCreator {
         getAdviserObtainmentFromMetaDataToExecution(envField.getNode(), kryoSerializer);
     PlanNodeBuilder planNodeBuilder =
         ClusterPlanCreatorUtils.getGitopsClustersStepPlanNodeBuilder(infraSectionUuid, envConfig);
+    planNodeBuilder.adviserObtainments(adviserObtainmentFromMetaDataToExecution);
+    return planNodeBuilder.build();
+  }
+
+  public static PlanNode createPlanForGitopsClusters(YamlField envField, String infraSectionUuid,
+                                                     EnvGroupPlanCreatorConfig envGroupPlanCreatorConfig, KryoSerializer kryoSerializer) {
+    List<AdviserObtainment> adviserObtainmentFromMetaDataToExecution =
+            getAdviserObtainmentFromMetaDataToExecution(envField.getNode(), kryoSerializer);
+    PlanNodeBuilder planNodeBuilder =
+            ClusterPlanCreatorUtils.getGitopsClustersStepPlanNodeBuilder(infraSectionUuid, envGroupPlanCreatorConfig);
     planNodeBuilder.adviserObtainments(adviserObtainmentFromMetaDataToExecution);
     return planNodeBuilder.build();
   }

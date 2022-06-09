@@ -53,6 +53,7 @@ public class EnvGroupPlanCreatorHelper {
     }
 
     return EnvGroupPlanCreatorConfig.builder()
+        .name(entity.get().getName())
         .identifier(entity.get().getIdentifier())
         .orgIdentifier(orgIdentifier)
         .projectIdentifier(projectIdentifier)
@@ -68,8 +69,8 @@ public class EnvGroupPlanCreatorHelper {
     try {
       String yamlString = YamlPipelineUtils.getYamlString(envGroupPlanCreatorConfig);
       YamlField withUuid = YamlUtils.injectUuidInYamlField(yamlString);
-      yamlField = new YamlField(YamlTypes.ENVIRONMENT_YAML,
-          new YamlNode(YamlTypes.ENVIRONMENT_YAML, withUuid.getNode().getCurrJsonNode(),
+      yamlField = new YamlField(YamlTypes.ENVIRONMENT_GROUP_YAML,
+          new YamlNode(YamlTypes.ENVIRONMENT_GROUP_YAML, withUuid.getNode().getCurrJsonNode(),
               originalEnvGroupField.getNode().getParentNode()));
     } catch (IOException e) {
       throw new InvalidRequestException("Invalid environment group yaml", e);
@@ -78,16 +79,16 @@ public class EnvGroupPlanCreatorHelper {
     Map<String, YamlField> fieldMap = ImmutableMap.of(envGroupUuid, yamlField);
 
     // preparing meta data
-    final Dependency envDependency = Dependency.newBuilder()
-                                         .putAllMetadata(prepareMetadata(envGroupUuid, infraSectionUuid,
-                                             serviceSpecNodeUuid, gitOpsEnabled, kryoSerializer))
-                                         .build();
+    final Dependency envGroupDependency = Dependency.newBuilder()
+                                              .putAllMetadata(prepareMetadata(serviceSpecNodeUuid, infraSectionUuid,
+                                                  envGroupUuid, gitOpsEnabled, kryoSerializer))
+                                              .build();
 
     planCreationResponseMap.put(envGroupUuid,
         PlanCreationResponse.builder()
             .dependencies(DependenciesUtils.toDependenciesProto(fieldMap)
                               .toBuilder()
-                              .putDependencyMetadata(envGroupUuid, envDependency)
+                              .putDependencyMetadata(envGroupUuid, envGroupDependency)
                               .build())
             .yamlUpdates(
                 YamlUpdates.newBuilder()
@@ -97,11 +98,11 @@ public class EnvGroupPlanCreatorHelper {
   }
 
   private Map<String, ByteString> prepareMetadata(String serviceSpecNodeId, String infraSectionUuid,
-      String environmentUuid, boolean gitOpsEnabled, KryoSerializer kryoSerializer) {
+      String environmentGroupUuid, boolean gitOpsEnabled, KryoSerializer kryoSerializer) {
     return ImmutableMap.<String, ByteString>builder()
         .put(YamlTypes.NEXT_UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(serviceSpecNodeId)))
         .put(YamlTypes.INFRA_SECTION_UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(infraSectionUuid)))
-        .put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(environmentUuid)))
+        .put(YamlTypes.UUID, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(environmentGroupUuid)))
         .put(YAMLFieldNameConstants.GITOPS_ENABLED, ByteString.copyFrom(kryoSerializer.asDeflatedBytes(gitOpsEnabled)))
         .build();
   }
