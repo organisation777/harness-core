@@ -102,7 +102,6 @@ public class WorkflowExecutionServiceHelper {
     if (isBlank(workflowExecutionId) || isEmpty(workflowVariables)) {
       return new WorkflowVariablesMetadata(workflowVariables);
     }
-
     WorkflowExecution workflowExecution = workflowExecutionService.getWorkflowExecution(appId, workflowExecutionId);
     if (workflowExecution == null || workflowExecution.getExecutionArgs() == null
         || executionArgs.getWorkflowType() != workflowExecution.getWorkflowType()
@@ -338,7 +337,15 @@ public class WorkflowExecutionServiceHelper {
         }
         continue;
       }
-      variable.setValue(oldWorkflowVariablesMap.get(name));
+      String oldValue = oldWorkflowVariablesMap.get(name);
+      if(oldValue == null) {
+        variable.setValue(oldValue);
+      }
+      else {
+        if(variable.getAllowedList().contains(oldValue)) {
+          variable.setValue(oldValue);
+        }
+      }
       // This is never a noop as we have already dealt with the case that this workflow variable is new.
       oldWorkflowVariablesMap.remove(name);
     }
