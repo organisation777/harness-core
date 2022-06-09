@@ -263,6 +263,7 @@ public enum FeatureName {
   CI_VM_INFRASTRUCTURE,
   SERVICENOW_NG_INTEGRATION,
   OPTIMIZED_TF_PLAN,
+  SELF_SERVICE_ENABLED,
   NG_NATIVE_HELM,
   CHI_CUSTOM_HEALTH,
   CHI_CUSTOM_HEALTH_LOGS,
@@ -371,7 +372,9 @@ public enum FeatureName {
   CVNG_TEMPLATE_MONITORED_SERVICE,
   CVNG_TEMPLATE_VERIFY_STEP,
   PIPELINE_QUEUE_STEP,
-  USE_PAGINATED_ENCRYPT_SERVICE; // To be only used by UI for safeguarding encrypt component changes in CG
+  USE_PAGINATED_ENCRYPT_SERVICE, // To be only used by UI for safeguarding encrypt component changes in CG
+  DEPLOYMENT_SUBFORMIK_PIPELINE_DROPDOWN,
+  DEPLOYMENT_SUBFORMIK_WORKFLOW_DROPDOWN;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
