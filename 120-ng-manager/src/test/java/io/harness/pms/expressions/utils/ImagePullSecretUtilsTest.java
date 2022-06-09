@@ -376,11 +376,21 @@ public class ImagePullSecretUtilsTest extends CategoryTest {
   public void testAcrImagePullSecretUsingUserAssignedMSI() {
     ArtifactOutcome artifactOutcome = getAcrArtifactOutcome();
     Ambiance ambiance = getAmbiance();
+    BaseNGAccess baseNGAccess = getBaseNGAccess(ACCOUNT_ID_VALUE, ORG_ID_VALUE, PROJECT_ID_VALUE);
     AzureCredentialDTO azureCredentialDTO = getAzureCredentialsForUserAssignedMSI();
     Optional<ConnectorResponseDTO> connectorResponseDTO = getAzureConnector(azureCredentialDTO);
 
     when(connectorService.get(any(), any(), any(), any())).thenReturn(connectorResponseDTO);
-    assertThat(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance)).isBlank();
+    when(azureHelperService.getBaseNGAccess(ACCOUNT_ID_VALUE, ORG_ID_VALUE, PROJECT_ID_VALUE)).thenReturn(baseNGAccess);
+    when(azureHelperService.getEncryptionDetails(any(), any())).thenReturn(null);
+
+    String jwtAcrToken = "ejyaoisncoanidoaiwjndoqiwjndocqijwdoqw9cjoq93jcq0owi9f0qc9i3jc93";
+    AzureAcrTokenTaskResponse azureAcrTokenTaskResponse =
+        AzureAcrTokenTaskResponse.builder().token(jwtAcrToken).build();
+
+    when(azureHelperService.executeSyncTask(any(), any(), any(), anyString())).thenReturn(azureAcrTokenTaskResponse);
+    assertEquals(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance),
+        format("${imageSecret.create(\"%s\", \"%s\", \"%s\")}", ACR_REGISTRY, ACR_DUMMY_USERNAME, jwtAcrToken));
   }
 
   @Test
@@ -389,11 +399,21 @@ public class ImagePullSecretUtilsTest extends CategoryTest {
   public void testAcrImagePullSecretUsingSystemAssignedMSI() {
     ArtifactOutcome artifactOutcome = getAcrArtifactOutcome();
     Ambiance ambiance = getAmbiance();
+    BaseNGAccess baseNGAccess = getBaseNGAccess(ACCOUNT_ID_VALUE, ORG_ID_VALUE, PROJECT_ID_VALUE);
     AzureCredentialDTO azureCredentialDTO = getAzureCredentialsForSystemAssignedMSI();
     Optional<ConnectorResponseDTO> connectorResponseDTO = getAzureConnector(azureCredentialDTO);
 
     when(connectorService.get(any(), any(), any(), any())).thenReturn(connectorResponseDTO);
-    assertThat(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance)).isBlank();
+    when(azureHelperService.getBaseNGAccess(ACCOUNT_ID_VALUE, ORG_ID_VALUE, PROJECT_ID_VALUE)).thenReturn(baseNGAccess);
+    when(azureHelperService.getEncryptionDetails(any(), any())).thenReturn(null);
+
+    String jwtAcrToken = "ejyaoisncoanidoaiwjndoqiwjndocqijwdoqw9cjoq93jcq0owi9f0qc9i3jc93";
+    AzureAcrTokenTaskResponse azureAcrTokenTaskResponse =
+        AzureAcrTokenTaskResponse.builder().token(jwtAcrToken).build();
+
+    when(azureHelperService.executeSyncTask(any(), any(), any(), anyString())).thenReturn(azureAcrTokenTaskResponse);
+    assertEquals(imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance),
+        format("${imageSecret.create(\"%s\", \"%s\", \"%s\")}", ACR_REGISTRY, ACR_DUMMY_USERNAME, jwtAcrToken));
   }
 
   private ArtifactOutcome getAcrArtifactOutcome() {

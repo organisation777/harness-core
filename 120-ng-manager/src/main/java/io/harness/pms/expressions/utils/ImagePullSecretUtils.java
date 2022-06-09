@@ -39,6 +39,7 @@ import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureManagedIdentityType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
@@ -280,7 +281,8 @@ public class ImagePullSecretUtils {
       } else {
         AzureInheritFromDelegateDetailsDTO config =
             (AzureInheritFromDelegateDetailsDTO) connectorConfig.getCredential().getConfig();
-        if (config.getAuthDTO() instanceof AzureMSIAuthUADTO) {
+        if (((AzureMSIAuthUADTO) config.getAuthDTO()).getAzureManagedIdentityType()
+            == AzureManagedIdentityType.USER_ASSIGNED_MANAGED_IDENTITY) {
           log.info("Generating image pull credentials for User-Assigned MSI");
           log.info(format("Fetching access token for clientId: %s",
               ((AzureMSIAuthUADTO) config.getAuthDTO()).getCredentials().getClientId()));

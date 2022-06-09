@@ -200,7 +200,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
     doNothing().when(logCallback).saveExecutionLog(anyString());
     helmInstallCommandRequestNG = createHelmInstallCommandRequestNG();
     helmRollbackCommandRequestNG = createHelmRollbackCommandRequestNG();
-    kubernetesConfig = KubernetesConfig.builder().build();
+    kubernetesConfig = KubernetesConfig.builder().aadIdToken("12345678900987654321").build();
     when(containerDeploymentDelegateBaseHelper.createKubernetesConfig(any())).thenReturn(kubernetesConfig);
     spyHelmDeployService = spy(helmDeployService);
     doNothing()
@@ -534,9 +534,8 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testDeleteAndPurgeHelmReleaseName() throws Exception {
     HelmCliResponse helmCliResponse = HelmCliResponse.builder().build();
-    doReturn(helmCliResponse)
-        .when(helmClient)
-        .deleteHelmRelease(HelmCommandDataMapperNG.getHelmCmdDataNG(helmInstallCommandRequestNG), true);
+    when(helmClient.deleteHelmRelease(HelmCommandDataMapperNG.getHelmCmdDataNG(helmInstallCommandRequestNG), true))
+        .thenReturn(helmCliResponse);
 
     helmDeployService.deleteAndPurgeHelmRelease(helmInstallCommandRequestNG, logCallback);
 
@@ -548,9 +547,8 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
   @Owner(developers = ACHYUTH)
   @Category(UnitTests.class)
   public void testDeleteAndPurgeHelmReleaseNameNotFailOnException() throws Exception {
-    doThrow(new IOException("Unable to execute process"))
-        .when(helmClient)
-        .deleteHelmRelease(HelmCommandDataMapperNG.getHelmCmdDataNG(helmInstallCommandRequestNG), true);
+    when(helmClient.deleteHelmRelease(HelmCommandDataMapperNG.getHelmCmdDataNG(helmInstallCommandRequestNG), true))
+        .thenThrow(new IOException("Unable to execute process"));
 
     assertThatCode(() -> helmDeployService.deleteAndPurgeHelmRelease(helmInstallCommandRequestNG, logCallback))
         .doesNotThrowAnyException();
@@ -821,6 +819,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
   private void shouldListReleaseHistoryV2() throws Exception {
     HelmReleaseHistoryCommandRequestNG request = HelmReleaseHistoryCommandRequestNG.builder()
                                                      .manifestDelegateConfig(helmChartManifestDelegateConfig.build())
+                                                     .kubernetesConfig(kubernetesConfig)
                                                      .build();
     request.setHelmVersion(V2);
 
@@ -845,6 +844,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
   private void shouldListReleaseHistoryV3() throws Exception {
     HelmReleaseHistoryCommandRequestNG request = HelmReleaseHistoryCommandRequestNG.builder()
                                                      .manifestDelegateConfig(helmChartManifestDelegateConfig.build())
+                                                     .kubernetesConfig(kubernetesConfig)
                                                      .build();
     request.setHelmVersion(V3);
 
@@ -868,6 +868,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
   private void shouldNotThrowExceptionInReleaseHist() throws Exception {
     HelmReleaseHistoryCommandRequestNG request = HelmReleaseHistoryCommandRequestNG.builder()
                                                      .manifestDelegateConfig(helmChartManifestDelegateConfig.build())
+                                                     .kubernetesConfig(kubernetesConfig)
                                                      .build();
 
     when(helmClient.releaseHistory(HelmCommandDataMapperNG.getHelmCmdDataNG(request), true))
@@ -960,6 +961,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
                                               .accountId("harnessCDP123")
                                               .helmVersion(V3)
                                               .k8SteadyStateCheckEnabled(false)
+                                              .kubernetesConfig(kubernetesConfig)
                                               .build();
 
     return request;
@@ -978,6 +980,7 @@ public class HelmDeployServiceImplNGTest extends CategoryTest {
                                                .prevReleaseVersion(2)
                                                .newReleaseVersion(3)
                                                .releaseName("release")
+                                               .kubernetesConfig(kubernetesConfig)
                                                .build();
 
     return request;

@@ -15,6 +15,7 @@ import static io.harness.rule.OwnerRule.VLICA;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -687,14 +688,12 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
       when(azureAuthorizationClient.getUserAccessToken(azureConfig, null)).thenReturn(azureIdentityAccessTokenResponse);
     }
 
-    when(azureManagementClient.getClusterCredentials(
-             azureConfig, accessToken, SUBSCRIPTION_ID, RESOURCE_GROUP, "default", true))
+    when(azureManagementClient.getClusterCredentials(any(), any(), any(), any(), any(), anyBoolean()))
         .thenReturn(readResourceFileContent("azure/adminKubeConfigContent.yaml"));
 
     KubernetesConfig clusterConfig = azureAsyncTaskHelper.getClusterConfig(
         azureConnectorDTO, SUBSCRIPTION_ID, RESOURCE_GROUP, CLUSTER, "default", null, true);
 
-    verify(azureKubernetesClient).listKubernetesClusters(azureConfig, SUBSCRIPTION_ID);
     assertThat(clusterConfig.getMasterUrl())
         .isEqualTo("https://cdp-test-a-cdp-test-rg-20d6a9-19a8a771.hcp.eastus.azmk8s.io:443");
     assertThat(clusterConfig.getNamespace()).isEqualTo("default");
@@ -732,8 +731,7 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
       when(azureAuthorizationClient.getUserAccessToken(azureConfig, null)).thenReturn(azureIdentityAccessTokenResponse);
     }
 
-    when(azureManagementClient.getClusterCredentials(
-             azureConfig, accessToken, SUBSCRIPTION_ID, RESOURCE_GROUP, "default", true))
+    when(azureManagementClient.getClusterCredentials(any(), any(), any(), any(), any(), anyBoolean()))
         .thenReturn(readResourceFileContent("azure/userKubeConfigContent.yaml"));
 
     when(azureAuthorizationClient.getUserAccessToken(azureConfig, "6dae42f8-4368-4678-94ff-3960e28e3630/.default"))
@@ -742,7 +740,6 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
     KubernetesConfig clusterConfig = azureAsyncTaskHelper.getClusterConfig(
         azureConnectorDTO, SUBSCRIPTION_ID, RESOURCE_GROUP, CLUSTER, "default", null, true);
 
-    verify(azureKubernetesClient).listKubernetesClusters(azureConfig, SUBSCRIPTION_ID);
     assertThat(clusterConfig.getMasterUrl())
         .isEqualTo("https://cdp-azure-test-aks-dns-baa4bbdc.hcp.eastus.azmk8s.io:443");
     assertThat(clusterConfig.getNamespace()).isEqualTo("default");
