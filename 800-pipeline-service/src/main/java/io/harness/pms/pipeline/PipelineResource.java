@@ -77,6 +77,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -203,70 +205,14 @@ public class PipelineResource implements YamlSchemaResource {
       @Parameter(description = PipelineResourceConstants.PIPELINE_DESCRIPTION_PARAM_MESSAGE, required = false,
           hidden = true) @QueryParam(NGCommonEntityConstants.DESCRIPTION_KEY) String pipelineDescription,
       @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
-      @RequestBody(required = true, description = "Pipeline YAML", content = {@Content(mediaType = "application.yaml", examples = @ExampleObject(name = "name", summary = "Create a Pipeline V2",
-              value = "pipeline:\n" +
-                      "    name: APIServerStub2\n" +
-                      "    identifier: APIServerStub2\n" +
-                      "    projectIdentifier: MISC\n" +
-                      "    orgIdentifier: default\n" +
-                      "    properties:\n" +
-                      "        ci:\n" +
-                      "            codebase:\n" +
-                      "                connectorRef: apiserverstub\n" +
-                      "                build: <+input>\n" +
-                      "                resources:\n" +
-                      "                    limits:\n" +
-                      "                        memory: 4Gi\n" +
-                      "                        cpu: 4000m\n" +
-                      "    stages:\n" +
-                      "        - stage:\n" +
-                      "              name: generate-jar\n" +
-                      "              identifier: generate_jar\n" +
-                      "              type: CI\n" +
-                      "              spec:\n" +
-                      "                  cloneCodebase: true\n" +
-                      "                  execution:\n" +
-                      "                      steps:\n" +
-                      "                          - step:\n" +
-                      "                                type: Run\n" +
-                      "                                name: build\n" +
-                      "                                identifier: build\n" +
-                      "                                description: build jar\n" +
-                      "                                spec:\n" +
-                      "                                    connectorRef: account.gcpplatform\n" +
-                      "                                    image: us.gcr.io/platform-205701/jenkins-slave-portal-open-8u242:latest\n" +
-                      "                                    command: |-\n" +
-                      "                                        ln -s \"/root/.m2\" \"/harness/.m2\"\n" +
-                      "                                        source /etc/profile.d/maven.sh\n" +
-                      "                                        cd $folder/server-stub\n" +
-                      "                                        echo \"JAR Created\"\n" +
-                      "                                        echo $settings > settings.xml\n" +
-                      "                                        mvn -s settings.xml -e -X clean deploy\n" +
-                      "                                        echo \"Success\"\n" +
-                      "                                    privileged: false\n" +
-                      "                                    resources:\n" +
-                      "                                        limits:\n" +
-                      "                                            memory: 15Gi\n" +
-                      "                                            cpu: 5000m\n" +
-                      "                                timeout: 150m\n" +
-                      "                  sharedPaths:\n" +
-                      "                      - /var/run\n" +
-                      "                  infrastructure:\n" +
-                      "                      type: KubernetesDirect\n" +
-                      "                      spec:\n" +
-                      "                          connectorRef: account.harnessciplatformng\n" +
-                      "                          namespace: harness-featurebuild\n" +
-                      "                          initTimeout: 15m\n" +
-                      "                          automountServiceAccountToken: true\n" +
-                      "                          nodeSelector: {}\n" +
-                      "              variables:\n" +
-                      "                  - name: folder\n" +
-                      "                    type: String\n" +
-                      "                    value: <+input>\n" +
-                      "                  - name: settings\n" +
-                      "                    type: Secret\n" +
-                      "                    value: SettingsText\n" +
-                      "    tags: {}", description = "Create a Pipeline API With Governance Checks"))}) @NotNull String yaml) {
+      @RequestBody(required = true, description = "Pipeline YAML", content = {
+        @Content(
+            examples = @ExampleObject(
+                value =
+                    Files.readString(new File("800-pipeline-service/src/main/resources/examples/pipeline/create.yml"))
+                        .toPath(),
+                description = "Sample Create Pipeline YAML"))
+      }) @NotNull String yaml) {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
     log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
         pipelineEntity.getIdentifier(), projectId, orgId, accountId));
