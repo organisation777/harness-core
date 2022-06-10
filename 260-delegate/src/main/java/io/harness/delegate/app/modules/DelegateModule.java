@@ -163,6 +163,10 @@ import io.harness.delegate.task.aws.AwsValidationHandler;
 import io.harness.delegate.task.aws.S3FetchFilesTaskNG;
 import io.harness.delegate.task.azure.AzureValidationHandler;
 import io.harness.delegate.task.azure.appservice.AzureAppServiceTaskParameters.AzureAppServiceTaskType;
+import io.harness.delegate.task.azure.appservice.webapp.AzureWebAppTaskNG;
+import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppRequestHandler;
+import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppSlotDeploymentRequestHandler;
+import io.harness.delegate.task.azure.appservice.webapp.ng.AzureWebAppRequestType;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.resource.operation.AzureResourceProvider;
 import io.harness.delegate.task.cek8s.CEKubernetesTestConnectionDelegateTask;
@@ -201,6 +205,8 @@ import io.harness.delegate.task.helm.HelmDeployServiceNG;
 import io.harness.delegate.task.helm.HelmValuesFetchTaskNG;
 import io.harness.delegate.task.helm.HttpHelmConnectivityDelegateTask;
 import io.harness.delegate.task.helm.HttpHelmValidationHandler;
+import io.harness.delegate.task.helm.OciHelmConnectivityDelegateTask;
+import io.harness.delegate.task.helm.OciHelmValidationHandler;
 import io.harness.delegate.task.jenkins.JenkinsTestConnectionDelegateTask;
 import io.harness.delegate.task.jenkins.JenkinsValidationHandler;
 import io.harness.delegate.task.jira.JiraTaskNG;
@@ -1254,6 +1260,12 @@ public class DelegateModule extends AbstractModule {
     serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_ROLLBACK.name())
         .to(ServerlessAwsLambdaRollbackCommandTaskHandler.class);
 
+    // Azure Web App NG
+    MapBinder<String, AzureWebAppRequestHandler> azureWebAppRequestTypeToRequestHandlerMap =
+        MapBinder.newMapBinder(binder(), String.class, AzureWebAppRequestHandler.class);
+    azureWebAppRequestTypeToRequestHandlerMap.addBinding(AzureWebAppRequestType.SLOT_DEPLOYMENT.name())
+        .to(AzureWebAppSlotDeploymentRequestHandler.class);
+
     registerSecretManagementBindings();
     registerConnectorValidatorsBindings();
 
@@ -1579,6 +1591,7 @@ public class DelegateModule extends AbstractModule {
         .toInstance(CEKubernetesTestConnectionDelegateTask.class);
     mapBinder.addBinding(TaskType.K8S_SERVICE_ACCOUNT_INFO).toInstance(K8sFetchServiceAccountTask.class);
     mapBinder.addBinding(TaskType.HTTP_HELM_CONNECTIVITY_TASK).toInstance(HttpHelmConnectivityDelegateTask.class);
+    mapBinder.addBinding(TaskType.OCI_HELM_CONNECTIVITY_TASK).toInstance(OciHelmConnectivityDelegateTask.class);
     mapBinder.addBinding(TaskType.NG_AZURE_TASK).toInstance(AzureTask.class);
 
     mapBinder.addBinding(TaskType.K8_FETCH_NAMESPACES).toInstance(ServiceImplDelegateTask.class);
@@ -1607,6 +1620,7 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.FETCH_S3_FILE_TASK_NG).toInstance(S3FetchFilesTaskNG.class);
     mapBinder.addBinding(TaskType.SERVERLESS_GIT_FETCH_TASK_NG).toInstance(ServerlessGitFetchTask.class);
     mapBinder.addBinding(TaskType.SERVERLESS_COMMAND_TASK).toInstance(ServerlessCommandTask.class);
+    mapBinder.addBinding(TaskType.AZURE_WEB_APP_TASK_NG).toInstance(AzureWebAppTaskNG.class);
   }
 
   private void registerSecretManagementBindings() {
@@ -1693,7 +1707,8 @@ public class DelegateModule extends AbstractModule {
         .to(JenkinsValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.HTTP_HELM_REPO.getDisplayName())
         .to(HttpHelmValidationHandler.class);
-
+    connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.OCI_HELM_REPO.getDisplayName())
+        .to(OciHelmValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.VAULT.getDisplayName())
         .to(UpsertSecretTaskValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.AZURE_KEY_VAULT.getDisplayName())
