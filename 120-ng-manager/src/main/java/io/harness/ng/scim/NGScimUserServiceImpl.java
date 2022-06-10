@@ -8,6 +8,7 @@
 package io.harness.ng.scim;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static java.util.Collections.emptyList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
@@ -95,8 +96,7 @@ public class NGScimUserServiceImpl implements ScimUserService {
                           .approved(true)
                           .email(primaryEmail)
                           .name(userName)
-                          .roleBindings(Collections.singletonList(
-                              RoleBinding.builder().roleIdentifier(ACCOUNT_VIEWER_ROLE).build()))
+                          .roleBindings(emptyList())
                           .inviteType(InviteType.SCIM_INITIATED_INVITE)
                           .build();
 
