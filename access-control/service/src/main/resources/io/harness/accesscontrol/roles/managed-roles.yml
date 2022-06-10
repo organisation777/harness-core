@@ -105,6 +105,19 @@ roles:
         - gitops_cert_view
         - gitops_cert_edit
         - gitops_cert_delete
+        - sto_overview_page_view
+        - sto_issue_view
+        - sto_issue_delete
+        - sto_scan_view
+        - sto_scan_delete
+        - sto_test_target_view
+        - sto_test_target_create
+        - sto_test_target_edit
+        - sto_test_target_delete
+        - sto_exception_view
+        - sto_exception_create
+        - sto_exception_approve
+        - sto_exception_delete
         - core_file_view
         - core_file_edit
         - core_file_delete
@@ -159,6 +172,11 @@ roles:
         - gitops_cluster_view
         - gitops_gpgkey_view
         - gitops_cert_view
+        - sto_overview_page_view
+        - sto_issue_view
+        - sto_scan_view
+        - sto_test_target_view
+        - sto_exception_view
         - core_file_view
         - core_variable_view
         - chaos_chaoshub_view
@@ -590,6 +608,35 @@ roles:
         - gitops_cert_view
         - gitops_cert_edit
         - gitops_cert_delete
+    - identifier: _sto_developer_role
+      name: Security Testing Developer Role
+      description: Can work with security issues
+      permissions:
+        - sto_overview_page_view
+        - sto_issue_view
+        - sto_scan_view
+        - sto_test_target_view
+        - sto_test_target_create
+        - sto_test_target_edit
+        - sto_exception_view
+        - sto_exception_create
+    - identifier: _sto_secops_role
+      name: Security Testing SecOps Role
+      description: Can work with security issues and manage security exceptions
+      permissions:
+        - sto_overview_page_view
+        - sto_issue_view
+        - sto_issue_delete
+        - sto_scan_view
+        - sto_scan_delete
+        - sto_test_target_view
+        - sto_test_target_create
+        - sto_test_target_edit
+        - sto_test_target_delete
+        - sto_exception_view
+        - sto_exception_create
+        - sto_exception_approve
+        - sto_exception_delete
       managed: true
       allowedScopeLevels:
         - account

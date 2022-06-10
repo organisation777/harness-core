@@ -70,6 +70,16 @@ resourceTypes:
     permissionKey: gpgkey
   - identifier: GITOPS_CERT
     permissionKey: cert
+  - identifier: STO_OVERVIEW_PAGE
+    permissionKey: overviewPage
+  - identifier: STO_TEST_TARGET
+    permissionKey: testTarget
+  - identifier: STO_EXCEPTION
+    permissionKey: exception
+  - identifier: STO_ISSUE
+    permissionKey: issue
+  - identifier: STO_SCAN
+    permissionKey: scan
   - identifier: FILE
     permissionKey: file
   - identifier: VARIABLE

@@ -857,6 +857,110 @@ permissions:
       - account
       - organization
       - project
+  - identifier: sto_overview_page_view
+    name: View STO Module Overview Page
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_test_target_view
+    name: View test targets
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_test_target_create
+    name: Create test targets
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_test_target_edit
+    name: Edit test targets
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_test_target_delete
+    name: Delete test targets
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_exception_view
+    name: View exceptions
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_exception_create
+    name: Create exception
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_exception_edit
+    name: Edit exception
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_exception_delete
+    name: Delete exception
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_issue_create
+    name: Create security issue
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_issue_delete
+    name: Delete security issue
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_scan_create
+    name: Create security scan
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
+  - identifier: sto_scan_delete
+    name: Delete security scan
+    status: ACTIVE
+    includeInAllRoles: false
+    allowedScopeLevels:
+      - account
+      - organization
+      - project
   - identifier: core_file_view
     name: View Files
     status: ACTIVE
