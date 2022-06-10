@@ -35,8 +35,7 @@ public class DebeziumConfigurationTest {
     expected_props.setProperty(DebeziumConfiguration.CONNECTOR_NAME, debeziumConfig.getConnectorName());
     expected_props.setProperty(DebeziumConfiguration.OFFSET_STORAGE, RedisOffsetBackingStore.class.getName());
     expected_props.setProperty(DebeziumConfiguration.OFFSET_STORAGE_FILE_FILENAME, JsonUtils.asJson(redisConfig));
-    expected_props.setProperty(DebeziumConfiguration.OFFSET_STORAGE_KEY,
-        debeziumConfig.getOffsetStorageTopic() + "-" + debeziumConfig.getCollectionIncludeList());
+    expected_props.setProperty(DebeziumConfiguration.OFFSET_STORAGE_KEY, debeziumConfig.getOffsetStorageTopic());
     expected_props.setProperty(
         DebeziumConfiguration.KEY_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getKeyConverterSchemasEnable());
     expected_props.setProperty(

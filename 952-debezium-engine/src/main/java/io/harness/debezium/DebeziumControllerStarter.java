@@ -35,11 +35,12 @@ public class DebeziumControllerStarter {
       try {
         MongoCollectionChangeConsumer changeConsumer = consumerFactory.get(monitoredCollection, changeConsumerConfig);
         Properties props = DebeziumConfiguration.getDebeziumProperties(debeziumConfig, redisLockConfig);
+        props.setProperty(DebeziumConfiguration.OFFSET_STORAGE_KEY,
+            debeziumConfig.getOffsetStorageTopic() + "-" + monitoredCollection);
         props.setProperty(DebeziumConfiguration.COLLECTION_INCLUDE_LIST, monitoredCollection);
         DebeziumController debeziumController =
             new DebeziumController(props, changeConsumer, locker, debeziumExecutorService);
         debeziumExecutorService.submit(debeziumController);
-
       } catch (Exception e) {
         log.error("Cannot Start Debezium Controller for Collection {}", monitoredCollection, e);
       }
