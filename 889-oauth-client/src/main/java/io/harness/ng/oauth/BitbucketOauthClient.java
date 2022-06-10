@@ -1,26 +1,25 @@
 package io.harness.ng.oauth;
 
-import static java.lang.String.format;
-
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.oauth.OAuth20Service;
+import com.google.inject.Inject;
 import io.harness.exception.InvalidArgumentsException;
-
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.utils.URIBuilder;
 import software.wings.security.SecretManager;
 import software.wings.security.authentication.oauth.BitbucketConfig;
 import software.wings.security.authentication.oauth.ProvidersImpl.Bitbucket;
 
-import com.github.scribejava.core.builder.ServiceBuilder;
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.oauth.OAuth20Service;
-import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.ExecutionException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.utils.URIBuilder;
+
+import static java.lang.String.format;
 
 @Slf4j
 public class BitbucketOauthClient extends BaseOauthClient implements OauthClient {
   OAuth20Service service;
 
+  @Inject
   public BitbucketOauthClient(SecretManager secretManager, BitbucketConfig config) {
     super(secretManager);
     service = new ServiceBuilder(config.getClientId())

@@ -267,6 +267,7 @@ import io.harness.yaml.core.StepSpecType;
 import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 
 import software.wings.security.ThreadLocalUserProvider;
+import software.wings.security.authentication.oauth.BitbucketConfig;
 import software.wings.security.authentication.oauth.GithubConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -299,6 +300,7 @@ import org.jooq.ExecuteListener;
 import org.mongodb.morphia.converters.TypeConverter;
 import org.springframework.core.convert.converter.Converter;
 import ru.vyarus.guice.validator.ValidationModule;
+import software.wings.security.authentication.oauth.GitlabConfig;
 
 @Slf4j
 @OwnedBy(HarnessTeam.PL)
@@ -325,6 +327,18 @@ public class NextGenModule extends AbstractModule {
   @Singleton
   GithubConfig getGithubOauthClient(NextGenConfiguration appConfig) {
     return appConfig.getGithubConfig();
+  }
+
+  @Provides
+  @Singleton
+  BitbucketConfig getBitbucketOauthClient(NextGenConfiguration appConfig) {
+    return appConfig.getBitbucketConfig();
+  }
+
+  @Provides
+  @Singleton
+  GitlabConfig getGitlabOauthClient(NextGenConfiguration appConfig) {
+    return appConfig.getGitlabConfig();
   }
 
   @Provides

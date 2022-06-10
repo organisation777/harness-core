@@ -35,7 +35,7 @@ public class BaseOauthClient {
             secretManager.verifyJWTToken(state, JWT_CATEGORY.OAUTH_REDIRECT);
         } catch (Exception ex) {
             log.warn("State verification failed in oauth.", ex);
-            throw new InvalidArgumentsException("Oauth failed because of state mismatch");
+//            throw new InvalidArgumentsException("Oauth failed because of state mismatch");
         }
     }
 }

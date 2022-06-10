@@ -76,7 +76,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import software.wings.security.authentication.oauth.BitbucketConfig;
 import software.wings.security.authentication.oauth.GithubConfig;
+import software.wings.security.authentication.oauth.GitlabConfig;
 
 @Getter
 @OwnedBy(HarnessTeam.PL)
@@ -215,6 +217,8 @@ public class NextGenConfiguration extends Configuration {
   @JsonProperty("ffServerClientConfig") ServiceHttpClientConfig ffServerClientConfig;
   @ConfigSecret @JsonProperty("gitopsResourceClientConfig") GitopsResourceClientConfig gitopsResourceClientConfig;
   @JsonProperty("githubOauthConfig") private GithubConfig githubConfig;
+  @JsonProperty("bitbucketOauthConfig") private BitbucketConfig bitbucketConfig;
+  @JsonProperty("gitlabOauthConfig") private GitlabConfig gitlabConfig;
 
   // [secondary-db]: Uncomment this and the corresponding config in yaml file if you want to connect to another database
   //  @JsonProperty("secondary-mongo") MongoConfig secondaryMongoConfig;

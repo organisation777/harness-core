@@ -61,7 +61,7 @@ public class OauthSecretService {
 
     // github doesn't provides refresh token
     if (provider.equals("github")) {
-      return OauthSecretResponse.builder().accessTokenRef(accessTokenResponse.getSecret().getIdentifier())
+      return OauthSecretResponse.builder().accessTokenRef(accessTokenResponse.getSecret().getIdentifier()).build();
     }
 
     SecretResponseWrapper refreshTokenResponse = ngSecretService.create(accountIdentifier,
