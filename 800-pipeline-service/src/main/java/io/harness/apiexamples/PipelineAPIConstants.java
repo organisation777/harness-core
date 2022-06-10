@@ -11,7 +11,7 @@ public class PipelineAPIConstants {
             "    name: Sample Pipeline\n" +
             "    identifier: Sample_Pipeline\n" +
             "    allowStageExecutions: false\n" +
-            "    projectIdentifier: MISC\n" +
+            "    projectIdentifier: Temp\n" +
             "    orgIdentifier: default\n" +
             "    tags: {}\n" +
             "    stages:\n" +
@@ -40,8 +40,8 @@ public class PipelineAPIConstants {
             "                                    approverInputs: []\n" +
             "                          - step:\n" +
             "                                type: ShellScript\n" +
-            "                                name: Shellscript Step\n" +
-            "                                identifier: Shellscript_Step\n" +
+            "                                name: ShellScript Step\n" +
+            "                                identifier: ShellScript_Step\n" +
             "                                spec:\n" +
             "                                    shell: Bash\n" +
             "                                    onDelegate: true\n" +

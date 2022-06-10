@@ -205,10 +205,9 @@ public class PipelineResource implements YamlSchemaResource {
           hidden = true) @QueryParam(NGCommonEntityConstants.DESCRIPTION_KEY) String pipelineDescription,
       @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true, description = "Pipeline YAML", content = {
-        @Content(
-            examples = @ExampleObject(
-                value = PipelineAPIConstants.CREATE_API,
-                description = "Sample Create Pipeline YAML"))
+        @Content(mediaType = "application/yaml",
+            examples = @ExampleObject(summary = "Sample Create Pipeline YAML", value = PipelineAPIConstants.CREATE_API,
+                description = "Sample Pipeline YAML with One Build Stage and One Deploy Stage"))
       }) @NotNull String yaml) {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
     log.info(String.format("Creating pipeline with identifier %s in project %s, org %s, account %s",
