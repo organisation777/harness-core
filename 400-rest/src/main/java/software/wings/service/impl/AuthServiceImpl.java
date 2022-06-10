@@ -397,8 +397,11 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public void validateDelegateToken(
       String accountId, String tokenString, String delegateId, boolean shouldSetTokenNameInGlobalContext) {
+    long startTime = System.currentTimeMillis();
     delegateTokenAuthenticator.validateDelegateToken(
         accountId, tokenString, delegateId, shouldSetTokenNameInGlobalContext);
+    long endTime = System.currentTimeMillis();
+    log.info("Arpit, time taken: {}", endTime - startTime);
   }
 
   @Override
