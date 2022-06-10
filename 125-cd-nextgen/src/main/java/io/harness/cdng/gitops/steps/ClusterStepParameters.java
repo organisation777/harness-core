@@ -51,39 +51,8 @@ public class ClusterStepParameters implements StepParameters {
     return ClusterStepParameters.builder().envGroupRef(envGroupRef).deployToAllEnvs(true).build();
   }
 
-  public static ClusterStepParameters WithEnv(@NotNull String envRef) {
-    return ClusterStepParameters.builder()
-        .envClusterRefs(Collections.singletonList(EnvClusterRefs.builder().envRef(envRef).deployToAll(true).build()))
-        .build();
-  }
-
-  public static ClusterStepParameters WithEnvAndClusterRefs(
-      @NotNull String envRef, @NotNull Collection<String> clusterRefs) {
-    return ClusterStepParameters.builder()
-        .envClusterRefs(
-            Collections.singletonList(EnvClusterRefs.builder().envRef(envRef).clusterRefs(clusterRefs).build()))
-        .build();
-  }
-
-  public static ClusterStepParameters WithEnvGroupAndEnv(@NotNull String envGroupRef, @NotNull String env) {
-    return ClusterStepParameters.builder()
-        .envGroupRef(envGroupRef)
-        .envClusterRefs(singletonList(EnvClusterRefs.builder().envRef(env).deployToAll(true).build()))
-        .build();
-  }
-
   public ClusterStepParameters(String envGroupRef, String env) {
     this.envGroupRef = envGroupRef;
     this.envClusterRefs = singletonList(EnvClusterRefs.builder().envRef(env).deployToAll(true).build());
-  }
-
-  @Data
-  @Builder
-  @TypeAlias("envClusterRefs")
-  @RecasterAlias("io.harness.cdng.gitops.steps.ClusterStepParameters.EnvClusterRefs")
-  public static class EnvClusterRefs {
-    private String envRef;
-    private Collection<String> clusterRefs;
-    boolean deployToAll;
   }
 }

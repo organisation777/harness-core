@@ -218,7 +218,7 @@ public class GitopsClustersStepTest extends CategoryTest {
     final Object[] set3 = new Object[] {
         ClusterStepParameters.builder()
             .envClusterRefs(
-                asList(ClusterStepParameters.EnvClusterRefs.builder().envRef("env1").deployToAll(true).build()))
+                asList(EnvClusterRefs.builder().envRef("env1").deployToAll(true).build()))
             .deployToAllEnvs(false)
             .build(),
         new GitopsClustersOutcome(new ArrayList<>()).appendCluster("env1", "c1-name").appendCluster("env1", "c2-name"),
@@ -228,7 +228,7 @@ public class GitopsClustersStepTest extends CategoryTest {
     final Object[] set4 = new Object[] {
         ClusterStepParameters.builder()
             .envClusterRefs(
-                asList(ClusterStepParameters.EnvClusterRefs.builder().envRef("env2").deployToAll(true).build()))
+                asList(EnvClusterRefs.builder().envRef("env2").deployToAll(true).build()))
             .deployToAllEnvs(false)
             .build(),
         new GitopsClustersOutcome(new ArrayList<>()).appendCluster("env2", "c3-name").appendCluster("env2", "c4-name"),
@@ -236,7 +236,7 @@ public class GitopsClustersStepTest extends CategoryTest {
 
     final Object[] set5 = new Object[] {
         ClusterStepParameters.builder()
-            .envClusterRefs(asList(ClusterStepParameters.EnvClusterRefs.builder()
+            .envClusterRefs(asList(EnvClusterRefs.builder()
                                        .envRef("env2")
                                        .deployToAll(false)
                                        .clusterRefs(asList("c4"))

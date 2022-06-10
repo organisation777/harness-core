@@ -7,6 +7,9 @@ import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
 import io.harness.cdng.envGroup.yaml.EnvGroupPlanCreatorConfig;
 import io.harness.cdng.envgroup.yaml.EnvironmentGroupYaml;
+import io.harness.cdng.environment.helper.EnvironmentPlanCreatorConfigMapper;
+import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
+import io.harness.cdng.environment.yaml.EnvironmentYamlV2;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.plan.Dependency;
@@ -26,7 +29,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,6 +57,15 @@ public class EnvGroupPlanCreatorHelper {
               projectIdentifier, orgIdentifier));
     }
 
+    List<EnvironmentPlanCreatorConfig> envConfigs = new ArrayList<>();
+    if (!envGroupYaml.isDeployToAll()) {
+      String mergedYaml = entity.get().getYaml();
+      List<EnvironmentYamlV2> envV2Yamls = envGroupYaml.getEnvGroupConfig();
+      for (EnvironmentYamlV2 envYaml : envV2Yamls) {
+        envConfigs.add(EnvironmentPlanCreatorConfigMapper.toEnvPlanCreatorConfigWithGitops(mergedYaml, envYaml, null));
+      }
+    }
+
     return EnvGroupPlanCreatorConfig.builder()
         .name(entity.get().getName())
         .identifier(entity.get().getIdentifier())
@@ -59,6 +73,7 @@ public class EnvGroupPlanCreatorHelper {
         .projectIdentifier(projectIdentifier)
         .environmentGroupRef(envGroupYaml.getEnvGroupRef())
         .deployToAll(envGroupYaml.isDeployToAll())
+        .environmentPlanCreatorConfigs(envConfigs)
         .build();
   }
 

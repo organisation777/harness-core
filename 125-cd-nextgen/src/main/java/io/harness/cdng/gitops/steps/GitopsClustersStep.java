@@ -23,7 +23,6 @@ import io.harness.beans.common.VariablesSweepingOutput;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
 import io.harness.cdng.gitops.service.ClusterService;
-import io.harness.cdng.gitops.steps.ClusterStepParameters.EnvClusterRefs;
 import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.gitops.models.Cluster;

@@ -14,6 +14,7 @@ import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.gitops.steps.ClusterStepParameters;
+import io.harness.cdng.gitops.steps.EnvClusterRefs;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.yaml.ParameterField;
@@ -45,7 +46,7 @@ public class ClusterPlanCreatorUtilTest extends CategoryTest {
 
     assertThat(stepParameters.isDeployToAllEnvs()).isEqualTo(false);
     assertThat(stepParameters.getEnvClusterRefs()).hasSize(1);
-    ClusterStepParameters.EnvClusterRefs envClusterRefs = stepParameters.getEnvClusterRefs().stream().findFirst().get();
+    EnvClusterRefs envClusterRefs = stepParameters.getEnvClusterRefs().stream().findFirst().get();
 
     assertThat(envClusterRefs.getEnvRef()).isEqualTo("env");
     assertThat(envClusterRefs.getClusterRefs()).containsExactly("c1", "c2");

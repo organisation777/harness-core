@@ -11,6 +11,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -18,6 +19,7 @@ import io.harness.cdng.creator.plan.PlanCreatorConstants;
 import io.harness.cdng.envGroup.yaml.EnvGroupPlanCreatorConfig;
 import io.harness.cdng.environment.yaml.EnvironmentPlanCreatorConfig;
 import io.harness.cdng.gitops.steps.ClusterStepParameters;
+import io.harness.cdng.gitops.steps.EnvClusterRefs;
 import io.harness.cdng.gitops.steps.GitopsClustersStep;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
@@ -25,8 +27,11 @@ import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.yaml.ParameterField;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.GITOPS)
@@ -65,13 +70,18 @@ public class ClusterPlanCreatorUtils {
 
     final String envRef = fetchEnvRef(envConfig);
     if (envConfig.isDeployToAll()) {
-      return ClusterStepParameters.WithEnv(envRef);
+      return ClusterStepParameters.builder()
+          .envClusterRefs(asList(EnvClusterRefs.builder().envRef(envRef).deployToAll(true).build()))
+          .build();
     }
 
     checkArgument(isNotEmpty(envConfig.getGitOpsClusterRefs()),
         "list of gitops clusterRefs must be provided when not deploying to all clusters");
 
-    return ClusterStepParameters.WithEnvAndClusterRefs(envRef, getClusterRefs(envConfig));
+    return ClusterStepParameters.builder()
+        .envClusterRefs(Collections.singletonList(
+            EnvClusterRefs.builder().envRef(envRef).clusterRefs(getClusterRefs(envConfig)).build()))
+        .build();
   }
 
   private ClusterStepParameters getStepParams(EnvGroupPlanCreatorConfig config) {
@@ -85,16 +95,20 @@ public class ClusterPlanCreatorUtils {
     checkArgument(isNotEmpty(config.getEnvironmentPlanCreatorConfigs()),
         "list of environments must be provided when not deploying to all clusters");
 
-    return ClusterStepParameters.WithEnvAndClusterRefs(envGroupRef, getClusterRefs(config));
+    final List<EnvClusterRefs> clusterRefs = config.getEnvironmentPlanCreatorConfigs()
+                                                 .stream()
+                                                 .map(c
+                                                     -> EnvClusterRefs.builder()
+                                                            .envRef(c.getIdentifier())
+                                                            .clusterRefs(ClusterPlanCreatorUtils.getClusterRefs(c))
+                                                            .build())
+                                                 .collect(Collectors.toList());
+
+    return ClusterStepParameters.builder().envClusterRefs(clusterRefs).build();
   }
 
   private Set<String> getClusterRefs(EnvironmentPlanCreatorConfig config) {
     return new HashSet<>(config.getGitOpsClusterRefs());
-  }
-
-  private Set<String> getClusterRefs(EnvGroupPlanCreatorConfig config) {
-    //    return new HashSet<>(config.getGitOpsClusterRefs());
-    return new HashSet<>();
   }
 
   private String fetchEnvRef(EnvironmentPlanCreatorConfig config) {
