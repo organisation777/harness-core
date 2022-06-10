@@ -377,4 +377,33 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
                                                           .build();
     return gitAwareEntityHelper.fetchYAMLFromRemote(scope, gitContextRequestParams, Collections.emptyMap());
   }
+
+  @Override
+  public PipelineEntity savePipelineEntityForImportedYAML(PipelineEntity pipelineToSave, boolean pushToGit) {
+    String accountIdentifier = pipelineToSave.getAccountIdentifier();
+    String orgIdentifier = pipelineToSave.getOrgIdentifier();
+    String projectIdentifier = pipelineToSave.getProjectIdentifier();
+    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
+    String yamlToPush = pipelineToSave.getYaml();
+    pipelineToSave.setYaml("");
+    pipelineToSave.setStoreType(StoreType.REMOTE);
+    pipelineToSave.setConnectorRef(gitEntityInfo.getConnectorRef());
+    pipelineToSave.setRepo(gitEntityInfo.getRepoName());
+    pipelineToSave.setFilePath(gitEntityInfo.getFilePath());
+    return transactionHelper.performTransaction(() -> {
+      PipelineEntity savedPipelineEntity = mongoTemplate.save(pipelineToSave);
+      if (pushToGit) {
+        Scope scope = Scope.builder()
+                          .accountIdentifier(pipelineToSave.getAccountIdentifier())
+                          .orgIdentifier(pipelineToSave.getOrgIdentifier())
+                          .projectIdentifier(pipelineToSave.getProjectIdentifier())
+                          .build();
+        gitAwareEntityHelper.updateFileImportedFromGit(pipelineToSave, yamlToPush, scope);
+      }
+      outboxService.save(
+          new PipelineCreateEvent(accountIdentifier, orgIdentifier, projectIdentifier, savedPipelineEntity));
+      checkForMetadataAndSaveIfAbsent(savedPipelineEntity);
+      return savedPipelineEntity;
+    });
+  }
 }

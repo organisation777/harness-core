@@ -67,4 +67,6 @@ public interface PMSPipelineRepositoryCustom {
   boolean deleteAllPipelinesInAProject(String accountId, String orgIdentifier, String projectIdentifier);
 
   String importPipelineFromRemote(String accountId, String orgIdentifier, String projectIdentifier);
+
+  PipelineEntity savePipelineEntityForImportedYAML(PipelineEntity pipelineToSave, boolean pushToGit);
 }
