@@ -70,14 +70,8 @@ public class TemplateReferenceHelper {
   TemplateSetupUsageHelper templateSetupUsageHelper;
   AccountClient accountClient;
 
-  private boolean isFeatureFlagEnabled(String accountId) {
-    return RestClientUtils.getResponse(
-        accountClient.isFeatureFlagEnabled(FeatureName.NG_TEMPLATE_REFERENCES_SUPPORT.name(), accountId));
-  }
-
   private boolean skipTemplateReference(TemplateEntity templateEntity) {
-    return !isFeatureFlagEnabled(templateEntity.getAccountId())
-        || TemplateEntityType.MONITORED_SERVICE_TEMPLATE.equals(templateEntity.getTemplateEntityType());
+    return TemplateEntityType.MONITORED_SERVICE_TEMPLATE.equals(templateEntity.getTemplateEntityType());
   }
 
   public void deleteTemplateReferences(TemplateEntity templateEntity) {
