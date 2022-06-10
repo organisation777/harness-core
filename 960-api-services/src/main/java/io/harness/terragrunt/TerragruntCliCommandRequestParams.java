@@ -34,4 +34,5 @@ public class TerragruntCliCommandRequestParams {
   private PlanLogOutputStream planLogOutputStream;
   private PlanJsonLogOutputStream planJsonLogOutputStream;
   private ErrorLogOutputStream errorLogOutputStream;
+  private boolean useAutoApproveFlag;
 }

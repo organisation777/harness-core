@@ -374,7 +374,8 @@ public enum FeatureName {
   USE_PAGINATED_ENCRYPT_SERVICE, // To be only used by UI for safeguarding encrypt component changes in CG
   DEPLOYMENT_SUBFORMIK_PIPELINE_DROPDOWN,
   DEPLOYMENT_SUBFORMIK_WORKFLOW_DROPDOWN,
-  TI_DOTNET;
+  TI_DOTNET,
+  TG_USE_AUTO_APPROVE_FLAG;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;

@@ -282,6 +282,7 @@ public class TerragruntProvisionTask extends AbstractDelegateRunnableTask {
               .planJsonLogOutputStream(planJsonLogOutputStream)
               .tfOutputsFile(tfOutputsFile)
               .errorLogOutputStream(errorLogOutputStream)
+              .useAutoApproveFlag(parameters.isUseAutoApproveFlag())
               .build();
 
       CliResponse terragruntCliResponse;

@@ -23,7 +23,7 @@ public final class TerragruntConstants {
   public static final String TERRAGRUNT_PLAN_DESTROY_COMMAND_FORMAT =
       "terragrunt plan -destroy -out=tfdestroyplan -input=false %s %s";
   public static final String TERRAGRUNT_DESTROY_COMMAND_FORMAT =
-      "terragrunt destroy -force --terragrunt-non-interactive %s %s";
+      "terragrunt destroy %s --terragrunt-non-interactive %s %s";
   public static final String TERRAGRUNT_RUN_ALL_APPLY_COMMAND_FORMAT =
       "terragrunt run-all apply -input=false --terragrunt-non-interactive %s %s";
   public static final String TERRAGRUNT_RUN_ALL_PLAN_COMMAND_FORMAT =
