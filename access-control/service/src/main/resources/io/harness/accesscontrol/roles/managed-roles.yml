@@ -624,3 +624,37 @@ roles:
       managed: true
       allowedScopeLevels:
         - account
+    - identifier: _ccm_admin
+      name: CCM Admin
+      description: CCM Admin
+      permissions:
+        - ccm_perspective_view
+        - ccm_perspective_edit
+        - ccm_perspective_delete
+        - ccm_budget_view
+        - ccm_budget_edit
+        - ccm_budget_delete
+        - ccm_costCategory_view
+        - ccm_costCategory_edit
+        - ccm_costCategory_delete
+        - ccm_autoStoppingRule_view
+        - ccm_autoStoppingRule_edit
+        - ccm_autoStoppingRule_delete
+        - ccm_folder_view
+        - ccm_folder_edit
+        - ccm_folder_delete
+      managed: true
+      allowedScopeLevels:
+        - account
+    - identifier: _ccm_viewer
+      name: CCM Viewer
+      description: CCM Viewer
+      permissions:
+        - ccm_perspective_view
+        - ccm_budget_view
+        - ccm_costCategory_view
+        - ccm_autoStoppingRule_view
+        - ccm_folder_view
+      managed: true
+      allowedScopeLevels:
+        - account
