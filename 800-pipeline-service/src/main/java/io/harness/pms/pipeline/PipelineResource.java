@@ -206,7 +206,8 @@ public class PipelineResource implements YamlSchemaResource {
       @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true, description = "Pipeline YAML", content = {
         @Content(mediaType = "application/yaml",
-            examples = @ExampleObject(summary = "Sample Create Pipeline YAML", value = PipelineAPIConstants.CREATE_API,
+            examples = @ExampleObject(name = "Create", summary = "Sample Create Pipeline YAML",
+                value = PipelineAPIConstants.CREATE_API,
                 description = "Sample Pipeline YAML with One Build Stage and One Deploy Stage"))
       }) @NotNull String yaml) {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
@@ -451,7 +452,12 @@ public class PipelineResource implements YamlSchemaResource {
       @Parameter(description = PipelineResourceConstants.PIPELINE_DESCRIPTION_PARAM_MESSAGE, required = false,
           hidden = true) @QueryParam(NGCommonEntityConstants.DESCRIPTION_KEY) String pipelineDescription,
       @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
-      @RequestBody(required = true, description = "Pipeline YAML to be updated") @NotNull String yaml) {
+      @RequestBody(required = true, description = "Pipeline YAML to be updated", content = {
+        @Content(mediaType = "application/yaml",
+            examples = @ExampleObject(name = "Update", summary = "Sample Update Pipeline YAML",
+                value = PipelineAPIConstants.CREATE_API,
+                description = "Sample Pipeline YAML with One Build Stage and One Deploy Stage"))
+      }) @NotNull String yaml) {
     log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
         projectId, orgId, accountId));
     PipelineEntity withVersion =
@@ -525,8 +531,14 @@ public class PipelineResource implements YamlSchemaResource {
       @Parameter(description = PipelineResourceConstants.PIPELINE_SEARCH_TERM_PARAM_MESSAGE)
       @QueryParam(NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm, @QueryParam("module") String module,
       @QueryParam("filterIdentifier") String filterIdentifier, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo,
-      @RequestBody(description = "This is the body for the filter properties for listing pipelines.")
-      PipelineFilterPropertiesDto filterProperties,
+      @RequestBody(description = "This is the body for the filter properties for listing pipelines.",
+          content =
+          {
+            @Content(mediaType = "application/json",
+                examples = @ExampleObject(name = "List", summary = "Sample List Pipeline JSON Input",
+                    value = PipelineAPIConstants.LIST_API,
+                    description = "Sample List JSON with FilterType as PipelineSetup"))
+          }) PipelineFilterPropertiesDto filterProperties,
       @Parameter(description = "Boolean flag to get distinct pipelines from all branches.") @QueryParam(
           "getDistinctFromBranches") Boolean getDistinctFromBranches) {
     log.info(String.format("Get List of pipelines in project %s, org %s, account %s", projectId, orgId, accountId));
