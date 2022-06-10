@@ -12,6 +12,8 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.remote.client.NGRestUtils.getResponse;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.engine.expressions.functors.SecretFunctor;
+import io.harness.expression.SecretString;
 import io.harness.ng.core.dto.UserGroupDTO;
 import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.notification.NotificationSettingConfigDTO;
@@ -20,6 +22,7 @@ import io.harness.notification.NotificationChannelType;
 import io.harness.notification.NotificationRequest;
 import io.harness.notification.SmtpConfig;
 import io.harness.notification.entities.NotificationSetting;
+import io.harness.notification.evaluator.SecretExpressionEvaluator;
 import io.harness.notification.remote.SmtpConfigClient;
 import io.harness.notification.remote.SmtpConfigResponse;
 import io.harness.notification.repositories.NotificationSettingRepository;
@@ -39,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -113,9 +117,10 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
 
   @Override
   public List<String> getNotificationRequestForUserGroups(List<NotificationRequest.UserGroup> notificationUserGroups,
-      NotificationChannelType notificationChannelType, String accountId) {
+      NotificationChannelType notificationChannelType, String accountId, long expressionFunctorToken) {
     List<UserGroupDTO> userGroups = getUserGroups(notificationUserGroups, accountId);
-    return getNotificationSettings(notificationChannelType, userGroups, accountId);
+    List<String> notificationSetting = getNotificationSettings(notificationChannelType, userGroups, accountId);
+    return resolveUserGroups(notificationSetting, expressionFunctorToken);
   }
 
   @Override
@@ -138,6 +143,16 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
       }
     }
     return Lists.newArrayList(notificationSettings);
+  }
+
+  private List<String> resolveUserGroups(List<String> notificationSetting, long expressionFunctorToken) {
+    if (notificationSetting.get(0)) {
+    }
+    SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
+    Object object = evaluator.resolve(notificationSetting, true);
+    if (object == null) {
+    }
+    return Stream.of(object).map(Object::toString).collect(Collectors.toList());
   }
 
   @Override
