@@ -5,37 +5,33 @@ import static java.lang.String.format;
 import io.harness.exception.InvalidArgumentsException;
 
 import software.wings.security.SecretManager;
-import software.wings.security.authentication.oauth.GithubConfig;
+import software.wings.security.authentication.oauth.BitbucketConfig;
+import software.wings.security.authentication.oauth.ProvidersImpl.Bitbucket;
 
-import com.github.scribejava.apis.GitHubApi;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
-import com.google.inject.Inject;
+import java.io.IOException;
 import java.net.URI;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
+import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 
 @Slf4j
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class GithubOauthClient extends BaseOauthClient implements OauthClient {
+public class BitbucketOauthClient extends BaseOauthClient implements OauthClient {
   OAuth20Service service;
 
-  @Inject
-  public GithubOauthClient(SecretManager secretManager, GithubConfig githubConfig) {
+  public BitbucketOauthClient(SecretManager secretManager, BitbucketConfig config) {
     super(secretManager);
-    service = new ServiceBuilder(githubConfig.getClientId())
-                  .apiSecret(githubConfig.getClientSecret())
-                  .scope("user:email") // replace with desired scope
-                  .callback(githubConfig.getCallbackUrl())
-                  .build(GitHubApi.instance());
+    service = new ServiceBuilder(config.getClientId())
+                  .apiSecret(config.getClientSecret())
+                  .callback(config.getCallbackUrl())
+                  .build(Bitbucket.instance());
   }
 
   @Override
   public String getName() {
-    return "github";
+    return "bitbucket";
   }
 
   @Override
@@ -52,7 +48,7 @@ public class GithubOauthClient extends BaseOauthClient implements OauthClient {
   }
 
   @Override
-  public OauthAccessToken execute(final String code, final String state, final String accountIdentifier) {
+  public OauthAccessToken execute(String code, String state, String accountIdentifier) {
     verifyState(state);
     OAuth2AccessToken accessToken = null;
     try {

@@ -5,9 +5,9 @@ import java.net.URI;
 import java.util.concurrent.ExecutionException;
 
 public interface OauthClient {
-    String getName();
+  String getName();
 
-    URI getRedirectUrl();
+  URI getRedirectUrl();
 
-    OauthAccessToken execute(String code, String state, String accountIdentifier) throws InterruptedException, ExecutionException, IOException;
+  OauthAccessToken execute(String code, String state, String accountIdentifier);
 }

@@ -13,18 +13,15 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.google.inject.Inject;
 import java.net.URI;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 
 @Slf4j
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class GithubOauthClient extends BaseOauthClient implements OauthClient {
+public class GitlabOauthClient extends BaseOauthClient implements OauthClient {
   OAuth20Service service;
 
   @Inject
-  public GithubOauthClient(SecretManager secretManager, GithubConfig githubConfig) {
+  public GitlabOauthClient(SecretManager secretManager, GithubConfig githubConfig) {
     super(secretManager);
     service = new ServiceBuilder(githubConfig.getClientId())
                   .apiSecret(githubConfig.getClientSecret())
@@ -35,7 +32,7 @@ public class GithubOauthClient extends BaseOauthClient implements OauthClient {
 
   @Override
   public String getName() {
-    return "github";
+    return "gitlab";
   }
 
   @Override
