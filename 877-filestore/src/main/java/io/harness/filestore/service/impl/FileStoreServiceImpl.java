@@ -335,12 +335,12 @@ public class FileStoreServiceImpl implements FileStoreService {
   }
 
   private String getDuplicateEntityIdentifierMessage(@NotNull FileDTO fileDto) {
-    return format("Try creating another %s, %s with identifier [%s] already exists.",
+    return format("Use another identifier %s, %s with identifier [%s] already exists.",
         fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getIdentifier());
   }
 
   private String getDuplicateEntityNameMessage(@NotNull FileDTO fileDto) {
-    return format("Try creating another %s, %s with name [%s] already exists in the parent folder [%s].",
+    return format("Use another name %s, %s with name [%s] already exists in the parent folder [%s].",
         fileDto.getType().name().toLowerCase(), fileDto.getType().name().toLowerCase(), fileDto.getName(),
         fileDto.getParentIdentifier());
   }
