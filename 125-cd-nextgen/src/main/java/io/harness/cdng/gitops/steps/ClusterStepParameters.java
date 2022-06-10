@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.cdng.gitops.steps;
 
 import static java.util.Collections.singletonList;
@@ -72,6 +79,8 @@ public class ClusterStepParameters implements StepParameters {
 
   @Data
   @Builder
+  @TypeAlias("envClusterRefs")
+  @RecasterAlias("io.harness.cdng.gitops.steps.ClusterStepParameters.EnvClusterRefs")
   public static class EnvClusterRefs {
     private String envRef;
     private Collection<String> clusterRefs;

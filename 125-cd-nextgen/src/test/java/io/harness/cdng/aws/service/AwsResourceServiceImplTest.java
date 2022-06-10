@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.NGONZALEZ;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -30,6 +31,7 @@ import io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.exception.AwsCFException;
 import io.harness.exception.AwsIAMRolesException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.rule.Owner;
@@ -113,7 +115,7 @@ public class AwsResourceServiceImplTest extends CategoryTest {
     GitStoreDelegateConfig mockGitStoreDelegateConfig = GitStoreDelegateConfig.builder().build();
     doReturn(mockGitStoreDelegateConfig)
         .when(gitHelper)
-        .getGitStoreDelegateConfig(any(), any(), any(), any(), any(), anyString());
+        .getGitStoreDelegateConfig(any(), any(), any(), any(), any(), any(), anyString());
     List<AwsCFTemplateParamsData> response = new LinkedList<>();
     response.add(AwsCFTemplateParamsData.builder().paramKey("param1").paramType("value1").build());
     response.add(AwsCFTemplateParamsData.builder().paramKey("param2").paramType("value2").build());
@@ -125,7 +127,8 @@ public class AwsResourceServiceImplTest extends CategoryTest {
     doReturn(mockAwsCFTaskResponse).when(serviceHelper).getResponseData(any(), any(), anyString());
     IdentifierRef mockIdentifierRef = IdentifierRef.builder().build();
 
-    service.getCFparametersKeys("s3", "bar", true, "far", "cat", "baz", mockIdentifierRef, "quux", "corge");
+    service.getCFparametersKeys(
+        "s3", "bar", true, "far", null, "cat", "baz", mockIdentifierRef, "quux", "corge", "abc", "efg", "hij");
     assertThat(mockAwsCFTaskResponse.getListOfParams().size()).isEqualTo(2);
   }
 
@@ -144,7 +147,7 @@ public class AwsResourceServiceImplTest extends CategoryTest {
     GitStoreDelegateConfig mockGitStoreDelegateConfig = GitStoreDelegateConfig.builder().build();
     doReturn(mockGitStoreDelegateConfig)
         .when(gitHelper)
-        .getGitStoreDelegateConfig(any(), any(), any(), any(), any(), anyString());
+        .getGitStoreDelegateConfig(any(), any(), any(), any(), any(), any(), anyString());
     List<AwsCFTemplateParamsData> response = new LinkedList<>();
     response.add(AwsCFTemplateParamsData.builder().paramKey("param1").paramType("value1").build());
     response.add(AwsCFTemplateParamsData.builder().paramKey("param2").paramType("value2").build());
@@ -156,7 +159,8 @@ public class AwsResourceServiceImplTest extends CategoryTest {
     doReturn(mockAwsCFTaskResponse).when(serviceHelper).getResponseData(any(), any(), anyString());
     IdentifierRef mockIdentifierRef = IdentifierRef.builder().build();
 
-    service.getCFparametersKeys("s3", "bar", true, "far", "cat", "baz", mockIdentifierRef, "quux", "corge");
+    service.getCFparametersKeys(
+        "s3", "bar", true, "far", null, "zar", "baz", mockIdentifierRef, "quux", "corge", "abc", "efg", "hij");
   }
 
   @Test()
@@ -181,5 +185,57 @@ public class AwsResourceServiceImplTest extends CategoryTest {
   public void getRegions() {
     Map<String, String> regions = service.getRegions();
     assertThat(regions).size().isEqualTo(19);
+  }
+  @Test
+  @Owner(developers = NGONZALEZ)
+  @Category(UnitTests.class)
+  public void testAwsCFParameterKeysThowExceptions() {
+    AwsConnectorDTO awsMockConnectorDTO = mock(AwsConnectorDTO.class);
+    doReturn(awsMockConnectorDTO).when(serviceHelper).getAwsConnector(any());
+    BaseNGAccess mockAccess = BaseNGAccess.builder().build();
+    doReturn(mockAccess).when(serviceHelper).getBaseNGAccess(any(), any(), any());
+    List<EncryptedDataDetail> encryptedDataDetails = mock(List.class);
+    doReturn(encryptedDataDetails).when(serviceHelper).getAwsEncryptionDetails(any(), any());
+    ConnectorInfoDTO mockConnectorInfoDTO = mock(ConnectorInfoDTO.class);
+    doReturn(mockConnectorInfoDTO).when(gitHelper).getConnectorInfoDTO(any(), any());
+    GitStoreDelegateConfig mockGitStoreDelegateConfig = GitStoreDelegateConfig.builder().build();
+    doReturn(mockGitStoreDelegateConfig)
+        .when(gitHelper)
+        .getGitStoreDelegateConfig(any(), any(), any(), any(), any(), any(), anyString());
+    List<AwsCFTemplateParamsData> response = new LinkedList<>();
+    response.add(AwsCFTemplateParamsData.builder().paramKey("param1").paramType("value1").build());
+    response.add(AwsCFTemplateParamsData.builder().paramKey("param2").paramType("value2").build());
+
+    AwsCFTaskResponse mockAwsCFTaskResponse = AwsCFTaskResponse.builder()
+                                                  .listOfParams(response)
+                                                  .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                                                  .build();
+    doReturn(mockAwsCFTaskResponse).when(serviceHelper).getResponseData(any(), any(), anyString());
+    IdentifierRef mockIdentifierRef = IdentifierRef.builder().build();
+
+    assertThatThrownBy(()
+                           -> service.getCFparametersKeys("s3", "bar", true, "far", null, "cat", "baz",
+                               mockIdentifierRef, "", "corge", "abc", "efg", "hij"))
+        .isInstanceOf(InvalidRequestException.class);
+
+    assertThatThrownBy(()
+                           -> service.getCFparametersKeys("git", "bar", true, "far", null, "cat", "baz",
+                               mockIdentifierRef, "", "", "abc", "efg", "hij"))
+        .isInstanceOf(InvalidRequestException.class);
+
+    assertThatThrownBy(()
+                           -> service.getCFparametersKeys(
+                               "", "", true, "", null, "", "", mockIdentifierRef, "", "", "abc", "efg", "hij"))
+        .isInstanceOf(InvalidRequestException.class);
+    AwsCFTaskResponse mockAwsCFTaskResponseFailed = AwsCFTaskResponse.builder()
+                                                        .listOfParams(response)
+                                                        .commandExecutionStatus(CommandExecutionStatus.FAILURE)
+                                                        .build();
+    doReturn(mockAwsCFTaskResponseFailed).when(serviceHelper).getResponseData(any(), any(), anyString());
+    assertThatThrownBy(()
+                           -> service.getCFparametersKeys(
+                               "s3", "bar", true, "far", null, "cat", "baz",
+                               mockIdentifierRef, "data", "corge", "abc", "efg", "hij"))
+        .isInstanceOf(AwsCFException.class);
   }
 }

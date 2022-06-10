@@ -33,6 +33,7 @@ import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import io.harness.beans.DecryptableEntity;
 import io.harness.beans.FeatureName;
+import io.harness.cdng.configfile.steps.ConfigFilesOutcome;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sAzureInfrastructureOutcome;
@@ -59,11 +60,13 @@ import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
 import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
 import io.harness.cdng.manifest.yaml.ManifestAttributes;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
+import io.harness.cdng.manifest.yaml.OciHelmChartConfig;
 import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome;
 import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
 import io.harness.cdng.manifest.yaml.S3StoreConfig;
 import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.common.NGTimeConversionHelper;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.connector.ConnectorInfoDTO;
@@ -74,6 +77,7 @@ import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConne
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
+import io.harness.delegate.beans.connector.helm.OciHelmConnectorDTO;
 import io.harness.delegate.beans.connector.scm.GitConnectionType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.connector.scm.adapter.ScmConnectorMapper;
@@ -98,6 +102,7 @@ import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.delegate.beans.storeconfig.GcsHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig;
+import io.harness.delegate.beans.storeconfig.OciHelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.S3HelmStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.StoreDelegateConfig;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
@@ -131,6 +136,9 @@ import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.EngineExpressionService;
 import io.harness.pms.rbac.PipelineRbacHelper;
+import io.harness.pms.sdk.core.data.OptionalOutcome;
+import io.harness.pms.sdk.core.resolver.RefObjectUtils;
+import io.harness.pms.sdk.core.resolver.outcome.OutcomeService;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.validation.ExpressionUtils;
@@ -147,6 +155,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -164,6 +173,7 @@ public class CDStepHelper {
   @Inject private LogStreamingStepClientFactory logStreamingStepClientFactory;
   @Inject private EntityReferenceExtractorUtils entityReferenceExtractorUtils;
   @Inject private PipelineRbacHelper pipelineRbacHelper;
+  @Inject protected OutcomeService outcomeService;
 
   public static final String RELEASE_NAME_VALIDATION_REGEX =
       "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
@@ -523,6 +533,12 @@ public class CDStepHelper {
               format("Invalid connector selected in %s. Select Http Helm connector", message));
         }
         break;
+      case ManifestStoreType.OCI:
+        if (!(connectorInfoDTO.getConnectorConfig() instanceof OciHelmConnectorDTO)) {
+          throw new InvalidRequestException(
+              format("Invalid connector selected in %s. Select Oci Helm connector", message));
+        }
+        break;
 
       case ManifestStoreType.S3:
         if (!((connectorInfoDTO.getConnectorConfig()) instanceof AwsConnectorDTO)) {
@@ -574,6 +590,26 @@ public class CDStepHelper {
           .httpHelmConnector((HttpHelmConnectorDTO) helmConnectorDTO.getConnectorConfig())
           .encryptedDataDetails(
               k8sEntityHelper.getEncryptionDataDetails(helmConnectorDTO, AmbianceUtils.getNgAccess(ambiance)))
+          .build();
+    }
+
+    if (ManifestStoreType.OCI.equals(storeConfig.getKind())) {
+      if (!isHelmOciEnabled(AmbianceUtils.getAccountId(ambiance))) {
+        throw new UnsupportedOperationException(format("Unsupported Store Config type: [%s]", storeConfig.getKind()));
+      }
+      OciHelmChartConfig ociStoreConfig = (OciHelmChartConfig) storeConfig;
+      ConnectorInfoDTO helmConnectorDTO =
+          getConnector(getParameterFieldValue(ociStoreConfig.getConnectorReference()), ambiance);
+      validateManifest(storeConfig.getKind(), helmConnectorDTO, validationErrorMessage);
+
+      return OciHelmStoreDelegateConfig.builder()
+          .repoName(helmConnectorDTO.getIdentifier())
+          .basePath(getParameterFieldValue(ociStoreConfig.getBasePath()))
+          .repoDisplayName(helmConnectorDTO.getName())
+          .ociHelmConnector((OciHelmConnectorDTO) helmConnectorDTO.getConnectorConfig())
+          .encryptedDataDetails(
+              k8sEntityHelper.getEncryptionDataDetails(helmConnectorDTO, AmbianceUtils.getNgAccess(ambiance)))
+          .helmOciEnabled(isHelmOciEnabled(AmbianceUtils.getAccountId(ambiance)))
           .build();
     }
 
@@ -648,6 +684,10 @@ public class CDStepHelper {
 
   public boolean isUseNewKubectlVersion(String accountId) {
     return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.NEW_KUBECTL_VERSION);
+  }
+
+  public boolean isHelmOciEnabled(String accountId) {
+    return cdFeatureFlagHelper.isEnabled(accountId, FeatureName.HELM_OCI_SUPPORT);
   }
 
   public boolean shouldCleanUpIncompleteCanaryDeployRelease(String accountId) {
@@ -861,5 +901,16 @@ public class CDStepHelper {
       manifestOutcomes.add(ManifestOutcomeMapper.toManifestOutcome(manifestAttributes, i));
     }
     return manifestOutcomes;
+  }
+
+  public Optional<ConfigFilesOutcome> getConfigFilesOutcome(Ambiance ambiance) {
+    OptionalOutcome configFilesOutcome = outcomeService.resolveOptional(
+        ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.CONFIG_FILES));
+
+    if (!configFilesOutcome.isFound()) {
+      return Optional.empty();
+    }
+
+    return Optional.of((ConfigFilesOutcome) configFilesOutcome.getOutcome());
   }
 }

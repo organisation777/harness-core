@@ -35,10 +35,12 @@ public class NGServiceEntityMapper {
 
   public NGServiceConfig toNGServiceConfig(ServiceEntity serviceEntity) {
     ServiceDefinition sDef = null;
+    Boolean gitOpsEnabled = null;
     if (isNotEmpty(serviceEntity.getYaml())) {
       try {
         final NGServiceConfig config = YamlPipelineUtils.read(serviceEntity.getYaml(), NGServiceConfig.class);
         sDef = config.getNgServiceV2InfoConfig().getServiceDefinition();
+        gitOpsEnabled = config.getNgServiceV2InfoConfig().getGitOpsEnabled();
       } catch (IOException e) {
         throw new InvalidRequestException("Cannot create service ng service config due to " + e.getMessage());
       }
@@ -50,7 +52,7 @@ public class NGServiceEntityMapper {
                                    .description(serviceEntity.getDescription())
                                    .tags(convertToMap(serviceEntity.getTags()))
                                    .serviceDefinition(sDef)
-                                   .gitOpsEnabled(serviceEntity.getGitOpsEnabled())
+                                   .gitOpsEnabled(gitOpsEnabled)
                                    .build())
         .build();
   }

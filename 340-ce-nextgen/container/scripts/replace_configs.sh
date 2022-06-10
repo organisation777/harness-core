@@ -67,6 +67,7 @@ replace_key_value cfClientConfig.eventUrl "$CF_CLIENT_EVENT_URL"
 replace_key_value cfClientConfig.analyticsEnabled "$CF_CLIENT_ANALYTICS_ENABLED"
 replace_key_value cfClientConfig.connectionTimeout "$CF_CLIENT_CONNECTION_TIMEOUT"
 replace_key_value cfClientConfig.readTimeout "$CF_CLIENT_READ_TIMEOUT"
+replace_key_value cfClientConfig.bufferSize "$CF_CLIENT_BUFFER_SIZE"
 replace_key_value featureFlagConfig.featureFlagSystem "$FEATURE_FLAG_SYSTEM"
 replace_key_value featureFlagConfig.syncFeaturesToCF "$SYNC_FEATURES_TO_CF"
 
@@ -88,4 +89,12 @@ if [[ "$STACK_DRIVER_LOGGING_ENABLED" == "true" ]]; then
   yq write -i $CONFIG_FILE logging.appenders[0].stackdriverLogEnabled "true"
 else
   yq delete -i $CONFIG_FILE logging.appenders[1]
+fi
+
+if [[ "" != "$SEGMENT_ENABLED" ]]; then
+  yq write -i $CONFIG_FILE segmentConfig.enabled "$SEGMENT_ENABLED"
+fi
+
+if [[ "" != "$SEGMENT_APIKEY" ]]; then
+  yq write -i $CONFIG_FILE segmentConfig.apiKey "$SEGMENT_APIKEY"
 fi

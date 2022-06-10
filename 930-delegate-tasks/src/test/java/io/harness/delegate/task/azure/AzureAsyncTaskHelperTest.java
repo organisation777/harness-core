@@ -8,11 +8,14 @@
 package io.harness.delegate.task.azure;
 
 import static io.harness.rule.OwnerRule.BUHA;
+import static io.harness.rule.OwnerRule.FILIP;
 import static io.harness.rule.OwnerRule.MLUKIC;
+import static io.harness.rule.OwnerRule.VLICA;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -30,18 +33,23 @@ import io.harness.azure.client.AzureAuthorizationClient;
 import io.harness.azure.client.AzureComputeClient;
 import io.harness.azure.client.AzureContainerRegistryClient;
 import io.harness.azure.client.AzureKubernetesClient;
+import io.harness.azure.client.AzureManagementClient;
 import io.harness.azure.model.AzureAuthenticationType;
 import io.harness.azure.model.AzureConfig;
+import io.harness.azure.model.tag.TagDetails;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.azure.response.AzureAcrTokenTaskResponse;
 import io.harness.delegate.beans.azure.response.AzureClustersResponse;
+import io.harness.delegate.beans.azure.response.AzureDeploymentSlotsResponse;
 import io.harness.delegate.beans.azure.response.AzureRegistriesResponse;
 import io.harness.delegate.beans.azure.response.AzureRepositoriesResponse;
 import io.harness.delegate.beans.azure.response.AzureResourceGroupsResponse;
 import io.harness.delegate.beans.azure.response.AzureSubscriptionsResponse;
+import io.harness.delegate.beans.azure.response.AzureTagsResponse;
+import io.harness.delegate.beans.azure.response.AzureWebAppNamesResponse;
 import io.harness.delegate.beans.connector.azureconnector.AzureAuthDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientKeyCertDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
@@ -72,6 +80,7 @@ import software.wings.delegatetasks.azure.AzureAsyncTaskHelper;
 import software.wings.helpers.ext.azure.AzureIdentityAccessTokenResponse;
 
 import com.google.common.io.Resources;
+import com.microsoft.azure.management.appservice.DeploymentSlot;
 import com.microsoft.azure.management.containerregistry.Registry;
 import com.microsoft.azure.management.containerservice.KubernetesCluster;
 import com.microsoft.azure.management.resources.Subscription;
@@ -100,6 +109,7 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
   @Mock private AzureComputeClient azureComputeClient;
   @Mock private AzureContainerRegistryClient azureContainerRegistryClient;
   @Mock private AzureKubernetesClient azureKubernetesClient;
+  @Mock private AzureManagementClient azureManagementClient;
   private static String CLIENT_ID = "clientId";
   private static String BAD_CLIENT_ID = "badclientId";
   private static String TENANT_ID = "tenantId";
@@ -261,6 +271,63 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppNamesUsingServicePrincipalWithSecret() {
+    testListWebAppNames(getAzureConnectorDTOWithSecretType(AzureSecretType.SECRET_KEY), getAzureConfigSecret());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppNamesUsingServicePrincipalWithCertificate() {
+    testListWebAppNames(getAzureConnectorDTOWithSecretType(AzureSecretType.KEY_CERT), getAzureConfigCert());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppNamesUsingUserAssignedManagedIdentity() {
+    testListWebAppNames(getAzureConnectorDTOWithMSI(CLIENT_ID), getAzureConfigUserAssignedMSI());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppNamesUsingSystemAssignedManagedIdentity() {
+    testListWebAppNames(getAzureConnectorDTOWithMSI(null), getAzureConfigSystemAssignedMSI());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppDeploymentSlotsUsingServicePrincipalWithSecret() {
+    testListWebAppDeploymentSlots(
+        getAzureConnectorDTOWithSecretType(AzureSecretType.SECRET_KEY), getAzureConfigSecret());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppDeploymentSlotsUsingServicePrincipalWithCertificate() {
+    testListWebAppDeploymentSlots(getAzureConnectorDTOWithSecretType(AzureSecretType.KEY_CERT), getAzureConfigCert());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppDeploymentSlotsUsingUserAssignedManagedIdentity() {
+    testListWebAppDeploymentSlots(getAzureConnectorDTOWithMSI(CLIENT_ID), getAzureConfigUserAssignedMSI());
+  }
+
+  @Test
+  @Owner(developers = VLICA)
+  @Category(UnitTests.class)
+  public void testListWebAppDeploymentSlotsUsingSystemAssignedManagedIdentity() {
+    testListWebAppDeploymentSlots(getAzureConnectorDTOWithMSI(null), getAzureConfigSystemAssignedMSI());
+  }
+
+  @Test
   @Owner(developers = {BUHA, MLUKIC})
   @Category(UnitTests.class)
   public void testListClustersUsingServicePrincipalWithSecret() {
@@ -401,6 +468,28 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testListTags() {
+    // Given
+    TagDetails tag1 = new TagDetails();
+    tag1.setTagName("tag-name-1");
+    TagDetails tag2 = new TagDetails();
+    tag2.setTagName("tag-name-2");
+
+    when(azureManagementClient.listTags(any(), eq("subscriptionId"))).thenReturn(Arrays.asList(tag1, tag2));
+
+    // When
+    AzureTagsResponse response = azureAsyncTaskHelper.listTags(
+        Collections.emptyList(), getAzureConnectorDTOWithSecretType(AzureSecretType.SECRET_KEY), "subscriptionId");
+
+    // Then
+    assertThat(response).isNotNull();
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
+    assertThat(response.getTags()).isNotNull().hasSize(2).containsExactlyInAnyOrder("tag-name-1", "tag-name-2");
+  }
+
+  @Test
   @Owner(developers = MLUKIC)
   @Category(UnitTests.class)
   public void testGetServicePrincipalCertificateAcrLoginToken() {
@@ -490,6 +579,42 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
     assertThat(resourceGroups.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
     assertThat(resourceGroups.getResourceGroups().isEmpty()).isFalse();
     assertThat(resourceGroups.getResourceGroups().get(0)).isEqualTo("resource-group");
+  }
+
+  private void testListWebAppNames(AzureConnectorDTO azureConnectorDTO, AzureConfig azureConfig) {
+    when(azureComputeClient.listWebAppNamesBySubscriptionIdAndResourceGroup(any(), any(), any()))
+        .thenReturn(Arrays.asList("test-web-app-1", "test-web-app-2"));
+
+    AzureWebAppNamesResponse resourceGroups =
+        azureAsyncTaskHelper.listWebAppNames(null, azureConnectorDTO, "subscriptionId", "resourceGroup");
+
+    verify(azureComputeClient)
+        .listWebAppNamesBySubscriptionIdAndResourceGroup(azureConfig, "subscriptionId", "resourceGroup");
+    assertThat(resourceGroups.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
+    assertThat(resourceGroups.getWebAppNames().size()).isEqualTo(2);
+
+    assertThat(resourceGroups.getWebAppNames().get(0)).isEqualTo("test-web-app-1");
+    assertThat(resourceGroups.getWebAppNames().get(1)).isEqualTo("test-web-app-2");
+  }
+
+  private void testListWebAppDeploymentSlots(AzureConnectorDTO azureConnectorDTO, AzureConfig azureConfig) {
+    DeploymentSlot deploymentSlot = mock(DeploymentSlot.class);
+
+    when(azureComputeClient.listWebAppDeploymentSlots(any(), any(), any(), any()))
+        .thenReturn(Arrays.asList(deploymentSlot));
+
+    when(deploymentSlot.name()).thenReturn("test-qa-name");
+
+    AzureDeploymentSlotsResponse deploymentSlotsResponse = azureAsyncTaskHelper.listDeploymentSlots(
+        null, azureConnectorDTO, "subscriptionId", "resourceGroup", "webAppName");
+
+    verify(azureComputeClient).listWebAppDeploymentSlots(azureConfig, "subscriptionId", "resourceGroup", "webAppName");
+    assertThat(deploymentSlotsResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.SUCCESS);
+    assertThat(deploymentSlotsResponse.getDeploymentSlots().isEmpty()).isFalse();
+    assertThat(deploymentSlotsResponse.getDeploymentSlots().get(0).getName()).isEqualTo("webAppName-test-qa-name");
+    assertThat(deploymentSlotsResponse.getDeploymentSlots().get(0).getType()).isEqualTo("non-production");
+    assertThat(deploymentSlotsResponse.getDeploymentSlots().get(1).getName()).isEqualTo("webAppName");
+    assertThat(deploymentSlotsResponse.getDeploymentSlots().get(1).getType()).isEqualTo("production");
   }
 
   private void testListClusters(AzureConnectorDTO azureConnectorDTO, AzureConfig azureConfig) {

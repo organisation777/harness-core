@@ -33,6 +33,7 @@ import io.harness.notification.bean.NotificationRules;
 import io.harness.plan.Plan;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
+import io.harness.pms.contracts.plan.PipelineStoreType;
 import io.harness.pms.contracts.plan.PlanCreationBlobResponse;
 import io.harness.pms.contracts.plan.RerunInfo;
 import io.harness.pms.contracts.plan.RetryExecutionInfo;
@@ -221,6 +222,13 @@ public class ExecutionHelper {
     if (gitSyncBranchContext != null) {
       builder.setGitSyncBranchContext(gitSyncBranchContext);
     }
+    PipelineStoreType pipelineStoreType = StoreTypeMapper.fromStoreType(pipelineEntity.getStoreType());
+    if (pipelineStoreType != null) {
+      builder.setPipelineStoreType(pipelineStoreType);
+    }
+    if (pipelineEntity.getConnectorRef() != null) {
+      builder.setPipelineConnectorRef(pipelineEntity.getConnectorRef());
+    }
     return builder.build();
   }
 
@@ -235,9 +243,9 @@ public class ExecutionHelper {
           InputSetTemplateHelper.createTemplateFromPipeline(pipelineEntity.getYaml()), mergedRuntimeInputYaml);
       if (EmptyPredicate.isNotEmpty(invalidFQNsInInputSet)) {
         throw new InvalidRequestException("Some fields are not valid: "
-            + invalidFQNsInInputSet.keySet()
+            + invalidFQNsInInputSet.entrySet()
                   .stream()
-                  .map(FQN::getExpressionFqn)
+                  .map(o -> o.getKey().getExpressionFqn() + ": " + o.getValue())
                   .collect(Collectors.toList())
                   .toString());
       }

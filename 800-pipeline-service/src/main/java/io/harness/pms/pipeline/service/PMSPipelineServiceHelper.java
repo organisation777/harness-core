@@ -13,6 +13,7 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
+import io.harness.ModuleType;
 import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
@@ -161,8 +162,7 @@ public class PMSPipelineServiceHelper {
   }
 
   public void validatePipelineFromRemote(PipelineEntity pipelineEntity) {
-    GovernanceMetadata governanceMetadata = validatePipelineYamlAndSetTemplateRefIfAny(pipelineEntity,
-        pmsFeatureFlagService.isEnabled(pipelineEntity.getAccountId(), FeatureName.OPA_PIPELINE_GOVERNANCE));
+    GovernanceMetadata governanceMetadata = validatePipelineYaml(pipelineEntity);
     if (governanceMetadata.getDeny()) {
       List<String> denyingPolicySetIds = governanceMetadata.getDetailsList()
                                              .stream()
@@ -175,9 +175,13 @@ public class PMSPipelineServiceHelper {
     }
   }
 
-  // todo: change method name
-  public GovernanceMetadata validatePipelineYamlAndSetTemplateRefIfAny(
-      PipelineEntity pipelineEntity, boolean checkAgainstOPAPolicies) {
+  public GovernanceMetadata validatePipelineYaml(PipelineEntity pipelineEntity) {
+    boolean governanceEnabled =
+        pmsFeatureFlagService.isEnabled(pipelineEntity.getAccountId(), FeatureName.OPA_PIPELINE_GOVERNANCE);
+    return validatePipelineYaml(pipelineEntity, governanceEnabled);
+  }
+
+  public GovernanceMetadata validatePipelineYaml(PipelineEntity pipelineEntity, boolean checkAgainstOPAPolicies) {
     try {
       GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
       if (gitEntityInfo != null && gitEntityInfo.isNewBranch()) {
@@ -287,10 +291,23 @@ public class PMSPipelineServiceHelper {
 
     Criteria moduleCriteria = new Criteria();
     if (EmptyPredicate.isNotEmpty(module)) {
+      // Add approval stage criteria to check for the pipelines containing the given module and the approval stage.
+      Criteria approvalStageCriteria =
+          Criteria
+              .where(String.format("%s.%s.stageTypes", PipelineEntityKeys.filters, ModuleType.PMS.name().toLowerCase()))
+              .in("Approval");
+      for (ModuleType moduleType : ModuleType.values()) {
+        if (moduleType.isInternal()) {
+          continue;
+        }
+        // This query ensures that only pipelines containing approval stage are visible.
+        approvalStageCriteria.and(String.format("%s.%s", PipelineEntityKeys.filters, moduleType.name().toLowerCase()))
+            .exists(false);
+      }
       // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
       // criteria = { "$or": [ { "filters": {} } , { "filters.MODULE": { $exists: true } } ] }
       moduleCriteria.orOperator(where(PipelineEntityKeys.filters).is(new Document()),
-          where(String.format("%s.%s", PipelineEntityKeys.filters, module)).exists(true));
+          where(String.format("%s.%s", PipelineEntityKeys.filters, module)).exists(true), approvalStageCriteria);
     }
 
     Criteria searchCriteria = new Criteria();
