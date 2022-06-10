@@ -665,3 +665,17 @@ We are already using logback framework in our application, so it is simple to en
 2. Checkout the branch to hotfix on and make the changes.
 3. Bump up the build number in the build.properties.
 4. Create a pull request on this branch and master as well, make sure you merge them on master within the next 3 4 hours.
+=======
+# Harness API Guidelines
+
+This repo holds the collection of guides on writing APIs within Harness. 
+
+## REST
+
+Harness uses a Representational State Transfer (RESTful) style API to expose functionality. While other options are available, RESTful APIs continue to be some of the most popular and robust public HTTP based APIs and so the standard our customers are used to interacting with.
+
+RESTful APIs are focused on resources, how to group them, and a set of actions that can be taken against them. A resource is a noun. Resources are grouped into collections and actions taken against them. Given RESTful APIs are generally built on top of the HTTP protocol, resources are mapped to URL endpoints and HTTP verbs are used to handle the default actions to be taken against a resource or collection.
+
+
+## Process For Change
+>>>>>>> source-repo
