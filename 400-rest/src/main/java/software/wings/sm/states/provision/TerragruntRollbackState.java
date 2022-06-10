@@ -209,7 +209,6 @@ public class TerragruntRollbackState extends TerragruntProvisionState {
               .tfVarSource(terragruntStateHelper.getTfVarSource(context, getTfVarFiles(), getTfVarGitFileConfig()))
               .workspace(workspace)
               .useAutoApproveFlag(featureFlagService.isEnabled(TG_USE_AUTO_APPROVE_FLAG, context.getAccountId()))
-
               .delegateTag(configParameter.getDelegateTag())
               .build();
 
