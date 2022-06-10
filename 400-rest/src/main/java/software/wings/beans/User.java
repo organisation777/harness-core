@@ -181,6 +181,14 @@ public class User extends Base implements Principal {
     return publicUser;
   }
 
+  @JsonIgnore
+  public User getUserAccountsAndSupportAccounts(int page, int size, String searchTerm) {
+    User publicUser = new User();
+    publicUser.setAccounts(getAccounts());
+    publicUser.setSupportAccounts(getSupportAccounts());
+    return publicUser;
+  }
+
   public boolean isAccountAdmin(String accountId) {
     return roles != null
         && roles.stream()

@@ -28,6 +28,7 @@ import static software.wings.utils.Utils.urlDecode;
 import static com.google.common.collect.ImmutableMap.of;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -100,6 +101,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Parameter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -523,6 +525,25 @@ public class UserResource {
     return new RestResponse<>(UserThreadLocal.get().getPublicUser());
   }
 
+  /**
+   * Get User Account details response.
+   *
+   * @return the rest response
+   */
+  @GET
+  @Path("user")
+  @Scope(value = ResourceType.USER, scope = LOGGED_IN)
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = LOGGED_IN)
+  public RestResponse<User> getUserAccounts(
+      @Parameter(description = "Page number of navigation. The default value is 0") @QueryParam(
+          NGResourceFilterConstants.PAGE_KEY) @DefaultValue("0") int page,
+      @Parameter(description = "Number of entries per page. The default value is 100") @QueryParam(
+          NGResourceFilterConstants.SIZE_KEY) @DefaultValue("100") int size,
+      @QueryParam(NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm) {
+    return new RestResponse<>(UserThreadLocal.get().getUserAccountsAndSupportAccounts(page, size, searchTerm));
+  }
   /**
    * Look up the user object using email and login the user. Intended for internal use only.
    * E.g. The Identity Service authenticated the user through OAuth provider and get the user email, then
