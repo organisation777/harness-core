@@ -32,7 +32,7 @@ public class RedisOffsetBackingStore extends MemoryOffsetBackingStore {
   @Override
   public void configure(WorkerConfig config) {
     super.configure(config);
-    this.redisKey = config.getString("offset.storage.topic");
+    this.redisKey = config.getString("offset.storage.topic") + "-" + config.getString("collection.include.list");
     String redisLockConfigJson = config.getString("offset.storage.file.filename");
     RedisConfig redisConfig = JsonUtils.asObject(redisLockConfigJson, RedisConfig.class);
     redisson = RedisUtils.getClient(redisConfig);

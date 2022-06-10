@@ -48,7 +48,8 @@ public class DebeziumConfiguration {
     props.setProperty(CONNECTOR_NAME, debeziumConfig.getConnectorName());
     props.setProperty(OFFSET_STORAGE, RedisOffsetBackingStore.class.getName());
     props.setProperty(OFFSET_STORAGE_FILE_FILENAME, JsonUtils.asJson(redisLockConfig));
-    props.setProperty(OFFSET_STORAGE_KEY, debeziumConfig.getOffsetStorageTopic());
+    props.setProperty(
+        OFFSET_STORAGE_KEY, debeziumConfig.getOffsetStorageTopic() + "-" + debeziumConfig.getCollectionIncludeList());
     props.setProperty(KEY_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getKeyConverterSchemasEnable());
     props.setProperty(VALUE_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getValueConverterSchemasEnable());
     props.setProperty(OFFSET_FLUSH_INTERVAL_MS, debeziumConfig.getOffsetFlushIntervalMillis());

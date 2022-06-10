@@ -29,7 +29,7 @@ server:
 
 debeziumConfigs:
   - isEnabled: true
-    offset.storage.topic: debezium-offsets-pipeline
+    offset.storage.topic: debezium-offsets
     name: pipeline
     key.converter.schemas.enable: false
     value.converter.schemas.enable: false

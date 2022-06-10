@@ -32,7 +32,7 @@ import org.redisson.api.RLock;
 
 @Singleton
 @Slf4j
-public class DebeziumController<T extends MongoDatabaseChangeConsumer> implements Runnable {
+public class DebeziumController<T extends MongoCollectionChangeConsumer> implements Runnable {
   private final T changeConsumer;
   private final Properties props;
   private final ExecutorService executorService;
@@ -67,7 +67,7 @@ public class DebeziumController<T extends MongoDatabaseChangeConsumer> implement
         }
       } catch (InterruptedException e) {
         shouldStop.set(true);
-        log.warn("Thread interrupted, stopping controller for {}", changeConsumer.getDatabase(), e);
+        log.warn("Thread interrupted, stopping controller for {}", changeConsumer.getCollection(), e);
       } catch (Exception e) {
         log.error("Primary sync stopped due to exception", e);
       } finally {
@@ -109,6 +109,6 @@ public class DebeziumController<T extends MongoDatabaseChangeConsumer> implement
   }
 
   private String getLockName() {
-    return DEBEZIUM_LOCK_PREFIX + changeConsumer.getDatabase();
+    return DEBEZIUM_LOCK_PREFIX + changeConsumer.getCollection();
   }
 }
