@@ -129,14 +129,14 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
         .fetchesNonDeletedEnvironmentFromListOfIdentifiers(
             ACC_ID, ORG_ID, PRO_ID, environmentGroupEntity.getEnvIdentifiers());
     ResponseDTO<EnvironmentGroupResponse> responseDTO =
-        environmentGroupResource.get(ENV_GROUP_ID, ACC_ID, ORG_ID, PRO_ID, false, null);
+        environmentGroupResource.get(ENV_GROUP_ID, ACC_ID, ORG_ID, PRO_ID, false);
     assertThat(responseDTO).isNotNull();
     assertThat(responseDTO.getData().getEnvGroup().getIdentifier()).isEqualTo(ENV_GROUP_ID);
 
     // case2: get function returns empty object
     Optional<EnvironmentGroupEntity> optional = Optional.empty();
     doReturn(optional).when(environmentGroupService).get(ACC_ID, ORG_ID, PRO_ID, ENV_GROUP_ID, false);
-    responseDTO = environmentGroupResource.get(ENV_GROUP_ID, ACC_ID, ORG_ID, PRO_ID, false, null);
+    responseDTO = environmentGroupResource.get(ENV_GROUP_ID, ACC_ID, ORG_ID, PRO_ID, false);
     assertThat(responseDTO).isNull();
   }
 
@@ -163,7 +163,7 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
         .fetchesNonDeletedEnvironmentFromListOfIdentifiers(
             ACC_ID, orgIdentifier, projectIdentifier, environmentGroupEntity.getEnvIdentifiers());
     ResponseDTO<EnvironmentGroupResponse> responseDTO =
-        environmentGroupResource.create(ACC_ID, environmentGroupRequestDTO, null);
+        environmentGroupResource.create(ACC_ID, environmentGroupRequestDTO);
     assertThat(responseDTO).isNotNull();
     assertThat(responseDTO.getData().getEnvGroup().getIdentifier()).isEqualTo(identifier);
     assertThat(responseDTO.getData().getEnvGroup().getName()).isEqualTo(name);
@@ -178,7 +178,7 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
     EnvironmentGroupEntity entity = getEntity();
     doReturn(entity).when(environmentGroupService).delete(ACC_ID, ORG_ID, PRO_ID, ENV_GROUP_ID, null);
     ResponseDTO<EnvironmentGroupDeleteResponse> deleteDTO =
-        environmentGroupResource.delete(null, ENV_GROUP_ID, ACC_ID, ORG_ID, PRO_ID, null);
+        environmentGroupResource.delete(null, ENV_GROUP_ID, ACC_ID, ORG_ID, PRO_ID);
     assertThat(deleteDTO).isNotNull();
     assertThat(deleteDTO.getData().getDeleted()).isEqualTo(entity.getDeleted());
     assertThat(deleteDTO.getData().getIdentifier()).isEqualTo(ENV_GROUP_ID);
@@ -207,7 +207,7 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
         .list(criteria, pageRequest, PRO_ID, ORG_ID, ACC_ID);
     ResponseDTO<PageResponse<EnvironmentGroupResponse>> pageResponseResponseDTO =
         environmentGroupResource.listEnvironmentGroup(
-            ACC_ID, ORG_ID, PRO_ID, null, searchTerm, 0, 1, null, filterIdentifier, null, null);
+            ACC_ID, ORG_ID, PRO_ID, null, searchTerm, 0, 1, null, filterIdentifier, null);
     assertThat(pageResponseResponseDTO).isNotNull();
     assertThat(pageResponseResponseDTO.getData().getPageItemCount()).isEqualTo(1L);
 
@@ -218,7 +218,7 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
         .when(environmentGroupService)
         .formCriteria(ACC_ID, ORG_ID, PRO_ID, false, searchTerm, filterIdentifier, null);
     pageResponseResponseDTO = environmentGroupResource.listEnvironmentGroup(
-        ACC_ID, ORG_ID, PRO_ID, null, searchTerm, 0, 1, null, filterIdentifier, null, null);
+        ACC_ID, ORG_ID, PRO_ID, null, searchTerm, 0, 1, null, filterIdentifier, null);
     assertThat(pageResponseResponseDTO).isNotNull();
     assertThat(pageResponseResponseDTO.getData().getPageItemCount()).isEqualTo(1L);
   }
@@ -241,7 +241,7 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
     doReturn(environmentGroupEntity).when(environmentGroupService).create(environmentGroupEntity);
     // passing identifier in api different from that of in yaml
     assertThatThrownBy(
-        () -> environmentGroupResource.update(null, "ENV_GROUP_ID", ACC_ID, environmentGroupRequestDTO, null))
+        () -> environmentGroupResource.update(null, "ENV_GROUP_ID", ACC_ID, environmentGroupRequestDTO))
         .isInstanceOf(InvalidRequestException.class);
 
     // case2: testing other updates
@@ -250,7 +250,7 @@ public class EnvironmentGroupResourceTest extends CategoryTest {
         .fetchesNonDeletedEnvironmentFromListOfIdentifiers(
             ACC_ID, orgIdentifier, projectIdentifier, environmentGroupEntity.getEnvIdentifiers());
     doReturn(environmentGroupEntity.withVersion(10L)).when(environmentGroupService).update(environmentGroupEntity);
-    assertThatCode(() -> environmentGroupResource.update(null, identifier, ACC_ID, environmentGroupRequestDTO, null))
+    assertThatCode(() -> environmentGroupResource.update(null, identifier, ACC_ID, environmentGroupRequestDTO))
         .doesNotThrowAnyException();
   }
 

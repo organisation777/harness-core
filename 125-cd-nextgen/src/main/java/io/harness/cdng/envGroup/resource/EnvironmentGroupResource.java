@@ -34,9 +34,6 @@ import io.harness.cdng.envGroup.services.EnvironmentGroupService;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filter.dto.FilterPropertiesDTO;
-import io.harness.gitsync.interceptor.GitEntityDeleteInfoDTO;
-import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
-import io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
@@ -68,7 +65,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -150,8 +146,7 @@ public class EnvironmentGroupResource {
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
       @Parameter(description = "Specify whether Environment is deleted or not") @QueryParam(
-          NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+          NGCommonEntityConstants.DELETED_KEY) @DefaultValue("false") boolean deleted) {
     Optional<EnvironmentGroupEntity> environmentGroupEntity =
         environmentGroupService.get(accountId, orgIdentifier, projectIdentifier, envGroupId, deleted);
 
@@ -180,8 +175,7 @@ public class EnvironmentGroupResource {
   create(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
              description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
       @Parameter(description = "Details of the Environment Group to be created")
-      @Valid EnvironmentGroupRequestDTO environmentGroupRequestDTO,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      @Valid EnvironmentGroupRequestDTO environmentGroupRequestDTO) {
     EnvironmentGroupEntity entity =
         EnvironmentGroupMapper.toEnvironmentGroupEntity(accountId, environmentGroupRequestDTO);
 
@@ -204,7 +198,7 @@ public class EnvironmentGroupResource {
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns the list of Environment Group for a Project")
+        ApiResponse(description = "Returns the list of Environment Group for a Project")
       })
   public ResponseDTO<PageResponse<EnvironmentGroupResponse>>
   listEnvironmentGroup(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
@@ -224,7 +218,7 @@ public class EnvironmentGroupResource {
       @Parameter(description = "Filter identifier") @QueryParam(
           NGResourceFilterConstants.FILTER_KEY) String filterIdentifier,
       @RequestBody(description = "This is the body for the filter properties for listing Environment Groups")
-      FilterPropertiesDTO filterProperties, @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+      FilterPropertiesDTO filterProperties) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgIdentifier, projectIdentifier),
         Resource.of(NGResourceType.ENVIRONMENT_GROUP, null), CDNGRbacPermissions.ENVIRONMENT_GROUP_VIEW_PERMISSION);
     Criteria criteria = environmentGroupService.formCriteria(accountId, orgIdentifier, projectIdentifier, false,
@@ -263,8 +257,7 @@ public class EnvironmentGroupResource {
       @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
-          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier,
-      @BeanParam GitEntityDeleteInfoDTO entityDeleteInfo) {
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier) {
     // TODO: set up usages of env group as well as env linked with it
     log.info(String.format("Delete Environment group Api %s", envGroupId));
     EnvironmentGroupEntity deletedEntity = environmentGroupService.delete(
@@ -290,7 +283,7 @@ public class EnvironmentGroupResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
           description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
       @Parameter(description = "Details of the Environment Group to be updated")
-      @Valid EnvironmentGroupRequestDTO environmentGroupRequestDTO, @BeanParam GitEntityUpdateInfoDTO gitEntityInfo) {
+      @Valid EnvironmentGroupRequestDTO environmentGroupRequestDTO) {
     log.info(String.format("Updating Environment Group with identifier %s in project %s, org %s, account %s",
         envGroupId, environmentGroupRequestDTO.getProjectIdentifier(), environmentGroupRequestDTO.getOrgIdentifier(),
         accountId));
@@ -319,14 +312,10 @@ public class EnvironmentGroupResource {
 
   @VisibleForTesting
   List<EnvironmentResponse> getEnvironmentResponses(EnvironmentGroupEntity groupEntity) {
-    List<EnvironmentResponse> envResponseList = null;
-
     List<Environment> envList =
         environmentService.fetchesNonDeletedEnvironmentFromListOfIdentifiers(groupEntity.getAccountId(),
             groupEntity.getOrgIdentifier(), groupEntity.getProjectIdentifier(), groupEntity.getEnvIdentifiers());
-    envResponseList = EnvironmentMapper.toResponseWrapper(envList);
-
-    return envResponseList;
+    return EnvironmentMapper.toResponseWrapper(envList);
   }
 
   @VisibleForTesting
