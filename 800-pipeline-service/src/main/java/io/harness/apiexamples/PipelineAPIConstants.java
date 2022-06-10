@@ -7,7 +7,7 @@
 package io.harness.apiexamples;
 
 public class PipelineAPIConstants {
-    public final String CREATE_API = "pipeline:\n" +
+    public static final String CREATE_API = "pipeline:\n" +
             "  name: Sample Pipeline\n" +
             "  identifier: Sample_Pipeline\n" +
             "  allowStageExecutions: false\n" +
