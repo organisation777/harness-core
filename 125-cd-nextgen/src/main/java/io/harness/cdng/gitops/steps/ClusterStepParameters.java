@@ -16,7 +16,6 @@ import io.harness.pms.sdk.core.steps.io.StepParameters;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -198,6 +198,7 @@ public class GitopsClustersStepTest extends CategoryTest {
 
     step.executeSyncAfterRbac(buildAmbiance(), input, StepInputPackage.builder().build(), null);
 
+    verify(sweepingOutputService).resolveOptional(any(), any());
     verify(sweepingOutputService).consume(any(), eq("gitops"), eq(expectedOutcome), eq("STAGE"));
     reset(sweepingOutputService);
   }
@@ -217,8 +218,7 @@ public class GitopsClustersStepTest extends CategoryTest {
     };
     final Object[] set3 = new Object[] {
         ClusterStepParameters.builder()
-            .envClusterRefs(
-                asList(EnvClusterRefs.builder().envRef("env1").deployToAll(true).build()))
+            .envClusterRefs(asList(EnvClusterRefs.builder().envRef("env1").deployToAll(true).build()))
             .deployToAllEnvs(false)
             .build(),
         new GitopsClustersOutcome(new ArrayList<>()).appendCluster("env1", "c1-name").appendCluster("env1", "c2-name"),
@@ -227,8 +227,7 @@ public class GitopsClustersStepTest extends CategoryTest {
 
     final Object[] set4 = new Object[] {
         ClusterStepParameters.builder()
-            .envClusterRefs(
-                asList(EnvClusterRefs.builder().envRef("env2").deployToAll(true).build()))
+            .envClusterRefs(asList(EnvClusterRefs.builder().envRef("env2").deployToAll(true).build()))
             .deployToAllEnvs(false)
             .build(),
         new GitopsClustersOutcome(new ArrayList<>()).appendCluster("env2", "c3-name").appendCluster("env2", "c4-name"),
@@ -236,11 +235,8 @@ public class GitopsClustersStepTest extends CategoryTest {
 
     final Object[] set5 = new Object[] {
         ClusterStepParameters.builder()
-            .envClusterRefs(asList(EnvClusterRefs.builder()
-                                       .envRef("env2")
-                                       .deployToAll(false)
-                                       .clusterRefs(asList("c4"))
-                                       .build()))
+            .envClusterRefs(
+                asList(EnvClusterRefs.builder().envRef("env2").deployToAll(false).clusterRefs(asList("c4")).build()))
             .deployToAllEnvs(false)
             .build(),
         new GitopsClustersOutcome(new ArrayList<>()).appendCluster("env2", "c4-name"),

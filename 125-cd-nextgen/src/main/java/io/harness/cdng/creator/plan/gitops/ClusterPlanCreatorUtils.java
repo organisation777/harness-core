@@ -25,6 +25,7 @@ import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.sdk.core.plan.PlanNode;
+import io.harness.pms.sdk.core.plan.PlanNode.PlanNodeBuilder;
 import io.harness.pms.yaml.ParameterField;
 
 import java.util.Collections;
@@ -37,7 +38,7 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(HarnessTeam.GITOPS)
 @UtilityClass
 public class ClusterPlanCreatorUtils {
-  public PlanNode.PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
+  public PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
       String infraSectionUuid, EnvironmentPlanCreatorConfig envConfig) {
     return PlanNode.builder()
         .uuid(infraSectionUuid)
@@ -51,7 +52,7 @@ public class ClusterPlanCreatorUtils {
                 .build());
   }
 
-  public PlanNode.PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
+  public PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
       String infraSectionUuid, EnvGroupPlanCreatorConfig envConfig) {
     return PlanNode.builder()
         .uuid(infraSectionUuid)

@@ -125,11 +125,11 @@ public class InfrastructurePmsPlanCreator {
   }
 
   public static PlanNode createPlanForGitopsClusters(YamlField envField, String infraSectionUuid,
-                                                     EnvGroupPlanCreatorConfig envGroupPlanCreatorConfig, KryoSerializer kryoSerializer) {
+      EnvGroupPlanCreatorConfig envGroupPlanCreatorConfig, KryoSerializer kryoSerializer) {
     List<AdviserObtainment> adviserObtainmentFromMetaDataToExecution =
-            getAdviserObtainmentFromMetaDataToExecution(envField.getNode(), kryoSerializer);
+        getAdviserObtainmentFromMetaDataToExecution(envField.getNode(), kryoSerializer);
     PlanNodeBuilder planNodeBuilder =
-            ClusterPlanCreatorUtils.getGitopsClustersStepPlanNodeBuilder(infraSectionUuid, envGroupPlanCreatorConfig);
+        ClusterPlanCreatorUtils.getGitopsClustersStepPlanNodeBuilder(infraSectionUuid, envGroupPlanCreatorConfig);
     planNodeBuilder.adviserObtainments(adviserObtainmentFromMetaDataToExecution);
     return planNodeBuilder.build();
   }

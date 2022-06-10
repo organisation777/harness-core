@@ -7,7 +7,6 @@
 
 package io.harness.cdng.gitops.steps;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -17,6 +16,8 @@ import static io.harness.logging.LogLevel.INFO;
 import static io.harness.pms.execution.utils.AmbianceUtils.getAccountId;
 import static io.harness.pms.execution.utils.AmbianceUtils.getOrgIdentifier;
 import static io.harness.pms.execution.utils.AmbianceUtils.getProjectIdentifier;
+
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import io.harness.beans.common.VariablesSweepingOutput;
@@ -101,9 +102,9 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
     OptionalSweepingOutput optionalSweepingOutput = executionSweepingOutputResolver.resolveOptional(
         ambiance, RefObjectUtils.getOutcomeRefObject(YAMLFieldNameConstants.SERVICE_VARIABLES));
 
-    final Map<String, Object> variables = optionalSweepingOutput.isFound()
+    final Map<String, Object> variables = optionalSweepingOutput != null && optionalSweepingOutput.isFound()
         ? ((VariablesSweepingOutput) optionalSweepingOutput.getOutput())
-        : new HashMap<>();
+        : null;
 
     try {
       Map<String, IndividualClusterInternal> validatedClusters = validatedClusters(ambiance, stepParameters);
