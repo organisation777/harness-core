@@ -116,18 +116,15 @@ public class PMSPipelineTemplateHelper {
 
   public List<EntityDetailProtoDTO> getTemplateReferencesForGivenYaml(
       String accountId, String orgId, String projectId, String yaml) {
-    if (pmsFeatureFlagHelper.isEnabled(accountId, FeatureName.NG_TEMPLATE_REFERENCES_SUPPORT)) {
-      GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
-      if (gitEntityInfo != null) {
-        return NGRestUtils.getResponse(templateResourceClient.getTemplateReferenceForGivenYaml(accountId, orgId,
-            projectId, gitEntityInfo.isNewBranch() ? gitEntityInfo.getBaseBranch() : gitEntityInfo.getBranch(),
-            gitEntityInfo.getYamlGitConfigId(), true, TemplateReferenceRequestDTO.builder().yaml(yaml).build()));
-      }
-
-      return NGRestUtils.getResponse(templateResourceClient.getTemplateReferenceForGivenYaml(
-          accountId, orgId, projectId, null, null, null, TemplateReferenceRequestDTO.builder().yaml(yaml).build()));
+    GitEntityInfo gitEntityInfo = GitContextHelper.getGitEntityInfo();
+    if (gitEntityInfo != null) {
+      return NGRestUtils.getResponse(templateResourceClient.getTemplateReferenceForGivenYaml(accountId, orgId,
+          projectId, gitEntityInfo.isNewBranch() ? gitEntityInfo.getBaseBranch() : gitEntityInfo.getBranch(),
+          gitEntityInfo.getYamlGitConfigId(), true, TemplateReferenceRequestDTO.builder().yaml(yaml).build()));
     }
-    return new ArrayList<>();
+
+    return NGRestUtils.getResponse(templateResourceClient.getTemplateReferenceForGivenYaml(
+        accountId, orgId, projectId, null, null, null, TemplateReferenceRequestDTO.builder().yaml(yaml).build()));
   }
 
   public RefreshResponseDTO getRefreshedYaml(String accountId, String orgId, String projectId, String yaml) {
