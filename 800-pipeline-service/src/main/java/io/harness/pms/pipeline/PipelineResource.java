@@ -21,6 +21,7 @@ import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.apiexamples.PipelineAPIConstants;
 import io.harness.beans.ExecutionNode;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.governance.PolicyEvaluationFailureException;
@@ -77,8 +78,6 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.io.File;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -208,9 +207,7 @@ public class PipelineResource implements YamlSchemaResource {
       @RequestBody(required = true, description = "Pipeline YAML", content = {
         @Content(
             examples = @ExampleObject(
-                value =
-                    Files.readString(new File("800-pipeline-service/src/main/resources/examples/pipeline/create.yml"))
-                        .toPath(),
+                value = PipelineAPIConstants.CREATE_API,
                 description = "Sample Create Pipeline YAML"))
       }) @NotNull String yaml) {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
