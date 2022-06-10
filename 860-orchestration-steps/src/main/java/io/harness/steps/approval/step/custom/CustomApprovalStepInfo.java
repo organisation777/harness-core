@@ -19,6 +19,7 @@ import io.harness.plancreator.steps.common.WithDelegateSelector;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.approval.ApprovalFacilitator;
 import io.harness.steps.approval.step.beans.CriteriaSpecWrapper;
@@ -31,6 +32,7 @@ import io.harness.yaml.core.timeout.Timeout;
 import io.harness.yaml.core.variables.NGVariable;
 import io.harness.yaml.utils.NGVariablesUtils;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
@@ -39,6 +41,7 @@ import javax.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.TypeAlias;
 
@@ -50,6 +53,11 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("customApprovalStepInfo")
 @RecasterAlias("io.harness.steps.approval.step.custom.CustomApprovalStepInfo")
 public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  String uuid;
+
   @NotNull ShellType shell;
 
   @NotNull ShellScriptSourceWrapper source;
@@ -57,6 +65,7 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
   @NotNull
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
+  @VariableExpression(skipVariableExpression = true)
   ParameterField<Timeout> scriptTimeout;
 
   @VariableExpression(skipVariableExpression = true) List<NGVariable> outputVariables;
@@ -70,6 +79,7 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
   @NotNull
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
+  @VariableExpression(skipVariableExpression = true)
   ParameterField<Timeout> retryInterval;
 
   @NotNull @VariableExpression(skipVariableExpression = true) CriteriaSpecWrapper approvalCriteria;
@@ -77,7 +87,7 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
 
   @Override
   public StepType getStepType() {
-    return CustomApprovalStep.STEP_TYPE;
+    return io.harness.steps.approval.step.custom.CustomApprovalStep.STEP_TYPE;
   }
 
   @Override
@@ -87,7 +97,7 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
 
   @Override
   public SpecParameters getSpecParameters() {
-    return CustomApprovalSpecParameters.builder()
+    return io.harness.steps.approval.step.custom.CustomApprovalSpecParameters.builder()
         .retryInterval(getRetryInterval())
         .outputVariables(NGVariablesUtils.getMapOfVariables(outputVariables, 0L))
         .environmentVariables(NGVariablesUtils.getMapOfVariables(environmentVariables, 0L))
