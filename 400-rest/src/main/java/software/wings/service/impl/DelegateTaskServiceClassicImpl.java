@@ -1313,6 +1313,9 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
                                                         .filter(c -> c instanceof SelectorCapability)
                                                         .map(c -> (SelectorCapability) c)
                                                         .collect(Collectors.toList());
+    if (isEmpty(selectorCapabilities)) {
+      return selectorCapabilities;
+    }
     List<SelectorCapability> selectors =
         selectorCapabilities.stream()
             .filter(sel -> Objects.nonNull(sel.getSelectorOrigin()))
