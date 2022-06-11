@@ -38,10 +38,9 @@ import lombok.experimental.UtilityClass;
 @OwnedBy(HarnessTeam.GITOPS)
 @UtilityClass
 public class ClusterPlanCreatorUtils {
-  public PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
-      String infraSectionUuid, EnvironmentPlanCreatorConfig envConfig) {
+  public PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(String nodeUuid, EnvironmentPlanCreatorConfig envConfig) {
     return PlanNode.builder()
-        .uuid(infraSectionUuid)
+        .uuid(nodeUuid)
         .name(PlanCreatorConstants.GITOPS_INFRA_NODE_NAME)
         .identifier(PlanCreatorConstants.GITOPS_INFRA_NODE_NAME)
         .stepType(GitopsClustersStep.STEP_TYPE)
@@ -52,10 +51,9 @@ public class ClusterPlanCreatorUtils {
                 .build());
   }
 
-  public PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(
-      String infraSectionUuid, EnvGroupPlanCreatorConfig envConfig) {
+  public PlanNodeBuilder getGitopsClustersStepPlanNodeBuilder(String nodeUuid, EnvGroupPlanCreatorConfig envConfig) {
     return PlanNode.builder()
-        .uuid(infraSectionUuid)
+        .uuid(nodeUuid)
         .name(PlanCreatorConstants.GITOPS_INFRA_NODE_NAME)
         .identifier(PlanCreatorConstants.GITOPS_INFRA_NODE_NAME)
         .stepType(GitopsClustersStep.STEP_TYPE)
