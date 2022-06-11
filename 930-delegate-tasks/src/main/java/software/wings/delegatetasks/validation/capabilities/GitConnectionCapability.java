@@ -7,7 +7,7 @@
 
 package software.wings.delegatetasks.validation.capabilities;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
@@ -60,6 +60,7 @@ public class GitConnectionCapability implements ExecutionCapability {
 
   @Override
   public String getCapabilityToString() {
-    return !isEmpty(gitConfig.getRepoUrl()) ? String.format("Capability Reach URL: %s ", gitConfig.getRepoUrl()) : null;
+    return isNotEmpty(gitConfig.getRepoUrl()) ? String.format("Capability reach url : %s ", gitConfig.getRepoUrl())
+                                              : null;
   }
 }
