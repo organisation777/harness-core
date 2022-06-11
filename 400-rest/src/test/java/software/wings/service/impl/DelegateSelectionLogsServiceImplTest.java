@@ -170,7 +170,8 @@ public class DelegateSelectionLogsServiceImplTest extends WingsBaseTest {
     assertThat(delegateSelectionLogParams.size()).isEqualTo(1);
     assertThat(delegateSelectionLogParams.get(0).getConclusion()).isEqualTo(INFO);
     assertThat(delegateSelectionLogParams.get(0).getEventTimestamp()).isNotNull();
-    assertThat(delegateSelectionLogParams.get(0).getMessage()).isEqualTo("Selectors: sel1, sel2");
+    assertThat(delegateSelectionLogParams.get(0).getMessage())
+        .isEqualTo("[Selector(s) originated from taskSelector[sel1, sel2] ]");
   }
 
   @Test

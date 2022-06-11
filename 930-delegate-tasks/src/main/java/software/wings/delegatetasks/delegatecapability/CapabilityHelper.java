@@ -13,8 +13,6 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static software.wings.beans.artifact.ArtifactStreamType.GCR;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -38,7 +36,6 @@ import software.wings.beans.HostConnectionAttributes;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.settings.SettingValue;
 
-import com.google.api.client.util.Lists;
 import com.google.inject.Singleton;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -48,7 +45,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

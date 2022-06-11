@@ -303,11 +303,13 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
     if (isNotEmpty(delegateSelectorReceived)) {
       info.add(delegateSelectorReceived);
     }
-    delegateTask.getExecutionCapabilities().forEach(capability -> {
-      if (!isEmpty(capability.getCapabilityToString())) {
-        info.add(capability.getCapabilityToString());
-      }
-    });
+    if (isNotEmpty(delegateTask.getExecutionCapabilities())) {
+      delegateTask.getExecutionCapabilities().forEach(capability -> {
+        if (!isEmpty(capability.getCapabilityToString())) {
+          info.add(capability.getCapabilityToString());
+        }
+      });
+    }
 
     if (isEmpty(info)) {
       return;
