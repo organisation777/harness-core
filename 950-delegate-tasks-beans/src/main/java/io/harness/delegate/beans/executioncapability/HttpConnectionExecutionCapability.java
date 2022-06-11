@@ -7,7 +7,6 @@
 
 package io.harness.delegate.beans.executioncapability;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -102,6 +101,6 @@ public class HttpConnectionExecutionCapability implements ExecutionCapability {
 
   @Override
   public String getCapabilityToString() {
-    return !isEmpty(fetchConnectableUrl()) ? String.format("Capability reach URL: %s ", fetchConnectableUrl()) : null;
+    return isNotEmpty(fetchConnectableUrl()) ? String.format("Capability reach URL: %s ", fetchConnectableUrl()) : null;
   }
 }

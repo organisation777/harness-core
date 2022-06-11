@@ -7,7 +7,7 @@
 
 package io.harness.delegate.beans.executioncapability;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import java.time.Duration;
 import javax.validation.constraints.NotNull;
@@ -43,6 +43,6 @@ public class PcfConnectivityCapability implements ExecutionCapability {
 
   @Override
   public String getCapabilityToString() {
-    return !isEmpty(endpointUrl) ? String.format("Capability Reach URL: %s ", endpointUrl) : null;
+    return isNotEmpty(endpointUrl) ? String.format("Capability reach url: %s ", endpointUrl) : null;
   }
 }
