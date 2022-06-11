@@ -25,6 +25,7 @@ import io.harness.gitops.models.ClusterQuery;
 import io.harness.gitops.remote.GitopsResourceClient;
 import io.harness.logging.DummyLogCallbackImpl;
 import io.harness.logging.LogCallback;
+import io.harness.logstreaming.LogStreamingClientFactory;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -59,8 +60,9 @@ public class GitopsClustersStepTest extends CategoryTest {
   @Mock private EnvironmentGroupService environmentGroupService;
   @Mock private GitopsResourceClient gitopsResourceClient;
   @Mock private ClusterService clusterService;
+  @Mock private LogStreamingClientFactory logStreamingClientFactory;
 
-  private LogCallback logCallback = new DummyLogCallbackImpl();
+  private final LogCallback logCallback = new DummyLogCallbackImpl();
 
   /*
   envgroup -> envGroupId
