@@ -46,6 +46,7 @@ import io.harness.delegate.TaskProgressRequest;
 import io.harness.delegate.TaskProgressResponse;
 import io.harness.delegate.TaskProgressUpdatesRequest;
 import io.harness.delegate.TaskProgressUpdatesResponse;
+import io.harness.delegate.TaskSelector;
 import io.harness.delegate.beans.DelegateProgressData;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskResponse;
@@ -125,14 +126,7 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
 
       if (isNotEmpty(request.getSelectorsList())) {
         List<SelectorCapability> selectorCapabilities =
-            request.getSelectorsList()
-                .stream()
-                .map(selector
-                    -> SelectorCapability.builder()
-                           .selectors(Sets.newHashSet(selector.getSelector()))
-                           .selectorOrigin(selector.getOrigin())
-                           .build())
-                .collect(Collectors.toList());
+            request.getSelectorsList().stream().map(this::toSelectorCapability).collect(Collectors.toList());
         capabilities.addAll(selectorCapabilities);
       }
 
@@ -396,5 +390,13 @@ public class DelegateServiceGrpcImpl extends DelegateServiceImplBase {
       log.error("Unexpected error occurred while processing reset perpetual task request.", ex);
       responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(ex.getMessage()).asRuntimeException());
     }
+  }
+
+  private SelectorCapability toSelectorCapability(TaskSelector taskSelector) {
+    String origin = isNotEmpty(taskSelector.getOrigin()) ? taskSelector.getOrigin() : "default";
+    return SelectorCapability.builder()
+        .selectors(Sets.newHashSet(taskSelector.getSelector()))
+        .selectorOrigin(origin)
+        .build();
   }
 }
