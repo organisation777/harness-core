@@ -129,7 +129,8 @@ public class InviteResource {
   @GET
   @Path("invite")
   @ApiOperation(value = "Get invite", nickname = "getInvite")
-  @Operation(operationId = "getInvite", summary = "Gets an Invite by either Invite Id or JwtToken",
+  @Operation(operationId = "getInvite", summary = "Get invite with jwtToken or inviteId",
+      description = "Gets an Invite by either Invite Id or by JwtToken",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -161,7 +162,8 @@ public class InviteResource {
 
   @GET
   @ApiOperation(value = "Get all invites for the queried project/organization", nickname = "getInvites")
-  @Operation(operationId = "getInvites", summary = "List all the Invites for a Project or Organization",
+  @Operation(operationId = "getInvites", summary = "Get all invite",
+      description = "List all the Invites for a Project or Organization",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -197,7 +199,8 @@ public class InviteResource {
   @POST
   @Path("aggregate")
   @ApiOperation(value = "Get a page of pending users for access control", nickname = "getPendingUsersAggregated")
-  @Operation(operationId = "getPendingUsersAggregated", summary = "List of all the Invites pending users",
+  @Operation(operationId = "getPendingUsersAggregated", summary = "List pending Invites",
+      description = "List of all the Invites pending users",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -220,8 +223,8 @@ public class InviteResource {
 
   @POST
   @ApiOperation(value = "Add a new invite for the specified project/organization", nickname = "sendInvite")
-  @Operation(operationId = "sendInvite",
-      summary =
+  @Operation(operationId = "sendInvite", summary = "Create Invitations",
+      description =
           "Send a user Invite to either Project or Organization (Deprecated). Please use the /user/users API to invite users",
       responses =
       {
@@ -292,7 +295,7 @@ public class InviteResource {
   @Hidden
   @Path("complete")
   @ApiOperation(value = "Complete user invite", nickname = "completeInvite", hidden = true)
-  @Operation(operationId = "completeInvite", summary = "Complete the User Invite",
+  @Operation(operationId = "completeInvite", summary = "Complete Invite", description = "Complete the User Invite",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -307,7 +310,7 @@ public class InviteResource {
   @PUT
   @Path("{inviteId}")
   @ApiOperation(value = "Resend invite mail", nickname = "updateInvite")
-  @Operation(operationId = "updateInvite", summary = "Resend the Invite email",
+  @Operation(operationId = "updateInvite", summary = "Update Invite", description = "Resend the Invite email",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -328,7 +331,7 @@ public class InviteResource {
   @DELETE
   @Path("{inviteId}")
   @ApiOperation(value = "Delete a invite for the specified project/organization", nickname = "deleteInvite")
-  @Operation(operationId = "deleteInvite", summary = "Delete an Invite by Identifier",
+  @Operation(operationId = "deleteInvite", summary = "Delete Invite", description = "Delete an Invite by Identifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

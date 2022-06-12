@@ -123,7 +123,8 @@ public class ProjectResource {
   @POST
   @ApiOperation(value = "Create a Project", nickname = "postProject")
   @NGAccessControlCheck(resourceType = PROJECT, permission = CREATE_PROJECT_PERMISSION)
-  @Operation(operationId = "postProject", summary = "Creates a Project",
+  @Operation(operationId = "postProject", summary = "Create Project",
+      description = "Creates a new Project based on details passed",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -146,7 +147,7 @@ public class ProjectResource {
   @GET
   @Path("{identifier}")
   @ApiOperation(value = "Gets a Project by ID", nickname = "getProject")
-  @Operation(operationId = "getProject", summary = "Gets a Project by ID",
+  @Operation(operationId = "getProject", summary = "Get project", description = "Gets a Project by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -173,7 +174,7 @@ public class ProjectResource {
 
   @GET
   @ApiOperation(value = "Get Project list", nickname = "getProjectList")
-  @Operation(operationId = "getProjectList", summary = "List user's project",
+  @Operation(operationId = "getProjectList", summary = "List project", description = "List user's project",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -216,8 +217,8 @@ public class ProjectResource {
   @GET
   @Path("/list")
   @ApiOperation(value = "Get Project list", nickname = "getProjectListWithMultiOrgFilter")
-  @Operation(operationId = "getProjectListWithMultiOrgFilter",
-      summary = "List user's project with support to filter by multiple organizations",
+  @Operation(operationId = "getProjectListWithMultiOrgFilter", summary = "List project with multiple organizations",
+      description = "List user's project with support to filter by multiple organizations",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -259,7 +260,7 @@ public class ProjectResource {
   @PUT
   @Path("{identifier}")
   @ApiOperation(value = "Update a Project by ID", nickname = "putProject")
-  @Operation(operationId = "putProject", summary = "Update Project by ID",
+  @Operation(operationId = "putProject", summary = "Update Project", description = "Update Project by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -289,7 +290,8 @@ public class ProjectResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete a Project by identifier", nickname = "deleteProject")
-  @Operation(operationId = "deleteProject", summary = "Deletes the Project corresponding to the specified Project ID.",
+  @Operation(operationId = "deleteProject", summary = "Delete project",
+      description = "Deletes the Project corresponding to the specified Project ID.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -316,7 +318,7 @@ public class ProjectResource {
   @Hidden
   @Path("all-projects")
   @ApiOperation(value = "Get ProjectDTO list", nickname = "getProjectDTOList", hidden = true)
-  @Operation(operationId = "getProjectDTOList", summary = "Get ProjectDTO list",
+  @Operation(operationId = "getProjectDTOList", summary = "Get ProjectDTO list", description = "Get ProjectDTO list",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -344,7 +346,8 @@ public class ProjectResource {
   @Path("projects-count")
   @ApiOperation(
       value = "Get total count of projects accessible to a user", nickname = "getPermittedProjectsCount", hidden = true)
-  @Operation(operationId = "getPermittedProjectsCount", summary = "Get total count of projects accessible to a user",
+  @Operation(operationId = "getPermittedProjectsCount", summary = "Get accessible project count",
+      description = "Get total count of projects accessible to a user",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

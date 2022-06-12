@@ -30,6 +30,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -72,6 +73,7 @@ public class GcpSecretsManagerResourceV2 {
   @POST
   @Timed
   @ExceptionMetered
+  @Operation(summary = "Save GCP secret manager config", description = "Saves the GCP secret manager config")
   public RestResponse<String> saveGcpSecretsManagerConfig(@QueryParam("accountId") final String accountId,
       @FormDataParam("name") String name, @FormDataParam("encryptionType") EncryptionType encryptionType,
       @FormDataParam("isDefault") boolean isDefault, @FormDataParam("usageRestrictions") String usageRestrictionsString,
@@ -94,6 +96,7 @@ public class GcpSecretsManagerResourceV2 {
   @Path("/{secretManagerId}")
   @ExceptionMetered
   @Timed
+  @Operation(summary = "Update GCP secret manager config", description = "Updates the GCP secret manager config")
   public RestResponse<String> updateGcpSecretsManagerConfig(@QueryParam("accountId") final String accountId,
       @PathParam("secretManagerId") final String secretManagerId, @FormDataParam("name") String name,
       @FormDataParam("encryptionType") EncryptionType encryptionType, @FormDataParam("isDefault") boolean isDefault,
@@ -117,7 +120,10 @@ public class GcpSecretsManagerResourceV2 {
   @DELETE
   @Timed
   @ExceptionMetered
-  public RestResponse<Boolean> deleteGcpSecretsManagerConfig(
+  @Operation(summary = "Delete GCP secret manager config",
+      description = "Deletes the GCP secret manager config when no secrets are encrypted with it.")
+  public RestResponse<Boolean>
+  deleteGcpSecretsManagerConfig(
       @QueryParam("accountId") final String accountId, @QueryParam("configId") final String secretsManagerConfigId) {
     return new RestResponse<>(
         gcpSecretsManagerService.deleteGcpSecretsManagerConfig(accountId, secretsManagerConfigId));
@@ -127,6 +133,7 @@ public class GcpSecretsManagerResourceV2 {
   @Timed
   @Path("/regions")
   @ExceptionMetered
+  @Operation(summary = "List regions", description = "List all available GCP regions")
   public RestResponse<List<String>> regions(
       @QueryParam("accountId") final String accountId, @QueryParam("configId") final String secretsManagerConfigId) {
     return new RestResponse<>(gcpSecretsManagerService.getAllAvailableRegions(accountId, secretsManagerConfigId));

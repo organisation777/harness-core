@@ -140,7 +140,8 @@ public class ConnectorResource {
   @GET
   @Path("{identifier}")
   @ApiOperation(value = "Get Connector", nickname = "getConnector")
-  @Operation(operationId = "getConnector", summary = "Get the Connector by accountIdentifier and connectorIdentifier",
+  @Operation(operationId = "getConnector", summary = "Get Connector",
+      description = "Get the Connector by accountIdentifier and connectorIdentifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -169,8 +170,8 @@ public class ConnectorResource {
   @GET
   @Path("validateUniqueIdentifier")
   @ApiOperation(value = "Validate Identifier is unique", nickname = "validateTheIdentifierIsUnique")
-  @Operation(operationId = "validateTheIdentifierIsUnique",
-      summary = "Validate the Connector by Account Identifier and Connector Identifier",
+  @Operation(operationId = "validateTheIdentifierIsUnique", summary = "Is Identifier Unique",
+      description = "Validate the Connector by Account Identifier and Connector Identifier for uniqueness",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -194,8 +195,8 @@ public class ConnectorResource {
 
   @GET
   @ApiOperation(value = "Gets Connector list", nickname = "getConnectorList")
-  @Operation(operationId = "getConnectorList",
-      summary = "Fetches the list of Connectors corresponding to the request's filter criteria.",
+  @Operation(operationId = "getConnectorList", summary = "List Connectors",
+      description = "Fetches the list of Connectors corresponding to the request's filter criteria.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -233,8 +234,8 @@ public class ConnectorResource {
   @POST
   @Path("/listV2")
   @ApiOperation(value = "Gets Connector list", nickname = "getConnectorListV2")
-  @Operation(operationId = "getConnectorListV2",
-      summary = "Fetches the list of Connectors corresponding to the request's filter criteria.",
+  @Operation(operationId = "getConnectorListV2", summary = "List Connectors",
+      description = "Fetches the list of Connectors corresponding to the request's filter criteria.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -276,7 +277,8 @@ public class ConnectorResource {
 
   @POST
   @ApiOperation(value = "Creates a Connector", nickname = "createConnector")
-  @Operation(operationId = "createConnector", summary = "Creates a Connector",
+  @Operation(operationId = "createConnector", summary = "Create Connector",
+      description = "Creates a Connector according to details of connector passed",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -305,7 +307,8 @@ public class ConnectorResource {
 
   @PUT
   @ApiOperation(value = "Updates a Connector", nickname = "updateConnector")
-  @Operation(operationId = "updateConnector", summary = "Updates the Connector",
+  @Operation(operationId = "updateConnector", summary = "Update Connector",
+      description = "Updates the Connector based on new values passed for all the fields.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -333,7 +336,7 @@ public class ConnectorResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete a connector by identifier", nickname = "deleteConnector")
-  @Operation(operationId = "deleteConnector", summary = "Deletes Connector by ID",
+  @Operation(operationId = "deleteConnector", summary = "Delete Connector", description = "Deletes Connector by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -360,7 +363,8 @@ public class ConnectorResource {
   @POST
   @Path("testConnection/{identifier}")
   @ApiOperation(value = "Test the connection", nickname = "getTestConnectionResult")
-  @Operation(operationId = "getTestConnectionResult", summary = "Tests the connection of the Connector by ID",
+  @Operation(operationId = "getTestConnectionResult", summary = "Tests Connector connection",
+      description = "Tests the connection of the Connector by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -392,8 +396,8 @@ public class ConnectorResource {
   @InternalApi
   @Path("testConnectionInternal/{identifier}")
   @ApiOperation(value = "Test the connection internal api", nickname = "getTestConnectionResultInternal")
-  @Operation(operationId = "getTestConnectionResultInternal",
-      summary = "Tests the connection of the connector by Identifier",
+  @Operation(operationId = "getTestConnectionResultInternal", summary = "Tests connector connection",
+      description = "Tests the connection of the connector by Identifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -419,7 +423,8 @@ public class ConnectorResource {
   @POST
   @Path("testGitRepoConnection/{identifier}")
   @ApiOperation(value = "Test the connection", nickname = "getTestGitRepoConnectionResult")
-  @Operation(operationId = "getTestGitRepoConnectionResult", summary = "Tests the Git Repo connection",
+  @Operation(operationId = "getTestGitRepoConnectionResult", summary = "Tests Git repo connection",
+      description = "Tests the Git Repo connection for given repo",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -443,7 +448,8 @@ public class ConnectorResource {
   @GET
   @Path("catalogue")
   @ApiOperation(value = "Get Connector Catalogue", nickname = "getConnectorCatalogue")
-  @Operation(operationId = "getConnectorCatalogue", summary = "Gets the Connector catalogue by Account Identifier",
+  @Operation(operationId = "getConnectorCatalogue", summary = "Gets Connector catalogue",
+      description = "Gets the Connector catalogue by Account Identifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -459,8 +465,9 @@ public class ConnectorResource {
   @GET
   @Path("/stats")
   @ApiOperation(value = "Get Connectors statistics", nickname = "getConnectorStatistics")
-  @Operation(operationId = "getConnectorStatistics",
-      summary = "Gets the connector's statistics by Account Identifier, Project Identifier and Organization Identifier",
+  @Operation(operationId = "getConnectorStatistics", summary = "Get connector statistics",
+      description =
+          "Gets the connector's statistics by Account Identifier, Project Identifier and Organization Identifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -481,8 +488,8 @@ public class ConnectorResource {
   @POST
   @Path("/listbyfqn")
   @ApiOperation(value = "Gets Connector list", nickname = "listConnectorByFQN")
-  @Operation(operationId = "listConnectorByFQN",
-      summary = "Get the list of connectors by FQN satisfying the criteria (if any) in the request",
+  @Operation(operationId = "listConnectorByFQN", summary = "Get connectors by FQN",
+      description = "Get the list of connectors by FQN satisfying the criteria (if any) in the request",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -519,7 +526,8 @@ public class ConnectorResource {
   @POST
   @Path("/getceawstemplateurl")
   @ApiOperation(value = "Get CCM Aws Connector Template URL Environment Wise", nickname = "getCEAwsTemplate")
-  @Operation(deprecated = true, operationId = "getCEAwsTemplate", summary = "Get the Template URL of connector",
+  @Operation(deprecated = true, operationId = "getCEAwsTemplate", summary = "Get Template URL of connector",
+      description = "Get the Template URL of connector",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -540,7 +548,8 @@ public class ConnectorResource {
   @GET
   @Path("/fieldValues")
   @ApiOperation(value = "Get All Allowed field values for Connector Type", nickname = "getAllAllowedFieldValues")
-  @Operation(operationId = "getAllAllowedFieldValues", summary = "Get the allowed field values by Connector Type",
+  @Operation(operationId = "getAllAllowedFieldValues", summary = "Get allowed field values",
+      description = "Get the allowed field values by Connector Type",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

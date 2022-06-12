@@ -25,6 +25,7 @@ import software.wings.service.intfc.security.NGSecretManagerService;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.Optional;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -50,7 +51,10 @@ public class SecretManagerResourceNG {
   @POST
   @Produces("application/json")
   @Consumes("application/x-kryo")
-  public RestResponse<SecretManagerConfigDTO> createSecretManager(SecretManagerConfigDTO dto) {
+  @Operation(operationId = "createSecretManager", summary = "Create secret manager",
+      description = "Creates a secret manager based on config passed")
+  public RestResponse<SecretManagerConfigDTO>
+  createSecretManager(SecretManagerConfigDTO dto) {
     SecretManagerConfig secretManagerConfig = SecretManagerConfigMapper.fromDTO(dto);
     return new RestResponse<>(ngSecretManagerService.create(secretManagerConfig).toDTO(true));
   }
@@ -59,15 +63,20 @@ public class SecretManagerResourceNG {
   @Path("meta-data")
   @Produces("application/json")
   @Consumes("application/json")
-  public RestResponse<SecretManagerMetadataDTO> getMetadata(
-      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
+  @Operation(operationId = "getMetadata", summary = "Get secret manager metadata",
+      description = "Get the secret manager metadata")
+  public RestResponse<SecretManagerMetadataDTO>
+  getMetadata(@QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       SecretManagerMetadataRequestDTO requestDTO) {
     return new RestResponse<>(ngSecretManagerService.getMetadata(accountIdentifier, requestDTO));
   }
 
   @GET
   @Path("{identifier}/validate")
-  public RestResponse<ConnectorValidationResult> validateSecretManager(@PathParam("identifier") String identifier,
+  @Operation(operationId = "validateSecretManager", summary = "Validate Secret maanger",
+      description = "Validates a secret manager identified by identifier, account, org and project identifier")
+  public RestResponse<ConnectorValidationResult>
+  validateSecretManager(@PathParam("identifier") String identifier,
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String account,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String org,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String project) {
@@ -76,8 +85,10 @@ public class SecretManagerResourceNG {
 
   @GET
   @Path("{identifier}")
-  public RestResponse<SecretManagerConfigDTO> getSecretManager(
-      @PathParam(NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
+  @Operation(operationId = "getSecretManager", summary = "Get secret manager",
+      description = "Get a secret manager identified by identifier, account, org and project identifier")
+  public RestResponse<SecretManagerConfigDTO>
+  getSecretManager(@PathParam(NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
@@ -93,8 +104,10 @@ public class SecretManagerResourceNG {
 
   @GET
   @Path("global/{accountIdentifier}")
-  public RestResponse<SecretManagerConfigDTO> getGlobalSecretManager(
-      @PathParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+  @Operation(operationId = "getGlobalSecretManager", summary = "Get global secret manager",
+      description = "Get a secret manager identified by account identifier")
+  public RestResponse<SecretManagerConfigDTO>
+  getGlobalSecretManager(@PathParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
     return new RestResponse<>(ngSecretManagerService.getGlobalSecretManager(accountIdentifier).toDTO(false));
   }
 
@@ -102,8 +115,10 @@ public class SecretManagerResourceNG {
   @Path("/{identifier}")
   @Produces("application/json")
   @Consumes("application/x-kryo")
-  public RestResponse<SecretManagerConfigDTO> updateSecretManager(
-      @PathParam(NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
+  @Operation(operationId = "updateSecretManager", summary = "Update secret manager",
+      description = "Update a secret manager identified by identifier, account, org and project identifier")
+  public RestResponse<SecretManagerConfigDTO>
+  updateSecretManager(@PathParam(NGCommonEntityConstants.IDENTIFIER_KEY) String identifier,
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @NotNull String accountIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
@@ -116,8 +131,10 @@ public class SecretManagerResourceNG {
 
   @DELETE
   @Path("/{identifier}")
-  public RestResponse<Boolean> deleteSecretManager(
-      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+  @Operation(operationId = "deleteSecretManager", summary = "Delete secret manager",
+      description = "Delete a secret manager identified by identifier, account, org and project identifier")
+  public RestResponse<Boolean>
+  deleteSecretManager(@QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @PathParam(NGCommonEntityConstants.IDENTIFIER_KEY) String identifier) {

@@ -28,6 +28,7 @@ import software.wings.service.intfc.security.CustomSecretsManagerService;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -58,6 +59,7 @@ public class CustomSecretsManagerResource {
 
   @GET
   @Path("{configId}")
+  @Operation(summary = "Get custom secret manager config", description = "Gets the custom secret manager config")
   public RestResponse<CustomSecretsManagerConfig> getCustomSecretsManagerConfig(
       @QueryParam("accountId") String accountId, @PathParam("configId") String configId) {
     checkIfFeatureAvailable(accountId);
@@ -68,7 +70,10 @@ public class CustomSecretsManagerResource {
 
   @POST
   @Path("validate")
-  public RestResponse<Boolean> validateCustomSecretsManagerConfig(
+  @Operation(
+      summary = "Validate custom secret manager config", description = "Validates the custom secret manager config")
+  public RestResponse<Boolean>
+  validateCustomSecretsManagerConfig(
       @QueryParam("accountId") String accountId, CustomSecretsManagerConfig customSecretsManagerConfig) {
     checkIfFeatureAvailable(accountId);
     try (AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
@@ -78,6 +83,7 @@ public class CustomSecretsManagerResource {
   }
 
   @PUT
+  @Operation(summary = "Save custom secret manager config", description = "Saves the custom secret manager config")
   public RestResponse<String> saveCustomSecretsManagerConfig(
       @QueryParam("accountId") String accountId, CustomSecretsManagerConfig customSecretsManagerConfig) {
     checkIfFeatureAvailable(accountId);
@@ -88,6 +94,7 @@ public class CustomSecretsManagerResource {
 
   @POST
   @Path("{configId}")
+  @Operation(summary = "Update custom secret manager config", description = "Updates the custom secret manager config")
   public RestResponse<String> updateCustomSecretsManagerConfig(@QueryParam("accountId") String accountId,
       @PathParam("configId") String configId, CustomSecretsManagerConfig customSecretsManagerConfig) {
     checkIfFeatureAvailable(accountId);
@@ -100,6 +107,7 @@ public class CustomSecretsManagerResource {
 
   @DELETE
   @Path("{configId}")
+  @Operation(summary = "Delete custom secret manager config", description = "Deletes the custom secret manager config")
   public RestResponse<Boolean> deleteCustomSecretsManagerConfig(
       @QueryParam("accountId") String accountId, @PathParam("configId") String configId) {
     checkIfFeatureAvailable(accountId);
