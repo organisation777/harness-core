@@ -265,8 +265,13 @@ public class InputSetResourcePMS {
       String pipelineRepoID, @BeanParam GitEntityCreateInfoDTO gitEntityCreateInfo,
       @RequestBody(required = true,
           description =
-              "Input set YAML to be created. The Account, Org, Project, and Pipeline identifiers inside the YAML should match the query parameters.")
-      @NotNull String yaml) {
+              "Input set YAML to be created. The Account, Org, Project, and Pipeline identifiers inside the YAML should match the query parameters.",
+          content = {
+            @Content(mediaType = "application/yaml",
+                examples = @ExampleObject(name = "Create", summary = "Sample Input Set YAML",
+                    value = io.harness.apiexamples.InputSetAPIConstants.CREATE_API,
+                    description = "Sample Input Set YAML"))
+          }) @NotNull String yaml) {
     yaml = removeRuntimeInputFromYaml(yaml);
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntity(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
@@ -366,8 +371,13 @@ public class InputSetResourcePMS {
       String pipelineRepoID, @BeanParam GitEntityUpdateInfoDTO gitEntityInfo,
       @RequestBody(required = true,
           description =
-              "Input set YAML to be updated. The query parameters should match the Account, Org, Project, and Pipeline Ids in the YAML.")
-      @NotNull String yaml) {
+              "Input set YAML to be updated. The query parameters should match the Account, Org, Project, and Pipeline Ids in the YAML.",
+          content = {
+            @Content(mediaType = "application/yaml",
+                examples = @ExampleObject(name = "Update", summary = "Sample Input Set YAML",
+                    value = io.harness.apiexamples.InputSetAPIConstants.CREATE_API,
+                    description = "Sample Input Set YAML"))
+          }) @NotNull String yaml) {
     log.info(String.format("Updating input set with identifier %s for pipeline %s in project %s, org %s, account %s",
         inputSetIdentifier, pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
     yaml = removeRuntimeInputFromYaml(yaml);
