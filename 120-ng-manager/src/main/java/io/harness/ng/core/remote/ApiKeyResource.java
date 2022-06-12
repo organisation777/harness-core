@@ -99,7 +99,7 @@ public class ApiKeyResource {
 
   @POST
   @ApiOperation(value = "Create API key", nickname = "createApiKey")
-  @Operation(operationId = "createApiKey", summary = "Creates an API key",
+  @Operation(operationId = "createApiKey", summary = "Create API key", description = "Creates an API key",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -119,7 +119,8 @@ public class ApiKeyResource {
   @PUT
   @Path("{identifier}")
   @ApiOperation(value = "Update API key", nickname = "updateApiKey")
-  @Operation(operationId = "updateApiKey", summary = "Updates API Key for the provided ID",
+  @Operation(operationId = "updateApiKey", summary = "Update API key",
+      description = "Updates API Key for the provided ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -137,7 +138,8 @@ public class ApiKeyResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete API key", nickname = "deleteApiKey")
-  @Operation(operationId = "deleteApiKey", summary = "Deletes the API Key corresponding to the provided ID.",
+  @Operation(operationId = "deleteApiKey", summary = "Delete API key",
+      description = "Deletes the API Key corresponding to the provided ID.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -163,8 +165,8 @@ public class ApiKeyResource {
 
   @GET
   @ApiOperation(value = "List api keys", nickname = "listApiKeys")
-  @Operation(operationId = "listApiKeys",
-      summary = "Fetches the list of API Keys corresponding to the request's filter criteria.",
+  @Operation(operationId = "listApiKeys", summary = "List API keys",
+      description = "Fetches the list of API Keys corresponding to the request's filter criteria.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -191,8 +193,8 @@ public class ApiKeyResource {
   @GET
   @Path("aggregate")
   @ApiOperation(value = "List api key", nickname = "listAggregatedApiKeys")
-  @Operation(operationId = "listApiKeys",
-      summary = "Fetches the list of Aggregated API Keys corresponding to the request's filter criteria.",
+  @Operation(operationId = "listApiKeys", summary = "List aggregated API keys",
+      description = "Fetches the list of Aggregated API Keys corresponding to the request's filter criteria.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -238,8 +240,8 @@ public class ApiKeyResource {
   @GET
   @Path("aggregate/{identifier}")
   @ApiOperation(value = "Get API key", nickname = "getAggregatedApiKey")
-  @Operation(operationId = "getAggregatedApiKey",
-      summary = "Fetches the API Keys details corresponding to the provided ID and Scope.",
+  @Operation(operationId = "getAggregatedApiKey", summary = "Get aggregated API key",
+      description = "Fetches the API Keys details corresponding to the provided ID and Scope.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

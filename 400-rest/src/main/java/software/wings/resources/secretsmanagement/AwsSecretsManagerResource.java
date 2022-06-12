@@ -25,6 +25,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,6 +48,7 @@ public class AwsSecretsManagerResource {
   @POST
   @Timed
   @ExceptionMetered
+  @Operation(summary = "Save aws secrets manager config", description = "Saves the AWS secrets manager configuration")
   public RestResponse<String> saveAwsSecretsManagerConfig(
       @QueryParam("accountId") final String accountId, AwsSecretsManagerConfig secretsManagerConfig) {
     return new RestResponse<>(awsSecretsManagerService.saveAwsSecretsManagerConfig(accountId, secretsManagerConfig));
@@ -55,7 +57,10 @@ public class AwsSecretsManagerResource {
   @DELETE
   @Timed
   @ExceptionMetered
-  public RestResponse<Boolean> deleteAwsSecretsManagerConfig(
+  @Operation(summary = "Delete aws secrets manager config",
+      description = "Deletes the AWS secrets manager configuration if there are no secrets encrypted with it")
+  public RestResponse<Boolean>
+  deleteAwsSecretsManagerConfig(
       @QueryParam("accountId") final String accountId, @QueryParam("configId") final String secretsManagerConfigId) {
     return new RestResponse<>(
         awsSecretsManagerService.deleteAwsSecretsManagerConfig(accountId, secretsManagerConfigId));

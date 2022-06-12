@@ -25,6 +25,7 @@ import software.wings.service.impl.security.AzureSecretsManagerServiceImpl;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import javax.validation.Valid;
 import javax.ws.rs.DELETE;
@@ -45,7 +46,10 @@ public class AzureSecretsManagerResource {
   @Inject AzureSecretsManagerServiceImpl azureSecretsManagerService;
 
   @POST
-  public RestResponse<String> saveAzureSecretsManagerConfig(
+  @Operation(
+      summary = "Save azure secrets manager config", description = "Saves the Azure secrets manager configuration")
+  public RestResponse<String>
+  saveAzureSecretsManagerConfig(
       @QueryParam("accountId") final String accountId, @Valid AzureVaultConfig azureVaultConfig) {
     try (AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
       log.info("Adding Azure Secret Manager");
@@ -54,7 +58,10 @@ public class AzureSecretsManagerResource {
   }
 
   @DELETE
-  public RestResponse<Boolean> deleteAzureVaultConfig(
+  @Operation(summary = "Delete azure secrets manager config",
+      description = "Deletes the Azure secrets manager configuration if there are no secrets encrypted with it")
+  public RestResponse<Boolean>
+  deleteAzureVaultConfig(
       @QueryParam("accountId") final String accountId, @QueryParam("configId") final String secretsManagerConfigId) {
     try (AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {
       log.info("Deleting Azure Secret Manager");
@@ -64,6 +71,7 @@ public class AzureSecretsManagerResource {
 
   @POST
   @Path("list-vaults")
+  @Operation(summary = "List azure vault", description = "Lists azure vaults found for the account id")
   public RestResponse<List<String>> listVaults(
       @QueryParam("accountId") final String accountId, AzureVaultConfig azureVaultConfig) {
     return new RestResponse<>(azureSecretsManagerService.listAzureVaults(accountId, azureVaultConfig));

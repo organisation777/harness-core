@@ -79,7 +79,8 @@ public class NGSecretManagerResource {
   @POST
   @Path("meta-data")
   @ApiOperation(value = "Get metadata of secret manager", nickname = "getMetadata")
-  @Operation(operationId = "getMetadata", summary = "Gets the metadata of Secret Manager",
+  @Operation(operationId = "getMetadata", summary = "Get metadata of Secret Manager",
+      description = "Gets the metadata of Secret Manager",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -97,7 +98,8 @@ public class NGSecretManagerResource {
   @Hidden
   @Path("{identifier}")
   @ApiOperation(hidden = true, value = "Get Secret Manager", nickname = "getSecretManager")
-  @Operation(operationId = "getSecretManager", summary = "Gets the Secret Manager Config",
+  @Operation(operationId = "getSecretManager", summary = "Get Secret Manager Config",
+      description = "Gets the Secret Manager Config",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

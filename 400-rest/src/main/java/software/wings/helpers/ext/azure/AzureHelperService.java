@@ -399,7 +399,7 @@ public class AzureHelperService {
     for (ResourceGroup rGroup : azure.resourceGroups().list()) {
       vaultList.addAll(azure.vaults().listByResourceGroup(rGroup.name()));
     }
-    log.info("Found azure vaults {} or account id: {}", vaultList, accountId);
+    log.info("Found azure vaults {} for account id: {}", vaultList, accountId);
     return vaultList;
   }
 }

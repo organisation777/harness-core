@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -76,6 +77,7 @@ public class GcpSecretsManagerResource {
 
   @PUT
   @Path("/global-kms")
+  @Operation(summary = "Save global KMS config", description = "Saves the Global KMS config")
   public RestResponse<String> saveGlobalKmsConfig(@QueryParam("accountId") final String accountId,
       @FormDataParam("name") String name, @FormDataParam("keyName") String keyName,
       @FormDataParam("keyRing") String keyRing, @FormDataParam("projectId") String projectId,
@@ -136,6 +138,7 @@ public class GcpSecretsManagerResource {
 
   @POST
   @Path("/{secretMangerId}")
+  @Operation(summary = "Update GCP secret manager config", description = "Updates the GCP secret manager config")
   public RestResponse<String> updateGcpSecretsManagerConfig(@QueryParam("accountId") final String accountId,
       @PathParam("secretMangerId") final String secretMangerId, @FormDataParam("name") String name,
       @FormDataParam("keyName") String keyName, @FormDataParam("keyRing") String keyRing,
@@ -166,6 +169,7 @@ public class GcpSecretsManagerResource {
   }
 
   @POST
+  @Operation(summary = "Save GCP secret manager config", description = "Saves the GCP secret manager config")
   public RestResponse<String> saveGcpSecretsManagerConfig(@QueryParam("accountId") final String accountId,
       @FormDataParam("name") String name, @FormDataParam("keyName") String keyName,
       @FormDataParam("keyRing") String keyRing, @FormDataParam("projectId") String projectId,
@@ -189,6 +193,7 @@ public class GcpSecretsManagerResource {
   }
 
   @DELETE
+  @Operation(summary = "Delete GCP secret manager config", description = "Deletes the GCP secret manager config")
   public RestResponse<Boolean> deleteGcpSecretsManagerConfig(
       @QueryParam("accountId") final String accountId, @QueryParam("configId") final String secretsManagerConfigId) {
     try (AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR)) {

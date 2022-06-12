@@ -101,7 +101,7 @@ public class TokenResource {
 
   @POST
   @ApiOperation(value = "Create token", nickname = "createToken")
-  @Operation(operationId = "createToken", summary = "Creates a Token",
+  @Operation(operationId = "createToken", summary = "Create Token", description = "Creates a Token",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -120,7 +120,7 @@ public class TokenResource {
   @PUT
   @Path("{identifier}")
   @ApiOperation(value = "Update token", nickname = "updateToken")
-  @Operation(operationId = "updateToken", summary = "Updates a Token by ID",
+  @Operation(operationId = "updateToken", summary = "Update Token", description = "Updates a Token by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -140,7 +140,7 @@ public class TokenResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete token", nickname = "deleteToken")
-  @Operation(operationId = "deleteToken", summary = "Deletes a Token by ID",
+  @Operation(operationId = "deleteToken", summary = "Delete Token", description = "Deletes a Token by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -175,7 +175,7 @@ public class TokenResource {
   @POST
   @Path("rotate/{identifier}")
   @ApiOperation(value = "Rotate token", nickname = "rotateToken")
-  @Operation(operationId = "rotateToken", summary = "Rotates a Token by ID",
+  @Operation(operationId = "rotateToken", summary = "Rotate Token", description = "Rotates a Token by ID",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -204,8 +204,8 @@ public class TokenResource {
   @GET
   @Path("aggregate")
   @ApiOperation(value = "List tokens", nickname = "listAggregatedTokens")
-  @Operation(operationId = "listAggregatedTokens",
-      summary = "Fetches the list of Aggregated Tokens corresponding to the request's filter criteria.",
+  @Operation(operationId = "listAggregatedTokens", summary = "List aggregated token.",
+      description = "Fetches the list of Aggregated Tokens corresponding to the request's filter criteria.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

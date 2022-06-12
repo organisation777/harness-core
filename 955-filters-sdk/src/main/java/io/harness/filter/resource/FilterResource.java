@@ -81,7 +81,7 @@ public class FilterResource {
   @GET
   @Path("{identifier}")
   @ApiOperation(value = "Get Filter", nickname = "getFilter")
-  @Operation(operationId = "getFilter", summary = "Gets a Filter by identifier",
+  @Operation(operationId = "getFilter", summary = "Get filter", description = "Gets a Filter by identifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -103,8 +103,8 @@ public class FilterResource {
 
   @GET
   @ApiOperation(value = "Get Filter", nickname = "getFilterList")
-  @Operation(operationId = "getConnectorListV2",
-      summary = "Get the list of Filters satisfying the criteria (if any) in the request",
+  @Operation(operationId = "getConnectorListV2", summary = "List filters",
+      description = "Get the list of Filters satisfying the criteria (if any) in the request",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -128,7 +128,7 @@ public class FilterResource {
 
   @POST
   @ApiOperation(value = "Create a Filter", nickname = "postFilter")
-  @Operation(operationId = "postFilter", summary = "Creates a Filter",
+  @Operation(operationId = "postFilter", summary = "Create filter", description = "Creates a Filter",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -144,7 +144,8 @@ public class FilterResource {
 
   @PUT
   @ApiOperation(value = "Update a Filter", nickname = "updateFilter")
-  @Operation(operationId = "updateFilter", summary = "Updates the Filter",
+  @Operation(operationId = "updateFilter", summary = "Updates filter",
+      description = "Updates the Filter with the new values",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -162,7 +163,7 @@ public class FilterResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete a filter", nickname = "deleteFilter")
-  @Operation(operationId = "deleteFilter", summary = "Delete a Filter by identifier",
+  @Operation(operationId = "deleteFilter", summary = "Delete filter", description = "Delete a Filter by identifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

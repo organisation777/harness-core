@@ -113,7 +113,8 @@ public class OrganizationResource {
 
   @POST
   @ApiOperation(value = "Create an Organization", nickname = "postOrganization")
-  @Operation(operationId = "postOrganization", summary = "Creates an Organization",
+  @Operation(operationId = "postOrganization", summary = "Create Organization",
+      description = "Creates an Organization based on details passed",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -136,7 +137,8 @@ public class OrganizationResource {
   @GET
   @Path("{identifier}")
   @ApiOperation(value = "Get an Organization by identifier", nickname = "getOrganization")
-  @Operation(operationId = "getOrganization", summary = "Get the Organization by accountIdentifier and orgIdentifier",
+  @Operation(operationId = "getOrganization", summary = "Get organization",
+      description = "Get the Organization by accountIdentifier and orgIdentifier",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -158,8 +160,8 @@ public class OrganizationResource {
 
   @GET
   @ApiOperation(value = "Get Organization list", nickname = "getOrganizationList")
-  @Operation(operationId = "getOrganizationList",
-      summary = "Get the list of Organizations satisfying the criteria (if any) in the request",
+  @Operation(operationId = "getOrganizationList", summary = "Get list of Organizations",
+      description = "Get the list of Organizations satisfying the criteria (if any) in the request",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -211,7 +213,8 @@ public class OrganizationResource {
   @PUT
   @Path("{identifier}")
   @ApiOperation(value = "Update an Organization by ID", nickname = "putOrganization")
-  @Operation(operationId = "putOrganization", summary = "Updates the Organization",
+  @Operation(operationId = "putOrganization", summary = "Update Organization",
+      description = "Updates the Organization with the values passed",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -243,8 +246,8 @@ public class OrganizationResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete an Organization by identifier", nickname = "deleteOrganization")
-  @Operation(operationId = "deleteOrganization",
-      summary = "Deletes the Organization corresponding to the specified Organization ID.",
+  @Operation(operationId = "deleteOrganization", summary = "Delete Organization",
+      description = "Deletes the Organization corresponding to the specified Organization ID.",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",

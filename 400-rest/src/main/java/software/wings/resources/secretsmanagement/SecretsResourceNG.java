@@ -19,6 +19,7 @@ import software.wings.service.intfc.security.NGSecretService;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.Optional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -45,8 +46,10 @@ public class SecretsResourceNG {
 
   @GET
   @Path("migration/{identifier}")
-  public RestResponse<EncryptedDataMigrationDTO> getEncryptedDataMigrationDTO(
-      @PathParam("identifier") String identifier,
+  @Operation(operationId = "getEncryptedDataMigration", summary = "Get encrypted data migration",
+      description = "Gets the encrypted data migration object based on account, org, project and secret identifier")
+  public RestResponse<EncryptedDataMigrationDTO>
+  getEncryptedDataMigrationDTO(@PathParam("identifier") String identifier,
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
