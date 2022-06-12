@@ -133,6 +133,9 @@ public class ConnectorUtils {
   private final Duration RETRY_SLEEP_DURATION = Duration.ofSeconds(2);
   private final int MAX_ATTEMPTS = 6;
 
+  private final String SAAS = "SaaS";
+  private final String SELF_MANAGED = "Self-Managed";
+
   @Inject
   public ConnectorUtils(ConnectorResourceClient connectorResourceClient, SecretUtils secretUtils,
       CIExecutionServiceConfig ciExecutionServiceConfig,
@@ -372,10 +375,10 @@ public class ConnectorUtils {
 
   public String getScmHostType(ConnectorDetails gitConnector) {
     String url = retrieveURL(gitConnector);
-    if (GitClientHelper.isGithubSAAS(url) || GitClientHelper.isGitlabSAAS(url) || GitClientHelper.isBitBucketSAAS(url) || GitClientHelper.isAzureRepoSAAS(url)) {
-      return "SaaS";
+    if (GitClientHelper.isGithubSAAS(url) || GitClientHelper.isGitlabSAAS(url)|| GitClientHelper.isBitBucketSAAS(url) || GitClientHelper.isAzureRepoSAAS(url)) {
+      return SAAS;
     } else {
-      return "On-prem";
+      return SELF_MANAGED;
     }
   }
 

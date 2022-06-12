@@ -168,6 +168,11 @@ public class CIExecutionPlanTestHelper {
   private static final String PLUGIN_STEP_ID = "step-3";
   private static final String PLUGIN_STEP_NAME = "plugin step";
 
+  private static final String RUN_TESTS_STEP_IMAGE = "maven:3.6.3-jdk-8";
+  private static final String RUN_TESTS_STEP_CONNECTOR = "runTestsCon";
+  private static final String RUN_TESTS_STEP_ID = "step-4";
+  private static final String RUN_TESTS_STEP_NAME = "run test with intelligence";
+
   private static final Integer PLUGIN_STEP_LIMIT_MEM = 50;
   private static final Integer PLUGIN_STEP_LIMIT_CPU = 100;
   private static final String PLUGIN_STEP_LIMIT_MEM_STRING = "50Mi";
@@ -499,7 +504,8 @@ public class CIExecutionPlanTestHelper {
 
   public List<ExecutionWrapperConfig> getExecutionWrapperConfigList() {
     return newArrayList(ExecutionWrapperConfig.builder().step(getGitCloneStepElementConfigAsJsonNode()).build(),
-        ExecutionWrapperConfig.builder().parallel(getRunAndPluginStepsInParallelAsJsonNode()).build());
+        ExecutionWrapperConfig.builder().parallel(getRunAndPluginStepsInParallelAsJsonNode()).build(),
+        ExecutionWrapperConfig.builder().step(getRunTestsStepElementConfigAsJsonNode()).build());
   }
 
   private DependencyElement getServiceDependencyElement() {
@@ -784,6 +790,27 @@ public class CIExecutionPlanTestHelper {
     stepSpecType.put("command", "./test-script1.sh");
     stepSpecType.put("image", RUN_STEP_IMAGE);
     stepSpecType.put("connectorRef", RUN_STEP_CONNECTOR);
+
+    stepElementConfig.set("spec", stepSpecType);
+    return stepElementConfig;
+  }
+
+  private JsonNode getRunTestsStepElementConfigAsJsonNode() {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode stepElementConfig = mapper.createObjectNode();
+    stepElementConfig.put("identifier", RUN_TESTS_STEP_ID);
+
+    stepElementConfig.put("type", "RunTests");
+    stepElementConfig.put("name", RUN_TESTS_STEP_IMAGE);
+
+    ObjectNode stepSpecType = mapper.createObjectNode();
+    stepSpecType.put("identifier", RUN_TESTS_STEP_ID);
+    stepSpecType.put("name", RUN_TESTS_STEP_NAME);
+    stepSpecType.put("command", "--bazelrc=bazelrc.remote test");
+    stepSpecType.put("image", RUN_TESTS_STEP_IMAGE);
+    stepSpecType.put("connectorRef", RUN_TESTS_STEP_CONNECTOR);
+    stepSpecType.put("language", "Java");
+    stepSpecType.put("buildTool", "Maven");
 
     stepElementConfig.set("spec", stepSpecType);
     return stepElementConfig;

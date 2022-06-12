@@ -9,8 +9,11 @@ package io.harness.ci.plan.creator.execution;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.ci.pipeline.executions.beans.*;
-import io.harness.k8s.model.ImageDetails;
+import io.harness.ci.pipeline.executions.beans.CIImageDetails;
+import io.harness.ci.pipeline.executions.beans.CIInfraDetails;
+import io.harness.ci.pipeline.executions.beans.CIScmDetails;
+import io.harness.ci.pipeline.executions.beans.CIWebhookInfoDTO;
+import io.harness.ci.pipeline.executions.beans.TIBuildDetails;
 import io.harness.pms.sdk.execution.beans.PipelineModuleInfo;
 
 import lombok.Builder;

@@ -7,25 +7,19 @@
 
 package ci.pipeline.execution;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 
-import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.ci.pipeline.executions.beans.CIImageDetails;
 import io.harness.ci.pipeline.executions.beans.CIInfraDetails;
+import io.harness.ci.pipeline.executions.beans.CIScmDetails;
 import io.harness.ci.pipeline.executions.beans.TIBuildDetails;
 import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
-import io.harness.delegate.beans.ci.pod.ConnectorDetails;
-import io.harness.k8s.model.ImageDetails;
-import io.harness.ng.core.BaseNGAccess;
-import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.events.OrchestrationEvent;
 import io.harness.pms.sdk.core.events.OrchestrationEventHandler;
 import io.harness.pms.sdk.execution.beans.PipelineModuleInfo;
 import io.harness.repositories.CIAccountExecutionMetadataRepository;
-import io.harness.stateutils.buildstate.ConnectorUtils;
 import io.harness.telemetry.TelemetryReporter;
 
 import com.google.inject.Inject;
@@ -40,7 +34,6 @@ import java.util.List;
 public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   @Inject CIAccountExecutionMetadataRepository ciAccountExecutionMetadataRepository;
   @Inject TelemetryReporter telemetryReporter;
-  @Inject private ConnectorUtils connectorUtils;
 
   private static final String CI_EXECUTED = "ci_built";
   private static final String USED_CODEBASE = "used_codebase";
@@ -50,17 +43,18 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   private static final String PRIVATE_REPO = "private_repo";
   private static final String REPO_NAME = "repo_name";
 
-  private static final String SCM_PROVIDER = "scm_provider";
-  private static final String SCM_AUTH_METHOD = "scm_auth_method";
-  private static final String SCM_HOST_TYPE = "scm_host_type";
+  private static final String SCM_URL_LIST = "scm_provider";
+  private static final String SCM_PROVIDER_LIST = "scm_provider";
+  private static final String SCM_AUTH_METHOD_LIST = "scm_auth_method";
+  private static final String SCM_HOST_TYPE_LIST = "scm_host_type";
 
   private static final String INFRA_TYPE_LIST = "infra_type_list";
   private static final String INFRA_OS_LIST = "infra_os_list";
   private static final String INFRA_HOST_LIST = "infra_host_list";
 
   private static final String IMAGES = "images";
-  private static final String TI_BUILD_TOOL = "ti_build_tool";
-  private static final String TI_LANGUAGE = "ti_language";
+  private static final String TI_BUILD_TOOL_LIST = "ti_build_tool_list";
+  private static final String TI_LANGUAGE_LIST = "ti_language_list";
 
   @Override
   public void handleEvent(OrchestrationEvent event) {
@@ -98,13 +92,25 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     ciBuiltMap.put(REPO_NAME, moduleInfo.getRepoName());
 
     // SCM Vendor details
-    // Since we only support one codebase, SCM details will be sent as values instead of list
     if (moduleInfo.getScmDetailsList() != null && moduleInfo.getScmDetailsList().size() != 0) {
-      ciBuiltMap.put(URL, moduleInfo.getScmDetailsList().get(0).getScmUrl());
-      ciBuiltMap.put(SCM_PROVIDER, moduleInfo.getScmDetailsList().get(0).getScmProvider());
-      ciBuiltMap.put(SCM_AUTH_METHOD, moduleInfo.getScmDetailsList().get(0).getScmAuthType());
-      ciBuiltMap.put(SCM_HOST_TYPE, moduleInfo.getScmDetailsList().get(0).getScmHostType());  
+      List<String> scmUrlList = new ArrayList<>();
+      List<String> scmProviderList = new ArrayList<>();
+      List<String> scmAuthTypeList = new ArrayList<>();
+      List<String> scmHostTypeList = new ArrayList<>();
+      for (CIScmDetails infraDetails : moduleInfo.getScmDetailsList()) {
+        scmUrlList.add(infraDetails.getScmProvider());
+        scmProviderList.add(infraDetails.getScmProvider());
+        scmAuthTypeList.add(infraDetails.getScmAuthType());
+        scmHostTypeList.add(infraDetails.getScmHostType());
+      }
+      ciBuiltMap.put(SCM_URL_LIST, scmUrlList);
+      ciBuiltMap.put(SCM_PROVIDER_LIST, scmProviderList);
+      ciBuiltMap.put(SCM_AUTH_METHOD_LIST, scmAuthTypeList);
+      ciBuiltMap.put(SCM_HOST_TYPE_LIST, scmHostTypeList);
+
+      ciBuiltMap.put(URL, scmUrlList.get(0));
     }
+
     ciBuiltMap.put(USED_CODEBASE, false);
     if (ciBuiltMap.getOrDefault(URL, null) != null) {
       ciBuiltMap.put(USED_CODEBASE, true);
@@ -121,9 +127,9 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     ciBuiltMap.put(IMAGES, imagesMap);
 
     // Infrastructure details
-    List<String> infraTypeList = new ArrayList<String>();
-    List<String> infraOsTypeList = new ArrayList<String>();
-    List<String> infraHostTypeList = new ArrayList<String>();
+    List<String> infraTypeList = new ArrayList<>();
+    List<String> infraOsTypeList = new ArrayList<>();
+    List<String> infraHostTypeList = new ArrayList<>();
     for (CIInfraDetails infraDetails : moduleInfo.getInfraDetailsList()) {
       infraTypeList.add(infraDetails.getInfraType());
       infraOsTypeList.add(infraDetails.getInfraOSType());
@@ -135,15 +141,15 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
 
     // Test Intelligence details
     if (moduleInfo.getTiBuildDetailsList() != null && moduleInfo.getTiBuildDetailsList().size() != 0) {
-      List<String> tiBuildToolList = new ArrayList<String>();
-      List<String> tiLanguageList = new ArrayList<String>();
+      List<String> tiBuildToolList = new ArrayList<>();
+      List<String> tiLanguageList = new ArrayList<>();
 
       for (TIBuildDetails tiBuildDetails : moduleInfo.getTiBuildDetailsList()){
         tiBuildToolList.add(tiBuildDetails.getBuildTool());
         tiLanguageList.add(tiBuildDetails.getLanguage());
       }
-      ciBuiltMap.put(TI_BUILD_TOOL, tiBuildToolList);
-      ciBuiltMap.put(TI_LANGUAGE, tiLanguageList);
+      ciBuiltMap.put(TI_BUILD_TOOL_LIST, tiBuildToolList);
+      ciBuiltMap.put(TI_LANGUAGE_LIST, tiLanguageList);
     }
 
     telemetryReporter.sendTrackEvent(CI_EXECUTED, identity, accountId, ciBuiltMap,

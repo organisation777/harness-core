@@ -10,7 +10,9 @@ package io.harness.ci.integrationstage;
 import static io.harness.beans.execution.WebhookEvent.Type.BRANCH;
 import static io.harness.beans.execution.WebhookEvent.Type.PR;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveOSType;
-import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.*;
+import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.KUBERNETES_DIRECT;
+import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.KUBERNETES_HOSTED;
+import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.VM;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
 import static io.harness.common.CIExecutionConstants.AZURE_REPO_BASE_URL;
 import static io.harness.common.CIExecutionConstants.GIT_URL_SUFFIX;
@@ -110,6 +112,9 @@ public class IntegrationStageUtils {
   private static final String TAG_EXPRESSION = "<+trigger.tag>";
   private static final String BRANCH_EXPRESSION = "<+trigger.branch>";
   public static final String PR_EXPRESSION = "<+trigger.prNumber>";
+
+  private static final String HARNESS_HOSTED = "Harness Hosted";
+  private static final String SELF_HOSTED = "Self Hosted";
 
   public IntegrationStageConfig getIntegrationStageConfig(StageElementConfig stageElementConfig) {
     return (IntegrationStageConfig) stageElementConfig.getStageType();
@@ -371,17 +376,34 @@ public class IntegrationStageUtils {
     return null;
   }
 
-  public static List<TIBuildDetails> getTiBuildDetails(InitializeStepInfo initializeStepInfo) {
-    List<TIBuildDetails> tiBuildDetailsList = new ArrayList<TIBuildDetails>();
+  public static List<StepElementConfig> getAllSteps(List<ExecutionWrapperConfig> executionWrapperConfigs) {
+    List<StepElementConfig> stepElementConfigs = new ArrayList<>();
 
-    List<ExecutionWrapperConfig> executionWrapperConfigs = initializeStepInfo.getExecutionElementConfig().getSteps();
+    if (executionWrapperConfigs == null) {
+      return stepElementConfigs;
+    }
+
     for (ExecutionWrapperConfig executionWrapper : executionWrapperConfigs) {
-
-      if (executionWrapper == null || executionWrapper.getStep() == null || executionWrapper.getStep().isNull()) {
+      if (executionWrapper == null) {
         continue;
       }
 
-      StepElementConfig stepElementConfig = getStepElementConfig(executionWrapper);
+      if (executionWrapper.getStep() != null) {
+        stepElementConfigs.add(getStepElementConfig(executionWrapper));
+      } else if (executionWrapper.getParallel() != null) {
+        ParallelStepElementConfig parallelStepElementConfig = getParallelStepElementConfig(executionWrapper);
+        List<StepElementConfig> fromParallel = getAllSteps(parallelStepElementConfig.getSections());
+        stepElementConfigs.addAll(fromParallel);
+      }
+    }
+    return stepElementConfigs;
+  }
+
+  public static List<TIBuildDetails> getTiBuildDetails(InitializeStepInfo initializeStepInfo) {
+    List<TIBuildDetails> tiBuildDetailsList = new ArrayList<>();
+    List<StepElementConfig> stepElementConfigs = getAllSteps(initializeStepInfo.getExecutionElementConfig().getSteps());
+
+    for (StepElementConfig stepElementConfig : stepElementConfigs) {
       if (!(stepElementConfig.getStepSpecType() instanceof CIStepInfo)) {
         continue;
       }
@@ -397,18 +419,12 @@ public class IntegrationStageUtils {
     }
     return tiBuildDetailsList;
   }
-  
+
   public static List<CIImageDetails> getCiImageDetails(InitializeStepInfo initializeStepInfo) {
-    List<CIImageDetails> imageDetailsList = new ArrayList<CIImageDetails>();
+    List<CIImageDetails> imageDetailsList = new ArrayList<>();
+    List<StepElementConfig> stepElementConfigs = getAllSteps(initializeStepInfo.getExecutionElementConfig().getSteps());
 
-    List<ExecutionWrapperConfig> executionWrapperConfigs = initializeStepInfo.getExecutionElementConfig().getSteps();
-    for (ExecutionWrapperConfig executionWrapper : executionWrapperConfigs) {
-
-      if (executionWrapper == null || executionWrapper.getStep() == null || executionWrapper.getStep().isNull()) {
-        continue;
-      }
-
-      StepElementConfig stepElementConfig = getStepElementConfig(executionWrapper);
+    for (StepElementConfig stepElementConfig : stepElementConfigs) {
       if (!(stepElementConfig.getStepSpecType() instanceof CIStepInfo)) {
         continue;
       }
@@ -628,13 +644,13 @@ public class IntegrationStageUtils {
 
     if (infrastructure.getType() == KUBERNETES_DIRECT) {
       infraOSType = getK8OS(infrastructure).toString();
-      infraHostType = "Self Hosted";
+      infraHostType = SELF_HOSTED;
     } else if (infrastructure.getType() == VM) {
       infraOSType = VmInitializeStepUtils.getVmOS(infrastructure).toString();
-      infraHostType = "Self Hosted";
+      infraHostType = SELF_HOSTED;
     } else if (infrastructure.getType() == KUBERNETES_HOSTED) {
       infraOSType = getK8OS(infrastructure).toString();
-      infraHostType = "Harness Hosted";
+      infraHostType = HARNESS_HOSTED;
     }
 
     return CIInfraDetails.builder()

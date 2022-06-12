@@ -38,7 +38,6 @@ import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
 import io.harness.ci.plan.creator.execution.CIStageModuleInfo;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.exception.ngexception.CIStageExecutionException;
-import io.harness.k8s.model.ImageDetails;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -101,10 +100,10 @@ public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider 
     String triggerRepoName = null;
     String url = null;
 
-    List<CIScmDetails> scmDetailsList = new ArrayList<CIScmDetails>();
-    List<CIInfraDetails> infraDetailsList = new ArrayList<CIInfraDetails>();
-    List<CIImageDetails> imageDetailsList = new ArrayList<CIImageDetails>();
-    List<TIBuildDetails> tiBuildDetailsList = new ArrayList<TIBuildDetails>();
+    List<CIScmDetails> scmDetailsList = new ArrayList<>();
+    List<CIInfraDetails> infraDetailsList = new ArrayList<>();
+    List<CIImageDetails> imageDetailsList = new ArrayList<>();
+    List<TIBuildDetails> tiBuildDetailsList = new ArrayList<>();
 
     CIBuildAuthor author = null;
     Boolean isPrivateRepo = false;
@@ -127,6 +126,9 @@ public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider 
 
           if (isNotEmpty(initializeStepInfo.getCiCodebase().getRepoName().getValue())) {
             repoName = initializeStepInfo.getCiCodebase().getRepoName().getValue();
+          }
+          if (initializeStepInfo.getCiCodebase().getConnectorRef().getValue() == null) {
+            throw new Exception("rutvij");
           }
           if (initializeStepInfo.getCiCodebase().getConnectorRef().getValue() != null) {
             try {
