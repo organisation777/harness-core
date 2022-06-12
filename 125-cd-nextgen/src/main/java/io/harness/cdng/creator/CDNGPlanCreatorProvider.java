@@ -54,6 +54,7 @@ import io.harness.cdng.creator.plan.steps.serverless.ServerlessAwsLambdaDeploySt
 import io.harness.cdng.creator.plan.steps.serverless.ServerlessAwsLambdaRollbackStepPlanCreator;
 import io.harness.cdng.creator.variables.DeploymentStageVariableCreator;
 import io.harness.cdng.creator.variables.GitOpsCreatePRStepVariableCreator;
+import io.harness.cdng.creator.variables.GitOpsMergePRStepVariableCreator;
 import io.harness.cdng.creator.variables.HelmDeployStepVariableCreator;
 import io.harness.cdng.creator.variables.HelmRollbackStepVariableCreator;
 import io.harness.cdng.creator.variables.K8sApplyStepVariableCreator;
@@ -171,6 +172,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   public List<VariableCreator> getVariableCreators() {
     List<VariableCreator> variableCreators = new ArrayList<>();
     variableCreators.add(new GitOpsCreatePRStepVariableCreator());
+    variableCreators.add(new GitOpsMergePRStepVariableCreator());
     variableCreators.add(new DeploymentStageVariableCreator());
     variableCreators.add(new ExecutionVariableCreator());
     variableCreators.add(new K8sApplyStepVariableCreator());
@@ -203,6 +205,14 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
         StepInfo.newBuilder()
             .setName("GitOps Create PR")
             .setType(StepSpecTypeConstants.GITOPS_CREATE_PR)
+            .setFeatureFlag(FeatureName.NG_GITOPS.name())
+            .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").setFolderPath("GitOps").build())
+            .build();
+
+    StepInfo gitOpsMergePR =
+        StepInfo.newBuilder()
+            .setName("GitOps Merge PR")
+            .setType(StepSpecTypeConstants.GITOPS_MERGE_PR)
             .setFeatureFlag(FeatureName.NG_GITOPS.name())
             .setStepMetaData(StepMetaData.newBuilder().addCategory("Kubernetes").setFolderPath("GitOps").build())
             .build();
@@ -400,6 +410,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
     List<StepInfo> stepInfos = new ArrayList<>();
 
     stepInfos.add(gitOpsCreatePR);
+    stepInfos.add(gitOpsMergePR);
     stepInfos.add(k8sRolling);
     stepInfos.add(delete);
     stepInfos.add(canaryDeploy);

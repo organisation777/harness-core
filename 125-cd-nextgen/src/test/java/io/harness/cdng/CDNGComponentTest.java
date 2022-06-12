@@ -29,7 +29,7 @@ public class CDNGComponentTest extends CDNGTestBase {
   @Test
   @Owner(developers = GEORGE)
   @Category(UnitTests.class)
-  //@Ignore(value = "TODO")
+  @Ignore(value = "TODO")
   public void componentCDNGTests() {
     for (Map.Entry<String, TestExecution> test : tests.entrySet()) {
       assertThatCode(() -> test.getValue().run()).as(test.getKey()).doesNotThrowAnyException();
