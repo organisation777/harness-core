@@ -20,6 +20,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
 import io.harness.cdng.gitops.service.ClusterService;
+import io.harness.exception.InvalidRequestException;
 import io.harness.gitops.models.Cluster;
 import io.harness.gitops.models.ClusterQuery;
 import io.harness.gitops.remote.GitopsResourceClient;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.assertj.core.api.Assertions;
 import org.jooq.tools.reflect.Reflect;
 import org.junit.Before;
 import org.junit.Test;
@@ -218,11 +220,8 @@ public class GitopsClustersStepTest extends CategoryTest {
     Reflect.on(step).set("gitopsResourceClient", gitopsResourceClient);
     Reflect.on(step).set("logger", logCallback);
 
-    step.executeSyncAfterRbac(buildAmbiance(), input, StepInputPackage.builder().build(), null);
-
-    verify(sweepingOutputService).resolveOptional(any(), any());
-    verify(sweepingOutputService).consume(any(), eq("gitops"), eq(expectedOutcome), eq("STAGE"));
-    reset(sweepingOutputService);
+    Assertions.assertThatExceptionOfType(InvalidRequestException.class)
+        .isThrownBy(() -> step.executeSyncAfterRbac(buildAmbiance(), input, StepInputPackage.builder().build(), null));
   }
 
   // Test cases
