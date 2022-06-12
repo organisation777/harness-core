@@ -207,7 +207,7 @@ public class PipelineResource implements YamlSchemaResource {
       @RequestBody(required = true, description = "Pipeline YAML", content = {
         @Content(mediaType = "application/yaml",
             examples = @ExampleObject(name = "Create", summary = "Sample Create Pipeline YAML",
-                value = PipelineAPIConstants.CREATE_API,
+                value = PipelineAPIConstants.CREATE_PIPELINE_API,
                 description = "Sample Pipeline YAML with One Build Stage and One Deploy Stage"))
       }) @NotNull String yaml) {
     PipelineEntity pipelineEntity = PMSPipelineDtoMapper.toPipelineEntity(accountId, orgId, projectId, yaml);
@@ -455,7 +455,7 @@ public class PipelineResource implements YamlSchemaResource {
       @RequestBody(required = true, description = "Pipeline YAML to be updated", content = {
         @Content(mediaType = "application/yaml",
             examples = @ExampleObject(name = "Update", summary = "Sample Update Pipeline YAML",
-                value = PipelineAPIConstants.CREATE_API,
+                value = PipelineAPIConstants.CREATE_PIPELINE_API,
                 description = "Sample Pipeline YAML with One Build Stage and One Deploy Stage"))
       }) @NotNull String yaml) {
     log.info(String.format("Updating pipeline with identifier %s in project %s, org %s, account %s", pipelineId,
@@ -536,7 +536,7 @@ public class PipelineResource implements YamlSchemaResource {
           {
             @Content(mediaType = "application/json",
                 examples = @ExampleObject(name = "List", summary = "Sample List Pipeline JSON Input",
-                    value = PipelineAPIConstants.LIST_API, description = "Sample List JSON"))
+                    value = PipelineAPIConstants.LIST_PIPELINE_API, description = "Sample List JSON"))
           }) PipelineFilterPropertiesDto filterProperties,
       @Parameter(description = "Boolean flag to get distinct pipelines from all branches.") @QueryParam(
           "getDistinctFromBranches") Boolean getDistinctFromBranches) {

@@ -25,6 +25,7 @@ import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.apiexamples.PipelineAPIConstants;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.git.model.ChangeType;
@@ -75,6 +76,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -269,8 +271,7 @@ public class InputSetResourcePMS {
           content = {
             @Content(mediaType = "application/yaml",
                 examples = @ExampleObject(name = "Create", summary = "Sample Input Set YAML",
-                    value = io.harness.apiexamples.InputSetAPIConstants.CREATE_API,
-                    description = "Sample Input Set YAML"))
+                    value = PipelineAPIConstants.CREATE_INPUTSET_API, description = "Sample Input Set YAML"))
           }) @NotNull String yaml) {
     yaml = removeRuntimeInputFromYaml(yaml);
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntity(
@@ -375,8 +376,7 @@ public class InputSetResourcePMS {
           content = {
             @Content(mediaType = "application/yaml",
                 examples = @ExampleObject(name = "Update", summary = "Sample Input Set YAML",
-                    value = io.harness.apiexamples.InputSetAPIConstants.CREATE_API,
-                    description = "Sample Input Set YAML"))
+                    value = PipelineAPIConstants.CREATE_INPUTSET_API, description = "Sample Input Set YAML"))
           }) @NotNull String yaml) {
     log.info(String.format("Updating input set with identifier %s for pipeline %s in project %s, org %s, account %s",
         inputSetIdentifier, pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
