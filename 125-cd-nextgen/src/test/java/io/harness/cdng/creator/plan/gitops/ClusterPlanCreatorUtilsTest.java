@@ -14,7 +14,11 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.junit.Test;
@@ -27,15 +31,26 @@ public class ClusterPlanCreatorUtilsTest {
   @Category(UnitTests.class)
   @Owner(developers = OwnerRule.YOGESH)
   @Parameters(method = "getData")
-  public void testGetGitopsClustersStepPlanNodeBuilder(EnvironmentPlanCreatorConfig input, StepParameters output) {
+  public void testGetGitopsClustersStepPlanNodeBuilder(
+      EnvironmentPlanCreatorConfig input, ClusterStepParameters output) {
     final String nodeUuid = "foobar";
+
     PlanNode expected = ClusterPlanCreatorUtils.getGitopsClustersStepPlanNodeBuilder(nodeUuid, input).build();
-    assertThat(expected.getStepParameters()).isEqualTo(output);
+
     assertThat(expected.getFacilitatorObtainments()).isNotNull();
     assertThat(expected.getIdentifier()).isEqualTo("GitopsClusters");
     assertThat(expected.getUuid()).isEqualTo(nodeUuid);
     assertThat(expected.getName()).isEqualTo("GitopsClusters");
     assertThat(expected.getStepType()).isEqualTo(GitopsClustersStep.STEP_TYPE);
+
+    ClusterStepParameters stepParameters = (ClusterStepParameters) expected.getStepParameters();
+    Map<String, EnvClusterRefs> expectedEnvClusterRefs = stepParameters.getEnvClusterRefs().stream().collect(
+        Collectors.toMap(EnvClusterRefs::getEnvRef, Function.identity()));
+    Map<String, EnvClusterRefs> actualEnvClusterRefs =
+        output.getEnvClusterRefs().stream().collect(Collectors.toMap(EnvClusterRefs::getEnvRef, Function.identity()));
+    assertThat(expectedEnvClusterRefs).isEqualTo(actualEnvClusterRefs);
+    assertThat(stepParameters.getEnvGroupRef()).isEqualTo(stepParameters.getEnvGroupRef());
+    assertThat(stepParameters.isDeployToAllEnvs()).isEqualTo(stepParameters.isDeployToAllEnvs());
   }
   @Test
   @Category(UnitTests.class)
@@ -59,11 +74,11 @@ public class ClusterPlanCreatorUtilsTest {
                                           .gitOpsClusterRefs(asList("c1", "c2", "c3"))
                                           .build();
     StepParameters o2 = ClusterStepParameters.builder()
-                            .envClusterRefs(Collections.singletonList(EnvClusterRefs.builder()
-                                                                          .envRef("myenv")
-                                                                          .deployToAll(false)
-                                                                          .clusterRefs(asList("c1", "c2", "c3"))
-                                                                          .build()))
+                            .envClusterRefs(asList(EnvClusterRefs.builder()
+                                                       .envRef("myenv")
+                                                       .deployToAll(false)
+                                                       .clusterRefs(asList("c3", "c1", "c2"))
+                                                       .build()))
                             .build();
     return new Object[][] {{i1, o1}, {i2, o2}};
   }
