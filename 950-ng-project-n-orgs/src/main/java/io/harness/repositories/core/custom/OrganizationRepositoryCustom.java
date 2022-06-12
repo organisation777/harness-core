@@ -7,19 +7,19 @@
 
 package io.harness.repositories.core.custom;
 
-import static io.harness.annotations.dev.HarnessTeam.PL;
-
+import com.mongodb.client.result.UpdateResult;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.ng.core.entities.Organization;
-
-import com.mongodb.client.result.UpdateResult;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+
+import java.util.List;
+
+import static io.harness.annotations.dev.HarnessTeam.PL;
 
 @OwnedBy(PL)
 public interface OrganizationRepositoryCustom {
@@ -30,6 +30,8 @@ public interface OrganizationRepositoryCustom {
   Organization update(Query query, Update update);
 
   Organization delete(String accountIdentifier, String identifier, Long version);
+
+  boolean hardDelete(String accountIdentifier, String identifier, Long version);
 
   List<Organization> findAll(Criteria criteria);
 

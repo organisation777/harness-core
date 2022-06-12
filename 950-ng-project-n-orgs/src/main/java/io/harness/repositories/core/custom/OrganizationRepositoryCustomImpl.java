@@ -7,17 +7,13 @@
 
 package io.harness.repositories.core.custom;
 
-import static io.harness.annotations.dev.HarnessTeam.PL;
-
+import com.google.inject.Inject;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.ng.core.entities.Organization;
 import io.harness.ng.core.entities.Organization.OrganizationKeys;
-
-import com.google.inject.Inject;
-import com.mongodb.client.result.UpdateResult;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +25,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.repository.support.PageableExecutionUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static io.harness.annotations.dev.HarnessTeam.PL;
 
 @OwnedBy(PL)
 @AllArgsConstructor(access = AccessLevel.PROTECTED, onConstructor = @__({ @Inject }))
@@ -102,6 +103,20 @@ public class OrganizationRepositoryCustomImpl implements OrganizationRepositoryC
     Query query = new Query(criteria);
     Update update = new Update().set(OrganizationKeys.deleted, Boolean.TRUE);
     return mongoTemplate.findAndModify(query, update, Organization.class);
+  }
+
+  @Override
+  public boolean hardDelete(String accountIdentifier, String identifier, Long version) {
+    Criteria criteria = Criteria.where(OrganizationKeys.accountIdentifier)
+                            .is(accountIdentifier)
+                            .and(OrganizationKeys.identifier)
+                            .is(identifier);
+    if (version != null) {
+      criteria.and(OrganizationKeys.version).is(version);
+    }
+    Query query = new Query(criteria);
+    DeleteResult removeResult = mongoTemplate.remove(query, Organization.class);
+    return removeResult.wasAcknowledged();
   }
 
   @Override

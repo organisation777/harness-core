@@ -7,8 +7,25 @@
 
 package io.harness.repositories.core.custom;
 
-import static io.harness.rule.OwnerRule.KARAN;
+import com.mongodb.client.result.DeleteResult;
+import io.harness.CategoryTest;
+import io.harness.category.element.UnitTests;
+import io.harness.ng.core.entities.Organization;
+import io.harness.ng.core.entities.Organization.OrganizationKeys;
+import io.harness.rule.Owner;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
+import static io.harness.rule.OwnerRule.KARAN;
+import static io.harness.rule.OwnerRule.VIKAS_M;
 import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -20,23 +37,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import io.harness.CategoryTest;
-import io.harness.category.element.UnitTests;
-import io.harness.ng.core.entities.Organization;
-import io.harness.ng.core.entities.Organization.OrganizationKeys;
-import io.harness.rule.Owner;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mockito.ArgumentCaptor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 
 public class OrganizationRepositoryCustomImplTest extends CategoryTest {
   private MongoTemplate mongoTemplate;
@@ -95,6 +95,29 @@ public class OrganizationRepositoryCustomImplTest extends CategoryTest {
     assertTrue(query.getQueryObject().containsKey(OrganizationKeys.identifier));
     assertEquals(identifier, query.getQueryObject().get(OrganizationKeys.identifier));
     assertTrue(query.getQueryObject().containsKey(OrganizationKeys.deleted));
+    assertTrue(query.getQueryObject().containsKey(OrganizationKeys.version));
+    assertEquals(version, query.getQueryObject().get(OrganizationKeys.version));
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void testHardDelete() {
+    String accountIdentifier = randomAlphabetic(10);
+    String identifier = randomAlphabetic(10);
+    Long version = 0L;
+    ArgumentCaptor<Query> queryArgumentCaptor = ArgumentCaptor.forClass(Query.class);
+
+    when(mongoTemplate.remove(any(), eq(Organization.class))).thenReturn(DeleteResult.acknowledged(1));
+    boolean deleted = organizationRepository.hardDelete(accountIdentifier, identifier, version);
+    verify(mongoTemplate, times(1)).remove(queryArgumentCaptor.capture(), eq(Organization.class));
+    Query query = queryArgumentCaptor.getValue();
+    assertTrue(deleted);
+    assertEquals(3, query.getQueryObject().size());
+    assertTrue(query.getQueryObject().containsKey(OrganizationKeys.accountIdentifier));
+    assertEquals(accountIdentifier, query.getQueryObject().get(OrganizationKeys.accountIdentifier));
+    assertTrue(query.getQueryObject().containsKey(OrganizationKeys.identifier));
+    assertEquals(identifier, query.getQueryObject().get(OrganizationKeys.identifier));
     assertTrue(query.getQueryObject().containsKey(OrganizationKeys.version));
     assertEquals(version, query.getQueryObject().get(OrganizationKeys.version));
   }
