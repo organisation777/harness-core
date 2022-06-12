@@ -19,7 +19,7 @@ import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.expressions.CDExpressionResolveFunctor;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.ManifestOutcome;
-import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
+import io.harness.cdng.manifest.yaml.ReleaseRepoManifestOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
@@ -145,9 +145,8 @@ public class CreatePRStep extends TaskChainExecutableWithRollbackAndRbac {
         stringMap, new CDExpressionResolveFunctor(engineExpressionService, ambiance));
 
     List<GitFetchFilesConfig> gitFetchFilesConfig = new ArrayList<>();
-    // TODO: Should ManifestOutcome type be changed
     gitFetchFilesConfig.add(
-        getGitFetchFilesConfig(ambiance, store, ValuesManifestOutcome.builder().identifier("dummy").build()));
+        getGitFetchFilesConfig(ambiance, store, ReleaseRepoManifestOutcome.builder().identifier("dummy").build()));
 
     stringMap.remove("__uuid");
 

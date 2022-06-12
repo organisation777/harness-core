@@ -34,7 +34,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.Wither;
 import org.springframework.data.annotation.TypeAlias;
 
-@OwnedBy(HarnessTeam.CDP)
+@OwnedBy(HarnessTeam.GITOPS)
 @Data
 @Builder
 @NoArgsConstructor

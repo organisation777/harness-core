@@ -7,7 +7,7 @@
 
 package io.harness.cdng.creator.plan.steps;
 
-import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.annotations.dev.HarnessTeam.GITOPS;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.gitops.CreatePRStepNode;
@@ -18,7 +18,7 @@ import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 import com.google.common.collect.Sets;
 import java.util.Set;
 
-@OwnedBy(CDP)
+@OwnedBy(GITOPS)
 public class GitOpsCreatePRStepPlanCreatorV2 extends CDPMSStepPlanCreatorV2<CreatePRStepNode> {
   @Override
   public Set<String> getSupportedStepTypes() {
