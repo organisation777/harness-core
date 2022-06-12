@@ -205,6 +205,26 @@ public class GitopsClustersStepTest extends CategoryTest {
     reset(sweepingOutputService);
   }
 
+  @Test
+  @Owner(developers = OwnerRule.YOGESH)
+  @Category(UnitTests.class)
+  @Parameters(method = "getDataForExceptions")
+  public void testExecuteSyncAfterRbacShouldThrow(ClusterStepParameters input, GitopsClustersOutcome expectedOutcome) {
+    GitopsClustersStep step = new GitopsClustersStep();
+
+    Reflect.on(step).set("executionSweepingOutputResolver", sweepingOutputService);
+    Reflect.on(step).set("environmentGroupService", environmentGroupService);
+    Reflect.on(step).set("clusterService", clusterService);
+    Reflect.on(step).set("gitopsResourceClient", gitopsResourceClient);
+    Reflect.on(step).set("logger", logCallback);
+
+    step.executeSyncAfterRbac(buildAmbiance(), input, StepInputPackage.builder().build(), null);
+
+    verify(sweepingOutputService).resolveOptional(any(), any());
+    verify(sweepingOutputService).consume(any(), eq("gitops"), eq(expectedOutcome), eq("STAGE"));
+    reset(sweepingOutputService);
+  }
+
   // Test cases
   private Object[][] getData() {
     final Object[] set1 =
@@ -244,7 +264,23 @@ public class GitopsClustersStepTest extends CategoryTest {
         new GitopsClustersOutcome(new ArrayList<>()).appendCluster("env2", "c4-name"),
     };
 
-    return new Object[][] {set1, set2, set3, set4, set5};
+    return new Object[][] {set2, set3, set4, set5};
+  }
+
+  // Test cases
+  private Object[][] getDataForExceptions() {
+    final Object[] set1 =
+        new Object[] {ClusterStepParameters.builder().build(), new GitopsClustersOutcome(new ArrayList<>())};
+    final Object[] set2 = new Object[] {
+        ClusterStepParameters.builder().envGroupRef("envGroupId").deployToAllEnvs(true).build(),
+        new GitopsClustersOutcome(new ArrayList<>())
+            .appendCluster("envGroupId", "env2", "c3-name")
+            .appendCluster("envGroupId", "env2", "c4-name")
+            .appendCluster("envGroupId", "env1", "c1-name")
+            .appendCluster("envGroupId", "env1", "c2-name"),
+
+    };
+    return new Object[][] {set1};
   }
 
   private Ambiance buildAmbiance() {

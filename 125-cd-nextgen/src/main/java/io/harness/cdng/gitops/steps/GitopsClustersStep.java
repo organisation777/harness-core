@@ -7,6 +7,7 @@
 
 package io.harness.cdng.gitops.steps;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -16,8 +17,6 @@ import static io.harness.logging.LogLevel.INFO;
 import static io.harness.pms.execution.utils.AmbianceUtils.getAccountId;
 import static io.harness.pms.execution.utils.AmbianceUtils.getOrgIdentifier;
 import static io.harness.pms.execution.utils.AmbianceUtils.getProjectIdentifier;
-
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import io.harness.beans.common.VariablesSweepingOutput;
@@ -56,12 +55,12 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
@@ -149,14 +148,18 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
     }
 
     if (isEmpty(envClusterRefs)) {
-      return new HashMap<>();
+      throw new InvalidRequestException("No Gitops Cluster is selected with the current environment configuration");
     }
-
-    saveExecutionLog(format("Following %d clusters are selected %s", envClusterRefs.size(), envClusterRefs));
 
     // clusterId -> IndividualClusterInternal
     final Map<String, IndividualClusterInternal> individualClusters =
         fetchClusterRefs(params.getEnvGroupRef(), ambiance, envClusterRefs);
+
+    if (isEmpty(individualClusters)) {
+      saveExecutionLog("No gitops cluster is selected");
+      throw new InvalidRequestException("No Gitops Cluster is selected with the current environment configuration");
+    }
+
     final Set<String> clusterIdentifiers = individualClusters.keySet();
 
     Map<String, Object> filter = ImmutableMap.of("identifier", ImmutableMap.of("$in", clusterIdentifiers));
@@ -196,7 +199,7 @@ public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepPar
   private Map<String, IndividualClusterInternal> fetchClusterRefs(
       String envGroupRef, Ambiance ambiance, Collection<EnvClusterRefs> envClusterRefs) {
     final List<IndividualClusterInternal> clusterRefs = envClusterRefs.stream()
-                                                            .filter(ec -> !ec.isDeployToAll())
+                                                            .filter(Predicate.not(EnvClusterRefs::isDeployToAll))
                                                             .map(ec
                                                                 -> ec.getClusterRefs()
                                                                        .stream()
