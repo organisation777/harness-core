@@ -7,12 +7,28 @@
 
 package io.harness.ng.core.impl;
 
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
+import static io.harness.NGConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER;
+import static io.harness.NGConstants.DEFAULT_ORG_IDENTIFIER;
+import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.beans.FeatureName.HARD_DELETE_ENTITIES;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.enforcement.constants.FeatureRestrictionName.MULTIPLE_ORGANIZATIONS;
+import static io.harness.exception.WingsException.USER_SRE;
+import static io.harness.ng.accesscontrol.PlatformPermissions.INVITE_PERMISSION_IDENTIFIER;
+import static io.harness.ng.accesscontrol.PlatformPermissions.VIEW_ORGANIZATION_PERMISSION;
+import static io.harness.ng.accesscontrol.PlatformResourceTypes.ORGANIZATION;
+import static io.harness.ng.core.remote.OrganizationMapper.toOrganization;
+import static io.harness.ng.core.user.UserMembershipUpdateSource.SYSTEM;
+import static io.harness.ng.core.utils.NGUtils.validate;
+import static io.harness.ng.core.utils.NGUtils.verifyValuesNotChanged;
+import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
+import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
+
+import static java.lang.Boolean.FALSE;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.acl.api.AccessCheckResponseDTO;
 import io.harness.accesscontrol.acl.api.AccessControlDTO;
@@ -47,16 +63,13 @@ import io.harness.security.dto.PrincipalType;
 import io.harness.telemetry.helpers.OrganizationInstrumentationHelper;
 import io.harness.utils.ScopeUtils;
 import io.harness.utils.featureflaghelper.NGFeatureFlagHelperService;
-import lombok.extern.slf4j.Slf4j;
-import net.jodah.failsafe.Failsafe;
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.validation.constraints.NotNull;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
@@ -66,27 +79,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static io.harness.NGConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER;
-import static io.harness.NGConstants.DEFAULT_ORG_IDENTIFIER;
-import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.beans.FeatureName.HARD_DELETE_ENTITIES;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.enforcement.constants.FeatureRestrictionName.MULTIPLE_ORGANIZATIONS;
-import static io.harness.exception.WingsException.USER_SRE;
-import static io.harness.ng.accesscontrol.PlatformPermissions.INVITE_PERMISSION_IDENTIFIER;
-import static io.harness.ng.accesscontrol.PlatformPermissions.VIEW_ORGANIZATION_PERMISSION;
-import static io.harness.ng.accesscontrol.PlatformResourceTypes.ORGANIZATION;
-import static io.harness.ng.core.remote.OrganizationMapper.toOrganization;
-import static io.harness.ng.core.user.UserMembershipUpdateSource.SYSTEM;
-import static io.harness.ng.core.utils.NGUtils.validate;
-import static io.harness.ng.core.utils.NGUtils.verifyValuesNotChanged;
-import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
-import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
-import static java.lang.Boolean.FALSE;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import javax.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @OwnedBy(PL)
 @Singleton

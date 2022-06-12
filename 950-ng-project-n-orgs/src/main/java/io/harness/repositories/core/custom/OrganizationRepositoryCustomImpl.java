@@ -7,13 +7,18 @@
 
 package io.harness.repositories.core.custom;
 
-import com.google.inject.Inject;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
+import static io.harness.annotations.dev.HarnessTeam.PL;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.ng.core.entities.Organization;
 import io.harness.ng.core.entities.Organization.OrganizationKeys;
+
+import com.google.inject.Inject;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,11 +30,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.repository.support.PageableExecutionUtils;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static io.harness.annotations.dev.HarnessTeam.PL;
 
 @OwnedBy(PL)
 @AllArgsConstructor(access = AccessLevel.PROTECTED, onConstructor = @__({ @Inject }))

@@ -7,19 +7,19 @@
 
 package io.harness.repositories.core.custom;
 
-import com.mongodb.client.result.UpdateResult;
+import static io.harness.annotations.dev.HarnessTeam.PL;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.ng.core.entities.Organization;
+
+import com.mongodb.client.result.UpdateResult;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-
-import java.util.List;
-
-import static io.harness.annotations.dev.HarnessTeam.PL;
 
 @OwnedBy(PL)
 public interface OrganizationRepositoryCustom {

@@ -7,25 +7,9 @@
 
 package io.harness.repositories.core.custom;
 
-import com.mongodb.client.result.DeleteResult;
-import io.harness.CategoryTest;
-import io.harness.category.element.UnitTests;
-import io.harness.ng.core.entities.Organization;
-import io.harness.ng.core.entities.Organization.OrganizationKeys;
-import io.harness.rule.Owner;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mockito.ArgumentCaptor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
-
 import static io.harness.rule.OwnerRule.KARAN;
 import static io.harness.rule.OwnerRule.VIKAS_M;
+
 import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -37,6 +21,24 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import io.harness.CategoryTest;
+import io.harness.category.element.UnitTests;
+import io.harness.ng.core.entities.Organization;
+import io.harness.ng.core.entities.Organization.OrganizationKeys;
+import io.harness.rule.Owner;
+
+import com.mongodb.client.result.DeleteResult;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 public class OrganizationRepositoryCustomImplTest extends CategoryTest {
   private MongoTemplate mongoTemplate;
