@@ -248,7 +248,7 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
     updateFreezeWindowReferenceInUserGroup(currentReferencedUserGroups, updatedReferencedUserGroups, accountId,
         oldSetting.getAppId(), oldSetting.getUuid());
   }
-
+  @Override
   public Set<String> getReferencedUserGroupIds(List<TimeRangeBasedFreezeConfig> timeRangeBasedFreezeConfig) {
     Set<String> referencedUserGroups = new HashSet<>();
     for (TimeRangeBasedFreezeConfig entry : timeRangeBasedFreezeConfig) {
