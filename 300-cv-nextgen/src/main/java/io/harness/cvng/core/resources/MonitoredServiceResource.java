@@ -206,6 +206,21 @@ public class MonitoredServiceResource {
   @GET
   @Timed
   @ExceptionMetered
+  @Path("/V2")
+  @ApiOperation(value = "list monitored service data ", nickname = "listMonitoredService")
+  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
+  public ResponseDTO<PageResponse<MonitoredServiceListItemDTO>> listV2(
+      @NotNull @Valid @BeanParam ProjectParams projectParams,
+      @QueryParam("environmentIdentifier") String environmentIdentifier, @QueryParam("offset") @NotNull Integer offset,
+      @QueryParam("pageSize") @NotNull Integer pageSize, @QueryParam("filter") String filter,
+      @NotNull @QueryParam("servicesAtRiskFilter") @ApiParam(defaultValue = "false") boolean servicesAtRiskFilter) {
+    return ResponseDTO.newResponse(monitoredServiceService.list(
+        projectParams, environmentIdentifier, offset, pageSize, filter, servicesAtRiskFilter));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
   @Path("{identifier}")
   @ApiOperation(value = "get monitored service data ", nickname = "getMonitoredService")
   @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
