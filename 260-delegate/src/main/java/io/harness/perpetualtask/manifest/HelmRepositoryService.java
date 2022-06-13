@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 @OwnedBy(HarnessTeam.CDC)
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)
 public class HelmRepositoryService implements ManifestRepositoryService {
-  private static final String MANIFEST_COLLECTION_DIR = "manifest-collection";
+  private static final String MANIFEST_COLLECTION_DIR = "/tmp/manifest-collection";
   private static final long TIMEOUT_IN_MILLIS = 90L * 1000;
 
   @Inject private HelmTaskHelper helmTaskHelper;
