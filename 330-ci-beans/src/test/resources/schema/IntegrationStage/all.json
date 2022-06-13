@@ -2592,29 +2592,6 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "QueueStepInfo": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/StepSpecType"
-        },
-        {
-          "type": "object",
-          "required": [
-            "key",
-            "scope"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "scope": {
-              "type": "string"
-            }
-          }
-        }
-      ],
-      "$schema": "http://json-schema.org/draft-07/schema#"
-    },
     "ManualExecutionSource": {
       "allOf": [
         {
@@ -3219,6 +3196,39 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ParameterFieldString": {
+      "type": "object",
+      "properties": {
+        "defaultValue": {
+          "type": "string"
+        },
+        "executionInput": {
+          "type": "boolean"
+        },
+        "expression": {
+          "type": "boolean"
+        },
+        "expressionValue": {
+          "type": "string"
+        },
+        "inputSetValidator": {
+          "$ref": "#/definitions/InputSetValidator"
+        },
+        "jsonResponseField": {
+          "type": "boolean"
+        },
+        "responseField": {
+          "type": "string"
+        },
+        "typeString": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "PatchInstruction": {
       "type": "object",
       "discriminator": "type",
@@ -3537,6 +3547,34 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "QueueStepInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StepSpecType"
+        },
+        {
+          "type": "object",
+          "required": [
+            "key",
+            "scope"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string",
+              "enum": [
+                "Pipeline",
+                "Stage",
+                "StepGroup"
+              ]
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "RemoveSegmentToVariationTargetMapYaml": {
       "allOf": [
         {
@@ -3704,7 +3742,7 @@
               "format": "int32"
             },
             "resourceUnit": {
-              "type": "string"
+              "$ref": "#/definitions/ParameterFieldString"
             }
           }
         }
@@ -5435,22 +5473,6 @@
           "if": {
             "properties": {
               "type": {
-                "const": "Queue"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/QueueStepInfo"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
                 "const": "Plugin"
               }
             }
@@ -5475,6 +5497,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/PolicyStepInfo"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Queue"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/QueueStepInfo"
               }
             }
           }
