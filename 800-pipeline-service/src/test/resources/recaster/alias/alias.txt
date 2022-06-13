@@ -118,3 +118,4 @@ io.harness.steps.customstage.CustomStageSpecParams
 io.harness.plancreator.steps.resourceconstraint.QueueStepNode
 io.harness.plancreator.steps.resourceconstraint.QueueStepInfo
 io.harness.ng.core.envGroup.EnvironmentGroupOutcome
+io.harness.steps.resourcerestraint.beans.QueueHoldingScope
