@@ -367,11 +367,11 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
     String yamlToPush = pipelineToSave.getYaml();
     addGitParamsToPipelineEntity(pipelineToSave, gitEntityInfo);
     return transactionHelper.performTransaction(() -> {
-      PipelineEntity savedPipelineEntity = mongoTemplate.save(pipelineToSave);
       if (pushToGit) {
-        Scope scope = buildScope(savedPipelineEntity);
+        Scope scope = buildScope(pipelineToSave);
         gitAwareEntityHelper.updateFileImportedFromGit(pipelineToSave, yamlToPush, scope);
       }
+      PipelineEntity savedPipelineEntity = mongoTemplate.save(pipelineToSave);
       outboxService.save(
           new PipelineCreateEvent(accountIdentifier, orgIdentifier, projectIdentifier, savedPipelineEntity));
       checkForMetadataAndSaveIfAbsent(savedPipelineEntity);
