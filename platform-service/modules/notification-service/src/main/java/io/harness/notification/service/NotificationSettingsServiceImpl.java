@@ -9,11 +9,11 @@ package io.harness.notification.service;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.expression.EngineExpressionEvaluator.EXPR_END;
+import static io.harness.expression.EngineExpressionEvaluator.EXPR_START;
 import static io.harness.remote.client.NGRestUtils.getResponse;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.engine.expressions.functors.SecretFunctor;
-import io.harness.expression.SecretString;
 import io.harness.ng.core.dto.UserGroupDTO;
 import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.notification.NotificationSettingConfigDTO;
@@ -39,6 +39,7 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -120,7 +121,9 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
       NotificationChannelType notificationChannelType, String accountId, long expressionFunctorToken) {
     List<UserGroupDTO> userGroups = getUserGroups(notificationUserGroups, accountId);
     List<String> notificationSetting = getNotificationSettings(notificationChannelType, userGroups, accountId);
-    return resolveUserGroups(notificationSetting, expressionFunctorToken);
+    return notificationChannelType.equals(NotificationChannelType.EMAIL)
+        ? notificationSetting
+        : resolveUserGroups(notificationSetting, expressionFunctorToken);
   }
 
   @Override
@@ -146,13 +149,24 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
   }
 
   private List<String> resolveUserGroups(List<String> notificationSetting, long expressionFunctorToken) {
-    if (notificationSetting.get(0)) {
+    List<String> resolvedGroups = new ArrayList<>();
+    List<String> secrets = new ArrayList<>();
+    if (!notificationSetting.isEmpty()) {
+      for (String notification : notificationSetting) {
+        if (notification.startsWith(EXPR_START) && notification.endsWith(EXPR_END)) {
+          secrets.add(notification);
+        } else {
+          resolvedGroups.add(notification);
+        }
+      }
+      SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
+      Object object = evaluator.resolve(secrets, true);
+      resolvedGroups.addAll(
+          Stream.of(object).filter(Objects::nonNull).map(Object::toString).collect(Collectors.toList()));
+      return resolvedGroups;
+    } else {
+      return notificationSetting;
     }
-    SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
-    Object object = evaluator.resolve(notificationSetting, true);
-    if (object == null) {
-    }
-    return Stream.of(object).map(Object::toString).collect(Collectors.toList());
   }
 
   @Override
