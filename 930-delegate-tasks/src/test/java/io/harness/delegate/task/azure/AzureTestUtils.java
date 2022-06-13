@@ -14,10 +14,12 @@ import io.harness.azure.AzureEnvironmentType;
 import io.harness.azure.model.AzureAuthenticationType;
 import io.harness.azure.model.AzureConfig;
 import io.harness.delegate.beans.azure.registry.AzureRegistryType;
+import io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData;
 import io.harness.delegate.task.azure.appservice.webapp.ng.AzureWebAppInfraDelegateConfig;
 import io.harness.delegate.task.azure.artifact.AzureArtifactConfig;
 import io.harness.delegate.task.azure.artifact.AzureContainerArtifactConfig;
 
+import java.util.HashMap;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(CDP)
@@ -57,6 +59,19 @@ public class AzureTestUtils {
         .cert(CERT)
         .tenantId(TENANT_ID)
         .clientId(CLIENT_ID)
+        .build();
+  }
+
+  public AzureAppServicePreDeploymentData createTestPreDeploymentData() {
+    return AzureAppServicePreDeploymentData.builder()
+        .appName(APP_NAME)
+        .imageNameAndTag(TEST_IMAGE + ":" + TEST_IMAGE_TAG)
+        .slotName(DEPLOYMENT_SLOT)
+        .trafficWeight(2.0)
+        .appSettingsToAdd(new HashMap<>())
+        .appSettingsToRemove(new HashMap<>())
+        .connStringsToAdd(new HashMap<>())
+        .connStringsToRemove(new HashMap<>())
         .build();
   }
 }
