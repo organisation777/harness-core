@@ -20,6 +20,7 @@ java_library(
         "//930-delegate-tasks/src/main/proto/io/harness:930_delegate_tasks_java_proto",
         "//932-connector-task:module",
         "//940-secret-manager-client:module",
+        "//941-filestore-client:module",
         "//948-cv-nextgen-beans:module",
         "//950-delegate-tasks-beans:module",
         "//952-scm-java-client:module",

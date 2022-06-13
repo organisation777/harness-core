@@ -88,6 +88,7 @@ import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionHandler;
 import io.harness.file.NGFileServiceModule;
 import io.harness.filestore.NgFileStoreModule;
 import io.harness.filestore.outbox.FileEventHandler;
+import io.harness.filestoreclient.module.FileStoreClientModule;
 import io.harness.gitops.GitopsResourceClientModule;
 import io.harness.gitsync.GitSyncConfigClientModule;
 import io.harness.gitsync.GitSyncModule;
@@ -717,6 +718,8 @@ public class NextGenModule extends AbstractModule {
 
     bind(VariableService.class).to(VariableServiceImpl.class);
     bindExceptionHandlers();
+    install(new FileStoreClientModule(this.appConfig.getManagerClientConfig(),
+            this.appConfig.getNextGenConfig().getNgManagerServiceSecret(), NG_MANAGER.getServiceId(), ClientMode.NON_PRIVILEGED));
   }
 
   private void bindExceptionHandlers() {

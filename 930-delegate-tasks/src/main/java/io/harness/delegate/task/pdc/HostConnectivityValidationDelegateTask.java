@@ -8,14 +8,20 @@
 package io.harness.delegate.task.pdc;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.network.SafeHttpCall.execute;
+import static software.wings.delegatetasks.cv.CVConstants.MAX_RETRIES;
 
+import com.google.common.util.concurrent.TimeLimiter;
+import com.google.inject.Inject;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.concurrent.HTimeLimiter;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskParams;
 import io.harness.delegate.beans.connector.pdcconnector.HostConnectivityTaskResponse;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
+import io.harness.delegate.cf.retry.RetryPolicy;
 import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.eraro.ErrorCode;
@@ -24,14 +30,25 @@ import io.harness.exception.ExceptionUtils;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.time.Duration;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+
+import io.harness.filestoreclient.remote.FileStoreClient;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
 import org.jose4j.lang.JoseException;
+
+import javax.ws.rs.core.Response;
 
 @OwnedBy(CDP)
 @Slf4j
 public class HostConnectivityValidationDelegateTask extends AbstractDelegateRunnableTask {
+
+  @Inject
+  private FileStoreClient filesStoreClient;
+  @Inject private TimeLimiter timeLimiter;
+
   public HostConnectivityValidationDelegateTask(DelegateTaskPackage delegateTaskPackage,
       ILogStreamingTaskClient logStreamingTaskClient, Consumer<DelegateTaskResponse> consumer,
       BooleanSupplier preExecute) {
@@ -45,6 +62,7 @@ public class HostConnectivityValidationDelegateTask extends AbstractDelegateRunn
     int port = hostConnectivityTaskParams.getPort();
 
     try {
+      //fetchFile();
       boolean connectableHost = connectableHost(hostName, port, hostConnectivityTaskParams.getSocketTimeout());
       return HostConnectivityTaskResponse.builder().connectionSuccessful(connectableHost).build();
     } catch (Exception ex) {
@@ -55,6 +73,30 @@ public class HostConnectivityValidationDelegateTask extends AbstractDelegateRunn
           .errorMessage(ExceptionUtils.getMessage(ex))
           .build();
     }
+  }
+
+  private void fetchFile() throws IOException{
+    log.info("Fetch file");
+    retrofit2.Response<Response> response = filesStoreClient.downloadFile("kmpySmUISimoRrJL6NL73w", "default", "testProject", "file2").execute();
+    log.info("Response: {}", response.body());
+
+    net.jodah.failsafe.RetryPolicy<Object> retryPolicy = new net.jodah.failsafe.RetryPolicy<>()
+            .handle(Exception.class)
+            .withDelay(Duration.ofSeconds(5L))
+            .withMaxRetries(MAX_RETRIES)
+            .onFailedAttempt(event
+                    -> log.info("[Retrying]: Failed updating task status attempt: {}",
+                    event.getAttemptCount(), event.getLastFailure()))
+            .onFailure(event
+                    -> log.error("[Failed]: Failed updating task status attempt: {}",
+                    event.getAttemptCount(), event.getFailure()));
+
+    Failsafe.with(retryPolicy)
+            .run(()
+                    -> HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(10L),
+                    ()
+                            -> execute(
+                            filesStoreClient.downloadFile("kmpySmUISimoRrJL6NL73w", "default", "testProject", "file2"))));
   }
 
   @Override
