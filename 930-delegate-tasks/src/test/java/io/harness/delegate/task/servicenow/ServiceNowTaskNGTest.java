@@ -9,9 +9,8 @@ package io.harness.delegate.task.servicenow;
 
 import static io.harness.rule.OwnerRule.PRABU;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,5 +85,12 @@ public class ServiceNowTaskNGTest extends CategoryTest {
     assertThat(serviceNowTaskNGParameters.getDelegateSelectors()).containsExactlyInAnyOrder("selector1");
     serviceNowTaskNGParameters.getServiceNowConnectorDTO().setDelegateSelectors(ImmutableSet.of("selector2"));
     assertThat(serviceNowTaskNGParameters.getDelegateSelectors()).containsExactlyInAnyOrder("selector1", "selector2");
+  }
+
+  @Test
+  @Owner(developers = PRABU)
+  @Category(UnitTests.class)
+  public void testisSupportingErrorFramework() {
+    assertThat(serviceNowTaskNG.isSupportingErrorFramework()).isTrue();
   }
 }

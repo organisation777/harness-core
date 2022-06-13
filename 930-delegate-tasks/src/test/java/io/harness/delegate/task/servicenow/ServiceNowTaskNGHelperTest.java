@@ -8,8 +8,7 @@
 package io.harness.delegate.task.servicenow;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.rule.OwnerRule.HINGER;
-import static io.harness.rule.OwnerRule.PRABU;
+import static io.harness.rule.OwnerRule.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,15 +16,16 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.beans.ci.vm.runner.SetupVmResponse;
 import io.harness.delegate.beans.connector.servicenow.ServiceNowConnectorDTO;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.HintException;
+import io.harness.exception.ServiceNowException;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.serializer.JsonUtils;
@@ -38,6 +38,7 @@ import software.wings.helpers.ext.servicenow.ServiceNowRestClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -401,5 +402,22 @@ public class ServiceNowTaskNGHelperTest extends CategoryTest {
     verify(secretDecryptionService).decrypt(any(), any());
 
     verify(serviceNowRestClient).getTemplateList(anyString(), eq("incident"), anyInt(), anyInt(), anyString());
+  }
+
+  @Test
+  @Owner(developers = vivekveman)
+  @Category(UnitTests.class)
+  public void responseTest() throws IOException {
+    Response<JsonNode> jsonNodeResponse = Response.success(200, null);
+
+    serviceNowTaskNgHelper.handleResponse(jsonNodeResponse, "Success Message");
+    ResponseBody body = mock(ResponseBody.class);
+    Response<JsonNode> jsonNodeResponse1 = Response.error(401, body);
+    assertThatThrownBy(() -> serviceNowTaskNgHelper.handleResponse(jsonNodeResponse1, any()))
+        .isInstanceOf(ServiceNowException.class);
+
+    Response<JsonNode> jsonNodeResponse2 = Response.error(404, body);
+    assertThatThrownBy(() -> serviceNowTaskNgHelper.handleResponse(jsonNodeResponse2, any()))
+        .isInstanceOf(ServiceNowException.class);
   }
 }
