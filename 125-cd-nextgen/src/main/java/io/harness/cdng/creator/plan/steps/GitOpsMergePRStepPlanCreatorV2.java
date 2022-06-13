@@ -12,8 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.GITOPS;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.gitops.MergePRStepNode;
 import io.harness.executions.steps.StepSpecTypeConstants;
-import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
-import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
 
 import com.google.common.collect.Sets;
 import java.util.Set;
