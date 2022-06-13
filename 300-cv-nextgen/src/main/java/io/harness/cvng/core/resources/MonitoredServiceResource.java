@@ -31,7 +31,6 @@ import io.harness.cvng.core.beans.monitoredService.HistoricalTrend;
 import io.harness.cvng.core.beans.monitoredService.MetricDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceChangeDetailSLO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
-import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListDashboardDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
@@ -201,20 +200,6 @@ public class MonitoredServiceResource {
       @QueryParam("pageSize") @NotNull Integer pageSize, @QueryParam("filter") String filter,
       @NotNull @QueryParam("servicesAtRiskFilter") @ApiParam(defaultValue = "false") boolean servicesAtRiskFilter) {
     return ResponseDTO.newResponse(monitoredServiceService.list(
-        projectParams, environmentIdentifier, offset, pageSize, filter, servicesAtRiskFilter));
-  }
-
-  @GET
-  @Timed
-  @ExceptionMetered
-  @Path("/V2")
-  @ApiOperation(value = "list monitored service data ", nickname = "listMonitoredService")
-  @NGAccessControlCheck(resourceType = MONITORED_SERVICE, permission = VIEW_PERMISSION)
-  public ResponseDTO<MonitoredServiceListDashboardDTO> listV2(@NotNull @Valid @BeanParam ProjectParams projectParams,
-      @QueryParam("environmentIdentifier") String environmentIdentifier, @QueryParam("offset") @NotNull Integer offset,
-      @QueryParam("pageSize") @NotNull Integer pageSize, @QueryParam("filter") String filter,
-      @NotNull @QueryParam("servicesAtRiskFilter") @ApiParam(defaultValue = "false") boolean servicesAtRiskFilter) {
-    return ResponseDTO.newResponse(monitoredServiceService.listV2(
         projectParams, environmentIdentifier, offset, pageSize, filter, servicesAtRiskFilter));
   }
 
