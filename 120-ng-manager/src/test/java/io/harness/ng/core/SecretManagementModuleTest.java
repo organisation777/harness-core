@@ -17,6 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import io.harness.CategoryTest;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -132,6 +133,13 @@ public class SecretManagementModuleTest extends CategoryTest {
       @Singleton
       AccountClient getAccountClient() {
         return mock(AccountClient.class);
+      }
+    });
+    modules.add(new ProviderModule() {
+      @Provides
+      @Singleton
+      AccessControlClient getAccessControlClient() {
+        return mock(AccessControlClient.class);
       }
     });
     modules.add(new ProviderModule() {
