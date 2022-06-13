@@ -21,6 +21,7 @@ import io.harness.eventsframework.EventsFrameworkConfiguration;
 import io.harness.ff.FeatureFlagConfig;
 import io.harness.grpc.client.GrpcClientConfig;
 import io.harness.mongo.MongoConfig;
+import io.harness.outbox.OutboxPollConfiguration;
 import io.harness.remote.CEAzureSetupConfig;
 import io.harness.remote.CEGcpSetupConfig;
 import io.harness.remote.client.ServiceHttpClientConfig;
@@ -102,6 +103,11 @@ public class CENextGenConfiguration extends Configuration {
   @JsonProperty(value = "awsConfig") @ConfigSecret private AwsConfig awsConfig;
 
   @JsonProperty("segmentConfiguration") @ConfigSecret private SegmentConfiguration segmentConfiguration;
+
+  @JsonProperty("auditClientConfig") private ServiceHttpClientConfig auditClientConfig;
+  @JsonProperty(value = "enableAudit") private boolean enableAudit;
+  @JsonProperty("exportMetricsToStackDriver") private boolean exportMetricsToStackDriver;
+  @JsonProperty("outboxPollConfig") private OutboxPollConfiguration outboxPollConfig;
 
   @JsonProperty(value = "hostname") private String hostname = "localhost";
   @JsonProperty(value = "basePathPrefix") private String basePathPrefix = "";

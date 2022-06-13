@@ -10,11 +10,14 @@ package io.harness.ccm.remote.resources.perspectives;
 import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.ccm.commons.utils.BigQueryHelper.UNIFIED_TABLE;
+import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
+import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ccm.auditEvents.PerspectiveCreateEvent;
 import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.budget.BudgetPeriod;
 import io.harness.ccm.commons.utils.BigQueryHelper;
@@ -35,6 +38,7 @@ import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.outbox.api.OutboxService;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.telemetry.Category;
 import io.harness.telemetry.TelemetryReporter;
@@ -43,6 +47,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -69,8 +74,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import lombok.extern.slf4j.Slf4j;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Api("perspective")
 @Path("perspective")
@@ -105,11 +113,16 @@ public class PerspectiveResource {
   private static final String DATA_SOURCES = "data_sources";
   private static final String IS_CLONE = "is_clone";
 
+  private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
+  private final TransactionTemplate transactionTemplate;
+  private final OutboxService outboxService;
+
   @Inject
   public PerspectiveResource(CEViewService ceViewService, CEReportScheduleService ceReportScheduleService,
       ViewCustomFieldService viewCustomFieldService, BigQueryService bigQueryService, BigQueryHelper bigQueryHelper,
       BudgetCostService budgetCostService, BudgetService budgetService, CCMNotificationService notificationService,
-      AwsAccountFieldHelper awsAccountFieldHelper, TelemetryReporter telemetryReporter) {
+      AwsAccountFieldHelper awsAccountFieldHelper, TelemetryReporter telemetryReporter,
+      @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate, OutboxService outboxService) {
     this.ceViewService = ceViewService;
     this.ceReportScheduleService = ceReportScheduleService;
     this.viewCustomFieldService = viewCustomFieldService;
@@ -120,6 +133,8 @@ public class PerspectiveResource {
     this.notificationService = notificationService;
     this.awsAccountFieldHelper = awsAccountFieldHelper;
     this.telemetryReporter = telemetryReporter;
+    this.transactionTemplate = transactionTemplate;
+    this.outboxService = outboxService;
   }
 
   @GET
@@ -264,11 +279,15 @@ public class PerspectiveResource {
       ceView.setUuid(null);
       ceView.setViewType(ViewType.CUSTOMER);
     }
-    CEView ceViewCheck = updateTotalCost(ceViewService.save(ceView, clone));
-    properties.put(PERSPECTIVE_ID, clone ? ceViewCheck.getUuid() : ceView.getUuid());
-    telemetryReporter.sendTrackEvent(
-        PERSPECTIVE_CREATED, null, accountId, properties, Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
-    return ResponseDTO.newResponse(ceViewCheck);
+    return ResponseDTO.newResponse(
+        Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
+          CEView ceViewCheck = updateTotalCost(ceViewService.save(ceView, clone));
+          properties.put(PERSPECTIVE_ID, clone ? ceViewCheck.getUuid() : ceView.getUuid());
+          telemetryReporter.sendTrackEvent(PERSPECTIVE_CREATED, null, accountId, properties,
+              Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
+          outboxService.save(new PerspectiveCreateEvent(ceView.getUuid(), ceView.toDTO()));
+          return ceViewCheck;
+        })));
   }
 
   private CEView updateTotalCost(CEView ceView) {
