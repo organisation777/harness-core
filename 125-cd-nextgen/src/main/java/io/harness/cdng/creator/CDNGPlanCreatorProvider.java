@@ -35,6 +35,7 @@ import io.harness.cdng.creator.plan.steps.CloudformationDeleteStackStepPlanCreat
 import io.harness.cdng.creator.plan.steps.CloudformationRollbackStackStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.CommandStepPlanCreator;
 import io.harness.cdng.creator.plan.steps.GitOpsCreatePRStepPlanCreatorV2;
+import io.harness.cdng.creator.plan.steps.GitOpsMergePRStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmDeployStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.HelmRollbackStepPlanCreatorV2;
 import io.harness.cdng.creator.plan.steps.K8sApplyStepPlanCreator;
@@ -111,6 +112,7 @@ public class CDNGPlanCreatorProvider implements PipelineServiceInfoProvider {
   public List<PartialPlanCreator<?>> getPlanCreators() {
     List<PartialPlanCreator<?>> planCreators = new LinkedList<>();
     planCreators.add(new GitOpsCreatePRStepPlanCreatorV2());
+    planCreators.add(new GitOpsMergePRStepPlanCreatorV2());
     planCreators.add(new DeploymentStagePMSPlanCreatorV2());
     planCreators.add(new ServicePlanCreatorV2());
     planCreators.add(new CDPMSStepPlanCreator());
