@@ -28,6 +28,7 @@ public enum Action {
   LOGIN,
   LOGIN2FA,
   UNSUCCESSFUL_LOGIN,
+  TOGGLE,
 
   // Deprecated
   ADD_MEMBERSHIP,
