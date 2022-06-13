@@ -8,9 +8,7 @@
 package io.harness.cvng.core.services.impl.monitoredService;
 
 import static io.harness.cvng.core.beans.params.ServiceEnvironmentParams.builderWithProjectParams;
-import static io.harness.cvng.notification.utils.NotificationRuleCommonUtils.COOL_OFF_DURATION;
-import static io.harness.cvng.notification.utils.NotificationRuleCommonUtils.getNotificationTemplateData;
-import static io.harness.cvng.notification.utils.NotificationRuleCommonUtils.getNotificationTemplateId;
+import static io.harness.cvng.notification.utils.NotificationRuleCommonUtils.*;
 import static io.harness.data.structure.CollectionUtils.distinctByKey;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -953,11 +951,11 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .stream()
             .map(monitoredService -> toMonitorServiceListDTO(monitoredService))
             .collect(Collectors.toList());
-    List<String> enabledServices = getEnabledMonitoredServices(projectParams.getAccountIdentifier())
-                                       .stream()
-                                       .filter(distinctByKey(x -> x.getServiceIdentifier()))
-                                       .map(MonitoredService::getServiceIdentifier)
-                                       .collect(Collectors.toList());
+    Set<String> enabledServices = getEnabledMonitoredServices(projectParams.getAccountIdentifier())
+                                      .stream()
+                                      .filter(distinctByKey(x -> x.getServiceIdentifier()))
+                                      .map(MonitoredService::getServiceIdentifier)
+                                      .collect(Collectors.toSet());
 
     PageResponse<MonitoredServiceListItemDTOBuilder> monitoredServiceListDTOBuilderPageResponse =
         PageUtils.offsetAndLimit(monitoredServiceListItemDTOS, offset, pageSize);
@@ -1006,8 +1004,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
       ChangeSummaryDTO changeSummary = changeSourceService.getChangeSummary(monitoredServiceParams,
           idToMonitoredServiceMap.get(monitoredServiceListDTOBuilder.getIdentifier()).getChangeSourceIdentifiers(),
           clock.instant().minus(Duration.ofDays(1)), clock.instant());
-      boolean serviceEnabled =
-          enabledServices.stream().anyMatch(x -> x.equals(monitoredServiceListDTOBuilder.getServiceRef()));
+      boolean serviceEnabled = enabledServices.contains(monitoredServiceListDTOBuilder.getServiceRef());
 
       monitoredServiceListDTOS.add(
           monitoredServiceListDTOBuilder.historicalTrend(historicalTrend)
