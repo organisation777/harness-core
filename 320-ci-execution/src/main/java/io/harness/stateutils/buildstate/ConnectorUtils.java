@@ -57,10 +57,8 @@ import io.harness.delegate.beans.connector.k8Connector.KubernetesCredentialType;
 import io.harness.delegate.beans.connector.scm.GitAuthType;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitConnectorDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
-import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpAuthenticationType;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoSshCredentialsDTO;
-import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoUsernameTokenDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessType;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
 import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketHttpCredentialsDTO;
@@ -302,8 +300,8 @@ public class ConnectorUtils {
       BitbucketConnectorDTO gitConfigDTO = (BitbucketConnectorDTO) gitConnector.getConnectorConfig();
       return fetchUserNameFromBitbucketConnector(gitConfigDTO, gitConnector.getIdentifier());
     } else if (gitConnector.getConnectorType() == AZURE_REPO) {
-      AzureRepoConnectorDTO gitConfigDTO = (AzureRepoConnectorDTO) gitConnector.getConnectorConfig();
-      return fetchUserNameFromAzureRepoConnector(gitConfigDTO);
+      // Username not needed for Azure.
+      return null;
     } else {
       throw new CIStageExecutionException("Unsupported git connector " + gitConnector.getConnectorType());
     }
@@ -686,20 +684,6 @@ public class ConnectorUtils {
         GitlabUsernameTokenDTO GitlabHttpCredentialsSpecDTO =
             (GitlabUsernameTokenDTO) gitlabHttpCredentialsDTO.getHttpCredentialsSpec();
         return GitlabHttpCredentialsSpecDTO.getUsername();
-      }
-    }
-
-    return null;
-  }
-
-  private String fetchUserNameFromAzureRepoConnector(AzureRepoConnectorDTO gitConfigDTO) {
-    if (gitConfigDTO.getAuthentication().getAuthType() == GitAuthType.HTTP) {
-      AzureRepoHttpCredentialsDTO azureRepoHttpCredentialsDTO =
-          (AzureRepoHttpCredentialsDTO) gitConfigDTO.getAuthentication().getCredentials();
-      if (azureRepoHttpCredentialsDTO.getType() == AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN) {
-        AzureRepoUsernameTokenDTO azureRepoUsernameTokenDTO =
-            (AzureRepoUsernameTokenDTO) azureRepoHttpCredentialsDTO.getHttpCredentialsSpec();
-        return azureRepoUsernameTokenDTO.getUsername();
       }
     }
 

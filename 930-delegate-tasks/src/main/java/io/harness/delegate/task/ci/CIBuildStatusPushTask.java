@@ -81,7 +81,7 @@ public class CIBuildStatusPushTask extends AbstractDelegateRunnableTask {
   private static final String BITBUCKET_API_URL = "https://api.bitbucket.org/";
   private static final String GITLAB_API_URL = "https://gitlab.com/api/";
   private static final String AZURE_REPO_API_URL = "https://dev.azure.com/";
-  private static final String AZURE_REPO_GENRE = "continuous-integration";
+  private static final String AZURE_REPO_GENRE = "HarnessCI";
   private static final String APP_URL = "https://app.harness.io";
   private static final String PATH_SEPARATOR = "/";
 
@@ -93,8 +93,10 @@ public class CIBuildStatusPushTask extends AbstractDelegateRunnableTask {
   @Override
   public DelegateResponseData run(TaskParameters parameters) {
     if (((CIBuildPushParameters) parameters).commandType == CIBuildPushTaskType.STATUS) {
+      String sha = "";
       try {
         CIBuildStatusPushParameters ciBuildStatusPushParameters = (CIBuildStatusPushParameters) parameters;
+        sha = ciBuildStatusPushParameters.getSha();
         boolean statusSent = false;
         if (ciBuildStatusPushParameters.getGitSCMType() == GitSCMType.GITHUB) {
           statusSent = sendBuildStatusToGitHub(ciBuildStatusPushParameters);
@@ -116,7 +118,7 @@ public class CIBuildStatusPushTask extends AbstractDelegateRunnableTask {
           return BuildStatusPushResponse.builder().status(Status.ERROR).build();
         }
       } catch (Exception ex) {
-        log.error("failed to send status", ex);
+        log.error(String.format("failed to send status for sha %s", sha), ex);
         return BuildStatusPushResponse.builder().status(Status.ERROR).build();
       }
     }
