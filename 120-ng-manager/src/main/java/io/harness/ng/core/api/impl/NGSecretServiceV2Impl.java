@@ -13,14 +13,16 @@ import static io.harness.delegate.beans.NgSetupFields.NG;
 import static io.harness.delegate.beans.NgSetupFields.OWNER;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.exception.WingsException.USER_SRE;
+import static io.harness.ng.accesscontrol.PlatformPermissions.VIEW_ORGANIZATION_PERMISSION;
+import static io.harness.ng.accesscontrol.PlatformResourceTypes.ORGANIZATION;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
 import static io.harness.secrets.SecretPermissions.SECRET_RESOURCE_TYPE;
 import static io.harness.secrets.SecretPermissions.SECRET_VIEW_PERMISSION;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
 
 import io.harness.accesscontrol.NGAccessDeniedException;
-import io.harness.accesscontrol.acl.api.Resource;
-import io.harness.accesscontrol.acl.api.ResourceScope;
+import io.harness.accesscontrol.acl.api.*;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.DelegateTaskRequest.DelegateTaskRequestBuilder;
@@ -62,6 +64,8 @@ import io.harness.utils.PageUtils;
 
 import software.wings.beans.TaskType;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -96,15 +100,14 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
   private final TransactionTemplate transactionTemplate;
   private final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
   private final TaskSetupAbstractionHelper taskSetupAbstractionHelper;
-  private final SecretPermissionValidator secretPermissionValidator;
+  private final AccessControlClient accessControlClient;
 
   @Inject
   public NGSecretServiceV2Impl(SecretRepository secretRepository, DelegateGrpcClientWrapper delegateGrpcClientWrapper,
       SshKeySpecDTOHelper sshKeySpecDTOHelper, NGSecretActivityService ngSecretActivityService,
       OutboxService outboxService, @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate,
       TaskSetupAbstractionHelper taskSetupAbstractionHelper,
-      WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper,
-      SecretPermissionValidator secretPermissionValidator) {
+      WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper, AccessControlClient accessControlClient) {
     this.secretRepository = secretRepository;
     this.outboxService = outboxService;
     this.delegateGrpcClientWrapper = delegateGrpcClientWrapper;
@@ -113,7 +116,7 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
     this.transactionTemplate = transactionTemplate;
     this.taskSetupAbstractionHelper = taskSetupAbstractionHelper;
     this.winRmCredentialsSpecDTOHelper = winRmCredentialsSpecDTOHelper;
-    this.secretPermissionValidator = secretPermissionValidator;
+    this.accessControlClient = accessControlClient;
   }
 
   @Override
@@ -339,8 +342,9 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
   @Override
   public Page<Secret> list(Criteria criteria, int page, int size) {
     List<ResourceScopeAndIdentifierDTO> secrets = secretRepository.findAllWithScopeAndIdentifierOnly(criteria);
-    Criteria permittedCriteria = new Criteria().orOperator(secrets.stream()
-                                                               .filter(this::checkAccess)
+    Criteria permittedCriteria = new Criteria().orOperator(Streams.stream(Iterables.partition(secrets, 1000))
+                                                               .map(this::checkAccess)
+                                                               .flatMap(List<ResourceScopeAndIdentifierDTO>::stream)
                                                                .map(secret
                                                                    -> Criteria.where(SecretKeys.identifier)
                                                                           .is(secret.getIdentifier())
@@ -355,15 +359,31 @@ public class NGSecretServiceV2Impl implements NGSecretServiceV2 {
         PageUtils.getPageRequest(page, size, Collections.singletonList(SecretKeys.createdAt + ",desc")));
   }
 
-  private boolean checkAccess(ResourceScopeAndIdentifierDTO secret) {
-    try {
-      secretPermissionValidator.checkForAccessOrThrow(
-          ResourceScope.of(secret.getAccountIdentifier(), secret.getOrgIdentifier(), secret.getProjectIdentifier()),
-          Resource.of(SECRET_RESOURCE_TYPE, secret.getIdentifier()), SECRET_VIEW_PERMISSION, null);
-      return true;
-    } catch (NGAccessDeniedException ex) {
-      return false;
-    }
+  private List<ResourceScopeAndIdentifierDTO> checkAccess(List<ResourceScopeAndIdentifierDTO> secrets) {
+    // owner of secret is null, so skipping checks in secretPermissionValidator
+    List<PermissionCheckDTO> permissionChecks =
+        secrets.stream()
+            .map(secret
+                -> PermissionCheckDTO.builder()
+                       .permission(SECRET_VIEW_PERMISSION)
+                       .resourceIdentifier(secret.getIdentifier())
+                       .resourceScope(ResourceScope.of(
+                           secret.getAccountIdentifier(), secret.getOrgIdentifier(), secret.getProjectIdentifier()))
+                       .resourceType(SECRET_RESOURCE_TYPE)
+                       .build())
+            .collect(Collectors.toList());
+    AccessCheckResponseDTO accessCheckResponse = accessControlClient.checkForAccess(permissionChecks);
+    return accessCheckResponse.getAccessControlList()
+        .stream()
+        .filter(AccessControlDTO::isPermitted)
+        .map(accessControlDTO
+            -> ResourceScopeAndIdentifierDTO.builder()
+                   .accountIdentifier(accessControlDTO.getResourceScope().getAccountIdentifier())
+                   .orgIdentifier(accessControlDTO.getResourceScope().getOrgIdentifier())
+                   .projectIdentifier(accessControlDTO.getResourceScope().getProjectIdentifier())
+                   .identifier(accessControlDTO.getResourceIdentifier())
+                   .build())
+        .collect(Collectors.toList());
   }
 
   @Override

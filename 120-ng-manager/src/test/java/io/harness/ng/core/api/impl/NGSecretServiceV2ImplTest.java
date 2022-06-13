@@ -80,7 +80,7 @@ public class NGSecretServiceV2ImplTest extends CategoryTest {
   private OutboxService outboxService;
   private TaskSetupAbstractionHelper taskSetupAbstractionHelper;
   private TransactionTemplate transactionTemplate;
-  private SecretPermissionValidator secretPermissionValidator;
+  private AccessControlClient accessControlClient;
   @Before
   public void setup() {
     secretRepository = mock(SecretRepository.class);
@@ -89,13 +89,13 @@ public class NGSecretServiceV2ImplTest extends CategoryTest {
     outboxService = mock(OutboxService.class);
     transactionTemplate = mock(TransactionTemplate.class);
     taskSetupAbstractionHelper = new TaskSetupAbstractionHelper();
-    secretPermissionValidator = mock(SecretPermissionValidator.class);
+    accessControlClient = mock(AccessControlClient.class);
     SshKeySpecDTOHelper sshKeySpecDTOHelper = mock(SshKeySpecDTOHelper.class);
     WinRmCredentialsSpecDTOHelper winRmCredentialsSpecDTOHelper = mock(WinRmCredentialsSpecDTOHelper.class);
 
     secretServiceV2 = new NGSecretServiceV2Impl(secretRepository, delegateGrpcClientWrapper, sshKeySpecDTOHelper,
         ngSecretActivityService, outboxService, transactionTemplate, taskSetupAbstractionHelper,
-        winRmCredentialsSpecDTOHelper, secretPermissionValidator);
+        winRmCredentialsSpecDTOHelper, accessControlClient);
     secretServiceV2Spy = spy(secretServiceV2);
   }
 
