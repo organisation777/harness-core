@@ -65,7 +65,7 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
   @NotNull
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
-  @VariableExpression(skipVariableExpression = true)
+  @VariableExpression(skipInnerObjectTraversal = true)
   ParameterField<Timeout> scriptTimeout;
 
   @VariableExpression(skipVariableExpression = true) List<NGVariable> outputVariables;
@@ -79,7 +79,7 @@ public class CustomApprovalStepInfo implements PMSStepInfo, WithDelegateSelector
   @NotNull
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
-  @VariableExpression(skipVariableExpression = true)
+  @VariableExpression(skipInnerObjectTraversal = true)
   ParameterField<Timeout> retryInterval;
 
   @NotNull @VariableExpression(skipVariableExpression = true) CriteriaSpecWrapper approvalCriteria;

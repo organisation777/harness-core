@@ -23,9 +23,11 @@ import io.harness.steps.approval.step.evaluation.ConditionEvaluator;
 
 import java.util.List;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(CDC)
+@Slf4j
 @UtilityClass
 public class CustomApprovalCriteriaEvaluator {
   public static boolean evaluateCriteria(CustomApprovalTicketNG ticket, CriteriaSpecDTO criteriaSpec) {
@@ -76,7 +78,8 @@ public class CustomApprovalCriteriaEvaluator {
         Operator operator = condition.getOperator();
         String standardValue = condition.getValue();
         if (!ticket.getFields().containsKey(condition.getKey())) {
-          throw new ApprovalStepNGException("Field " + condition.getKey() + " doesn't exist in ticket", true);
+          log.warn("Field {} is not exported. Evaluating criteria to false", condition.getKey());
+          return false;
         }
         Object ticketValue = ticket.getFields().get(condition.getKey());
         Object ticketDisplayValue = ticket.getFields().get(condition.getKey());
