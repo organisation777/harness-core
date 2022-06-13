@@ -70,7 +70,7 @@ import retrofit2.Response;
 
 @Slf4j
 public class GitopsClustersStep implements SyncExecutableWithRbac<ClusterStepParameters> {
-  private static final String GITOPS_SWEEPING_OUTPUT = "gitops";
+  public static final String GITOPS_SWEEPING_OUTPUT = "gitops";
   private static final int UNLIMITED_SIZE = 100000;
 
   @Inject private ClusterService clusterService;
