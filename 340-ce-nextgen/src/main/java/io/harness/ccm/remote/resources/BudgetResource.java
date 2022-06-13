@@ -13,6 +13,7 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
+import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.entities.billing.Budget;
 import io.harness.ccm.commons.entities.budget.BudgetData;
@@ -86,6 +87,7 @@ public class BudgetResource {
   @LogAccountIdentifier
   @ExceptionMetered
   @Consumes(MediaType.APPLICATION_JSON)
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_edit")
   @ApiOperation(value = "Create budget", nickname = "createBudget")
   @Operation(operationId = "createBudget",
       description =
@@ -119,6 +121,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_edit")
   @ApiOperation(value = "Clone budget", nickname = "cloneBudget")
   @Operation(operationId = "cloneBudget", description = "Clone a Cloud Cost Budget using the given Budget ID.",
       summary = "Clone a budget",
@@ -141,6 +144,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_view")
   @ApiOperation(value = "Get budget", nickname = "getBudget")
   @Operation(operationId = "getBudget", description = "Fetch details of a Cloud Cost Budget for the given Budget ID.",
       summary = "Fetch Budget details",
@@ -161,6 +165,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_view")
   @ApiOperation(value = "List Budgets for account", nickname = "listBudgetsForAccount")
   @Operation(operationId = "listBudgets", description = "List all the Cloud Cost Budgets.",
       summary = "List all the Budgets",
@@ -181,6 +186,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_view")
   @ApiOperation(value = "List Budgets for Perspective", nickname = "listBudgetsForPerspective")
   @Operation(operationId = "listBudgetsForPerspective",
       description = "List all the Cloud Cost Budgets associated for the given Perspective ID.",
@@ -203,6 +209,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_edit")
   @ApiOperation(value = "Update budget", nickname = "updateBudget")
   @Operation(operationId = "updateBudget",
       description = "Update an existing Cloud Cost Budget for the given Budget ID.",
@@ -227,6 +234,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_delete")
   @ApiOperation(value = "Delete budget", nickname = "deleteBudget")
   @Operation(operationId = "deleteBudget", description = "Delete a Cloud Cost Budget for the given Budget ID.",
       summary = "Delete a budget",
@@ -282,6 +290,7 @@ public class BudgetResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = "BUDGET", permission = "ccm_budget_view")
   @ApiOperation(value = "Get cost details for budget", nickname = "getCostDetails")
   @Operation(operationId = "getCostDetails",
       description = "Fetch the cost details of a Cloud Cost Budget for the given Budget ID.",
