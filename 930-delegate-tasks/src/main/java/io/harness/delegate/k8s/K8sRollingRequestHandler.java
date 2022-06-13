@@ -45,6 +45,7 @@ import io.harness.delegate.task.k8s.K8sRollingDeployResponse;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.k8s.KubernetesContainerService;
+import io.harness.k8s.KubernetesSteadyStateService;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.manifest.ManifestHelper;
 import io.harness.k8s.model.K8sDelegateTaskParams;
@@ -81,6 +82,7 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
   @Inject private K8sTaskHelperBase k8sTaskHelperBase;
   @Inject K8sRollingBaseHandler k8sRollingBaseHandler;
   @Inject private ContainerDeploymentDelegateBaseHelper containerDeploymentDelegateBaseHelper;
+  @Inject private KubernetesSteadyStateService kubernetesSteadyStateService;
 
   private KubernetesConfig kubernetesConfig;
   private Kubectl client;
@@ -147,10 +149,14 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
           k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, WaitForSteadyState, true, commandUnitsProgress);
 
       try {
-        k8sTaskHelperBase.doStatusCheckForAllResources(client, managedWorkloadKubernetesResourceIds,
-            k8sDelegateTaskParams, kubernetesConfig.getNamespace(), waitForeSteadyStateLogCallback,
-            customWorkloads.isEmpty(), true);
-
+        if (k8sRollingDeployRequest.isUseK8sApiForSteadyStateCheck()) {
+          kubernetesSteadyStateService.performSteadyStateCheck(kubernetesConfig, managedWorkloadKubernetesResourceIds,
+              kubernetesConfig.getNamespace(), waitForeSteadyStateLogCallback, steadyStateTimeoutInMillis);
+        } else {
+          k8sTaskHelperBase.doStatusCheckForAllResources(client, managedWorkloadKubernetesResourceIds,
+              k8sDelegateTaskParams, kubernetesConfig.getNamespace(), waitForeSteadyStateLogCallback,
+              customWorkloads.isEmpty(), true);
+        }
         k8sTaskHelperBase.doStatusCheckForAllCustomResources(client, customWorkloads, k8sDelegateTaskParams,
             waitForeSteadyStateLogCallback, true, steadyStateTimeoutInMillis, true);
       } finally {

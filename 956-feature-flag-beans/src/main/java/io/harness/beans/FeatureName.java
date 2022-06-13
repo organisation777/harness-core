@@ -10,6 +10,7 @@ package io.harness.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureFlag.Scope;
+
 import lombok.Getter;
 
 /**
@@ -346,6 +347,7 @@ public enum FeatureName {
   HELP_PANEL,
   CHAOS_ENABLED,
   DEPLOYMENT_SUBFORMIK_APPLICATION_DROPDOWN,
+  USE_K8S_API_FOR_STEADY_STATE_CHECK,
   USAGE_SCOPE_RBAC,
   ALLOW_USER_TYPE_FIELDS_JIRA,
   HARD_DELETE_SECRETS,
