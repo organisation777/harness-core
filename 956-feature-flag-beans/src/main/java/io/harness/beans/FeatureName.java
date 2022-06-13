@@ -365,8 +365,7 @@ public enum FeatureName {
   JDK11_DELEGATE,
   JDK11_WATCHER,
   NG_FILE_STORE,
-  ACCOUNT_BASIC_ROLE,
-  WATCHER_VERSION_FROM_MANAGER;
+  ACCOUNT_BASIC_ROLE;
 
   FeatureName() {
     scope = Scope.PER_ACCOUNT;
