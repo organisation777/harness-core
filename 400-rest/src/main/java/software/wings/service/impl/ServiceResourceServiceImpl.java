@@ -31,13 +31,7 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 import static io.harness.validation.PersistenceValidator.duplicateCheck;
 import static io.harness.validation.Validator.notNullCheck;
 
-import static software.wings.api.DeploymentType.AZURE_WEBAPP;
-import static software.wings.api.DeploymentType.CUSTOM;
-import static software.wings.api.DeploymentType.ECS;
-import static software.wings.api.DeploymentType.HELM;
-import static software.wings.api.DeploymentType.KUBERNETES;
-import static software.wings.api.DeploymentType.PCF;
-import static software.wings.api.DeploymentType.valueOf;
+import static software.wings.api.DeploymentType.*;
 import static software.wings.beans.ConfigFile.DEFAULT_TEMPLATE_ID;
 import static software.wings.beans.EntityVersion.Builder.anEntityVersion;
 import static software.wings.beans.Service.GLOBAL_SERVICE_NAME_FOR_YAML;
@@ -50,6 +44,7 @@ import static software.wings.beans.yaml.YamlConstants.APP_SETTINGS_FILE;
 import static software.wings.beans.yaml.YamlConstants.CONN_STRINGS_FILE;
 import static software.wings.beans.yaml.YamlConstants.EMPTY_SETTINGS_CONTENT;
 import static software.wings.service.intfc.ServiceVariableService.EncryptedFieldMode.OBTAIN_VALUE;
+import static software.wings.settings.SettingVariableTypes.AZURE;
 import static software.wings.yaml.YamlHelper.trimYaml;
 
 import static java.lang.String.format;
@@ -207,6 +202,7 @@ import software.wings.service.intfc.ownership.OwnedByService;
 import software.wings.service.intfc.template.TemplateService;
 import software.wings.service.intfc.verification.CVConfigurationService;
 import software.wings.service.intfc.yaml.YamlPushService;
+import software.wings.settings.SettingVariableTypes;
 import software.wings.sm.ContextElement;
 import software.wings.stencils.DataProvider;
 import software.wings.stencils.Stencil;
@@ -508,7 +504,60 @@ public class ServiceResourceServiceImpl implements ServiceResourceService, DataP
       throw new InvalidRequestException(
           "Artifact from Manifest flag can be set to true only for kubernetes and helm deployment types");
     }
-
+    // Checking Artifact Type for respective Deployment type
+    switch (service.getDeploymentType()) {
+      case KUBERNETES:
+        if(service.getArtifactType() != ArtifactType.DOCKER) {
+          throw new InvalidRequestException(
+                  "Only Docker ArtifactType allowed for KUBERNETES Deployment Type "
+          );
+        }
+        break;
+      case HELM:
+        if( service.getArtifactType() != ArtifactType.DOCKER){
+          throw new InvalidRequestException(
+                  "Only Docker ArtifactType allowed for given Deployment Type "
+          );
+        }
+        break;
+      case ECS:
+        if( service.getArtifactType() != ArtifactType.DOCKER) {
+          throw new InvalidRequestException(
+                  "Only DOCKER ArtifactType allowed for given Deployment Type "
+          );
+        }
+        break;
+      case AWS_CODEDEPLOY:
+        if( service.getArtifactType() != ArtifactType.AWS_CODEDEPLOY){
+          throw new InvalidRequestException(
+                  "Only AWS_CODEDEPLOY ArtifactType allowed for given Deployment Type "
+          );
+        }
+        break;
+      case AWS_LAMBDA:
+        if(service.getArtifactType() != ArtifactType.AWS_LAMBDA){
+          throw new InvalidRequestException(
+                  "Only AWS_Lambda ArtifactType allowed for given Deployment Type "
+          );
+        }
+        break;
+      case AMI:
+        if(service.getArtifactType() != ArtifactType.AMI){
+          throw new InvalidRequestException(
+                  "Only AMI ArtifactType allowed for given Deployment Type "
+          );
+        }
+        break;
+      case PCF:
+        if(service.getArtifactType() != ArtifactType.PCF){
+          throw new InvalidRequestException(
+                  "Only PCF ArtifactType allowed for given Deployment Type "
+          );
+        }
+        break;
+      default:
+        break;
+    }
     // TODO: ASR: IMP: update the block below for artifact variables as service variable
     if (createdFromYaml) {
       if (featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {

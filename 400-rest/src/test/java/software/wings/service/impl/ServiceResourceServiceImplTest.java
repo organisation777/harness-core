@@ -13,18 +13,8 @@ import static io.harness.beans.SearchFilter.Operator.NOT_EXISTS;
 import static io.harness.beans.SearchFilter.Operator.OR;
 import static io.harness.k8s.model.HelmVersion.V2;
 import static io.harness.k8s.model.HelmVersion.V3;
-import static io.harness.rule.OwnerRule.AGORODETKI;
-import static io.harness.rule.OwnerRule.ANSHUL;
-import static io.harness.rule.OwnerRule.ARVIND;
-import static io.harness.rule.OwnerRule.IVAN;
-import static io.harness.rule.OwnerRule.MILOS;
-import static io.harness.rule.OwnerRule.POOJA;
-import static io.harness.rule.OwnerRule.RAMA;
-import static io.harness.rule.OwnerRule.ROHITKARELIA;
-import static io.harness.rule.OwnerRule.TATHAGAT;
-import static io.harness.rule.OwnerRule.VAIBHAV_SI;
-import static io.harness.rule.OwnerRule.YOGESH;
 
+import static io.harness.rule.OwnerRule.*;
 import static software.wings.api.DeploymentType.AWS_CODEDEPLOY;
 import static software.wings.api.DeploymentType.CUSTOM;
 import static software.wings.api.DeploymentType.HELM;
@@ -1135,5 +1125,26 @@ public class ServiceResourceServiceImplTest extends WingsBaseTest {
     k8sService.setDeploymentType(KUBERNETES);
     spyServiceResourceService.checkAndSetServiceAsK8sV2(k8sService);
     assertThat(k8sService.isK8sV2()).isTrue();
+  }
+
+  @Test
+  @Owner(developers = TARUN_UBA)
+  @Category(UnitTests.class)
+  public void testSavingK8Artifact() {
+    when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
+    when(featureFlagService.isEnabled(FeatureName.HARNESS_TAGS, ACCOUNT_ID)).thenReturn(true);
+    when(limitCheckerFactory.getInstance(new Action(anyString(), ActionType.CREATE_SERVICE)))
+            .thenReturn(new MockChecker(true, ActionType.CREATE_SERVICE));
+
+    Service k8sService = Service.builder()
+            .name(SERVICE_NAME)
+            .accountId(ACCOUNT_ID)
+            .appId(APP_ID)
+            .deploymentType(KUBERNETES)
+            .artifactType(ArtifactType.DOCKER)
+            .description("Description")
+            .isK8sV2(true)
+            .build();
+    Service service = serviceResourceService.save(k8sService);
   }
 }
