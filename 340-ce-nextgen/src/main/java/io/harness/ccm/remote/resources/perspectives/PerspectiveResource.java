@@ -279,12 +279,12 @@ public class PerspectiveResource {
       ceView.setUuid(null);
       ceView.setViewType(ViewType.CUSTOMER);
     }
+    CEView ceViewCheck = updateTotalCost(ceViewService.save(ceView, clone));
+    properties.put(PERSPECTIVE_ID, clone ? ceViewCheck.getUuid() : ceView.getUuid());
+    telemetryReporter.sendTrackEvent(
+        PERSPECTIVE_CREATED, null, accountId, properties, Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
     return ResponseDTO.newResponse(
         Failsafe.with(transactionRetryPolicy).get(() -> transactionTemplate.execute(status -> {
-          CEView ceViewCheck = updateTotalCost(ceViewService.save(ceView, clone));
-          properties.put(PERSPECTIVE_ID, clone ? ceViewCheck.getUuid() : ceView.getUuid());
-          telemetryReporter.sendTrackEvent(PERSPECTIVE_CREATED, null, accountId, properties,
-              Collections.singletonMap(AMPLITUDE, true), Category.GLOBAL);
           outboxService.save(new PerspectiveCreateEvent(ceView.getUuid(), ceView.toDTO()));
           return ceViewCheck;
         })));
