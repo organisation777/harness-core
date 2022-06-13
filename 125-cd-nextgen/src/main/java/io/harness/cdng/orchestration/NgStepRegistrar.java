@@ -18,6 +18,7 @@ import io.harness.cdng.configfile.steps.ConfigFilesStep;
 import io.harness.cdng.configfile.steps.IndividualConfigFileStep;
 import io.harness.cdng.creator.plan.environment.steps.EnvironmentStepV2;
 import io.harness.cdng.gitops.CreatePRStep;
+import io.harness.cdng.gitops.steps.GitopsClustersStep;
 import io.harness.cdng.gitops.MergePRStep;
 import io.harness.cdng.helm.HelmDeployStep;
 import io.harness.cdng.helm.HelmRollbackStep;
@@ -124,6 +125,7 @@ public class NgStepRegistrar {
     engineSteps.put(ConfigFilesStep.STEP_TYPE, ConfigFilesStep.class);
     engineSteps.put(CommandStep.STEP_TYPE, CommandStep.class);
     engineSteps.putAll(NGCommonUtilStepsRegistrar.getEngineSteps());
+    engineSteps.put(GitopsClustersStep.STEP_TYPE, GitopsClustersStep.class);
     return engineSteps;
   }
 }
