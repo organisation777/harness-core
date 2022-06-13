@@ -388,6 +388,10 @@ public class NGTriggerElementMapper {
     } else if (webhookEventPayloadParser.containsHeaderKey(headers, X_VSS_HEADER)) {
       webhookTriggerType = AZURE;
     } else {
+      if (isEmpty(accountIdentifier) || isEmpty(orgIdentifier) || isEmpty(projectIdentifier)) {
+        throw new InvalidRequestException(
+            "AccountIdentifier, OrgIdentifier, ProjectIdentifier can not be null for custom webhook executions");
+      }
       webhookTriggerType = CUSTOM;
     }
 
