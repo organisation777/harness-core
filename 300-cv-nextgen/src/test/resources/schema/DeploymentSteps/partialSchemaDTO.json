@@ -102,6 +102,7 @@
         "CVNGStepInfo": {
           "type": "object",
           "required": [
+            "spec",
             "type"
           ],
           "properties": {
@@ -282,7 +283,10 @@
               "$ref": "#/definitions/cvng/MonitoredServiceSpec"
             },
             {
-              "type": "object"
+              "type": "object",
+              "properties": {
+
+              }
             }
           ],
           "$schema": "http://json-schema.org/draft-07/schema#"
@@ -360,6 +364,10 @@
           ],
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
+        "JsonNode": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
         "ManualFailureSpecConfig": {
           "type": "object",
           "required": [
@@ -428,6 +436,7 @@
         "MonitoredServiceNode": {
           "type": "object",
           "required": [
+            "spec",
             "type"
           ],
           "properties": {
@@ -441,7 +450,7 @@
               "if": {
                 "properties": {
                   "type": {
-                    "const": "CONFIGURED"
+                    "const": "Configured"
                   }
                 }
               },
@@ -457,7 +466,7 @@
               "if": {
                 "properties": {
                   "type": {
-                    "const": "DEFAULT"
+                    "const": "Default"
                   }
                 }
               },
@@ -473,7 +482,7 @@
               "if": {
                 "properties": {
                   "type": {
-                    "const": "TEMPLATE"
+                    "const": "Template"
                   }
                 }
               },
@@ -490,6 +499,11 @@
         "MonitoredServiceSpec": {
           "type": "object",
           "discriminator": "type",
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "OnFailureConfig": {
@@ -732,11 +746,15 @@
               "type": "object",
               "required": [
                 "monitoredServiceTemplateRef",
+                "templateInputs",
                 "versionLabel"
               ],
               "properties": {
                 "monitoredServiceTemplateRef": {
                   "type": "string"
+                },
+                "templateInputs": {
+                  "$ref": "#/definitions/cvng/JsonNode"
                 },
                 "versionLabel": {
                   "type": "string"
@@ -753,7 +771,9 @@
             },
             {
               "type": "object",
-              "properties": {}
+              "properties": {
+
+              }
             }
           ],
           "$schema": "http://json-schema.org/draft-07/schema#"
@@ -790,4 +810,5 @@
   "namespace": "cvng",
   "skipStageSchema": true,
   "moduleType": "CV"
+}
 }

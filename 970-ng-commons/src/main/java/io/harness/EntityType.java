@@ -244,7 +244,9 @@ public enum EntityType {
       ModuleType.CORE, EntityTypeConstants.INFRASTRUCTURE, IdentifierRef.class, EntityYamlRootNames.INFRASTRUCTURE),
   @JsonProperty(EntityTypeConstants.JENKINS_BUILD)
   JENKINS_BUILD(
-      ModuleType.PMS, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD);
+      ModuleType.PMS, EntityTypeConstants.JENKINS_BUILD, IdentifierRef.class, EntityYamlRootNames.JENKINS_BUILD),
+  @JsonProperty(EntityTypeConstants.COMMAND)
+  COMMAND_STEP(ModuleType.CD, EntityTypeConstants.COMMAND, IdentifierRef.class, EntityYamlRootNames.COMMAND);
 
   private final ModuleType moduleType;
   String yamlName;

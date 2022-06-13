@@ -95,4 +95,5 @@ public interface EntityTypeConstants {
   String CLOUDFORMATION_ROLLBACK_STACK_STEP = "RollbackStack";
   String INFRASTRUCTURE = "Infrastructure";
   String JENKINS_BUILD = "JenkinsBuild";
+  String COMMAND = "Command";
 }

@@ -67,6 +67,7 @@ public enum FeatureRestrictionName {
   DELETE_STACK,
   ROLLBACK_STACK,
   JENKINS_BUILD,
+  COMMAND,
 
   // STO Features
   SECURITY,
