@@ -55,7 +55,9 @@ public class MergePRStep extends TaskChainExecutableWithRollbackAndRbac {
                                                .build();
 
   @Override
-  public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {}
+  public void validateResources(Ambiance ambiance, StepElementParameters stepParameters) {
+    // Nothing to validate
+  }
 
   @Override
   public TaskChainResponse executeNextLinkWithSecurityContext(Ambiance ambiance, StepElementParameters stepParameters,
@@ -107,10 +109,7 @@ public class MergePRStep extends TaskChainExecutableWithRollbackAndRbac {
         TaskSelectorYaml.toTaskSelector(emptyIfNull(getParameterFieldValue(gitOpsSpecParams.getDelegateSelectors()))),
         stepHelper.getEnvironmentType(ambiance));
 
-    return TaskChainResponse.builder()
-        .chainEnd(true)
-        .taskRequest(taskRequest)
-        .build();
+    return TaskChainResponse.builder().chainEnd(true).taskRequest(taskRequest).build();
   }
 
   @Override

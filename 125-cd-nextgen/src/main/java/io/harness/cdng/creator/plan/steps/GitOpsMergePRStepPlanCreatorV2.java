@@ -29,9 +29,4 @@ public class GitOpsMergePRStepPlanCreatorV2 extends CDPMSStepPlanCreatorV2<Merge
   public Class<MergePRStepNode> getFieldClass() {
     return MergePRStepNode.class;
   }
-
-  @Override
-  public PlanCreationResponse createPlanForField(PlanCreationContext ctx, MergePRStepNode stepElement) {
-    return super.createPlanForField(ctx, stepElement);
-  }
 }
