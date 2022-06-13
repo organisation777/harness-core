@@ -13,7 +13,6 @@ import static javax.cache.expiry.Duration.TWENTY_MINUTES;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.HarnessCacheManager;
-import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.version.VersionInfoManager;
 
 import software.wings.beans.ApiKeyEntry;
@@ -123,9 +122,9 @@ public class ManagerCacheRegistrar extends AbstractModule {
   @Provides
   @Named(SECRET_TOKEN_CACHE)
   @Singleton
-  public Cache<String, EncryptedRecordData> getSecretTokenCache(
+  public Cache<String, Object> getSecretTokenCache(
       HarnessCacheManager harnessCacheManager, VersionInfoManager versionInfoManager) {
-    return harnessCacheManager.getCache(SECRET_TOKEN_CACHE, String.class, EncryptedRecordData.class,
+    return harnessCacheManager.getCache(SECRET_TOKEN_CACHE, String.class, Object.class,
         CreatedExpiryPolicy.factoryOf(TWENTY_MINUTES), versionInfoManager.getVersionInfo().getBuildNo());
   }
 
@@ -155,7 +154,7 @@ public class ManagerCacheRegistrar extends AbstractModule {
     }, Names.named(APIKEY_RESTRICTION_CACHE)));
     mapBinder.addBinding(WHITELIST_CACHE).to(Key.get(new TypeLiteral<Cache<String, WhitelistConfig>>() {
     }, Names.named(WHITELIST_CACHE)));
-    mapBinder.addBinding(SECRET_TOKEN_CACHE).to(Key.get(new TypeLiteral<Cache<String, EncryptedRecordData>>() {
+    mapBinder.addBinding(SECRET_TOKEN_CACHE).to(Key.get(new TypeLiteral<Cache<String, Object>>() {
     }, Names.named(SECRET_TOKEN_CACHE)));
   }
 

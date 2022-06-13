@@ -259,7 +259,7 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   @Inject private DelegateSetupService delegateSetupService;
   @Inject private AuditHelper auditHelper;
   @Inject private DelegateMetricsService delegateMetricsService;
-  @Inject @Named(SECRET_TOKEN_CACHE) Cache<String, EncryptedRecordData> secretsCache;
+  @Inject @Named(SECRET_TOKEN_CACHE) Cache<String, Object> secretsCache;
   @Inject @Getter private Subject<DelegateObserver> subject = new Subject<>();
 
   private static final SecureRandom random = new SecureRandom();

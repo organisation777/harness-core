@@ -46,7 +46,7 @@ public class ManagerPreExecutionExpressionEvaluator extends ExpressionEvaluator 
       FeatureFlagService featureFlagService, ManagerDecryptionService managerDecryptionService,
       SecretManager secretManager, String accountId, String workflowExecutionId, int expressionFunctorToken,
       SecretManagerClientService ngSecretService, Map<String, String> taskSetupAbstractions,
-      Cache<String, EncryptedRecordData> secretsCache) {
+      Cache<String, Object> secretsCache) {
     String appId = taskSetupAbstractions == null ? null : taskSetupAbstractions.get(Cd1SetupFields.APP_ID_FIELD);
     String envId = taskSetupAbstractions == null ? null : taskSetupAbstractions.get(Cd1SetupFields.ENV_ID_FIELD);
     String serviceTemplateId =

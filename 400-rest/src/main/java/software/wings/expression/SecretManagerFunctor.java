@@ -61,7 +61,7 @@ public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFun
   private FeatureFlagService featureFlagService;
   private ManagerDecryptionService managerDecryptionService;
   private SecretManager secretManager;
-  private final Cache<String, EncryptedRecordData> secretsCache;
+  private final Cache<String, Object> secretsCache;
   private String accountId;
   private String appId;
   private String envId;
@@ -168,10 +168,16 @@ public class SecretManagerFunctor implements ExpressionFunctor, SecretManagerFun
             .collect(Collectors.toList());
 
     if (isNotEmpty(localEncryptedDetails)) {
-      EncryptedRecordData locallyEncryptedData = secretsCache.get(encryptedData.getUuid());
+      Object cacheValue = secretsCache.get(encryptedData.getUuid());
+      EncryptedRecordData locallyEncryptedData = null;
+
+      if (cacheValue instanceof EncryptedRecordData) {
+        locallyEncryptedData = (EncryptedRecordData) cacheValue;
+      }
       String secretValue;
       if (locallyEncryptedData == null) {
-        log.debug("Cache miss for secret with name: {}", serviceVariable.getSecretTextName());
+        log.info(
+            "Cache miss for secret with name: {} {} ", serviceVariable.getSecretTextName(), encryptedData.getUuid());
         managerDecryptionService.decrypt(serviceVariable, localEncryptedDetails);
         secretValue = new String(serviceVariable.getValue());
         String localEncryptionKey = generateUuid();
