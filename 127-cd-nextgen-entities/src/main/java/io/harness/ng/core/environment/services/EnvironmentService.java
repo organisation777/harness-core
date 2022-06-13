@@ -32,6 +32,8 @@ public interface EnvironmentService {
   boolean delete(
       String accountId, String orgIdentifier, String projectIdentifier, String environmentIdentifier, Long version);
 
+  boolean forceDeleteAllInProject(String accountId, String orgIdentifier, String projectIdentifier);
+
   List<Environment> listAccess(Criteria criteria);
 
   List<String> fetchesNonDeletedEnvIdentifiersFromList(
@@ -39,4 +41,7 @@ public interface EnvironmentService {
 
   List<Environment> fetchesNonDeletedEnvironmentFromListOfIdentifiers(
       String accountId, String orgIdentifier, String projectIdentifier, List<String> envIdentifierList);
+
+  String createEnvironmentInputsYaml(
+      String accountId, String projectIdentifier, String orgIdentifier, String envIdentifier);
 }
