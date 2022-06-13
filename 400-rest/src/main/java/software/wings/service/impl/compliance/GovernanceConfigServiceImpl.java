@@ -101,6 +101,7 @@ import org.mongodb.morphia.query.UpdateOperations;
 public class GovernanceConfigServiceImpl implements GovernanceConfigService {
   private static final long MIN_FREEZE_WINDOW_TIME = 1800000L;
   private static final long MAX_FREEZE_WINDOW_TIME = 31536000000L;
+  private static final String GOVERNANCE_CONFIG = "GOVERNANCE_CONFIG";
 
   @Inject private WingsPersistence wingsPersistence;
   @Inject private AccountService accountService;
@@ -271,10 +272,10 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
     Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
 
     for (String id : parentsToRemove) {
-      userGroupService.removeParentsReference(id, accountId, appId, entityId, "GOVERNANCE_CONFIG");
+      userGroupService.removeParentsReference(id, accountId, appId, entityId, GOVERNANCE_CONFIG);
     }
     for (String id : parentsToAdd) {
-      userGroupService.addParentsReference(id, accountId, appId, entityId, "GOVERNANCE_CONFIG");
+      userGroupService.addParentsReference(id, accountId, appId, entityId, GOVERNANCE_CONFIG);
     }
   }
 
