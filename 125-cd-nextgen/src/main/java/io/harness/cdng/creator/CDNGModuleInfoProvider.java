@@ -7,10 +7,13 @@
 
 package io.harness.cdng.creator;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactsOutcome;
+import io.harness.cdng.gitops.steps.GitopsClustersStep;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.steps.InfrastructureStep;
 import io.harness.cdng.pipeline.executions.beans.CDPipelineModuleInfo;
@@ -19,11 +22,12 @@ import io.harness.cdng.pipeline.executions.beans.CDStageModuleInfo;
 import io.harness.cdng.pipeline.executions.beans.CDStageModuleInfo.CDStageModuleInfoBuilder;
 import io.harness.cdng.pipeline.executions.beans.InfraExecutionSummary;
 import io.harness.cdng.pipeline.executions.beans.ServiceExecutionSummary;
+import io.harness.cdng.pipeline.executions.beans.ServiceExecutionSummary.ArtifactsSummary;
+import io.harness.cdng.pipeline.executions.beans.ServiceExecutionSummary.ArtifactsSummary.ArtifactsSummaryBuilder;
 import io.harness.cdng.service.steps.ServiceConfigStep;
 import io.harness.cdng.service.steps.ServiceSectionStep;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepType;
@@ -40,6 +44,7 @@ import io.harness.steps.environment.EnvironmentOutcome;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.vavr.collection.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,10 +54,8 @@ import java.util.stream.Collectors;
 public class CDNGModuleInfoProvider implements ExecutionSummaryModuleInfoProvider {
   @Inject OutcomeService outcomeService;
 
-  public ServiceExecutionSummary.ArtifactsSummary mapArtifactsOutcomeToSummary(
-      Optional<ArtifactsOutcome> artifactsOutcomeOptional) {
-    ServiceExecutionSummary.ArtifactsSummary.ArtifactsSummaryBuilder artifactsSummaryBuilder =
-        ServiceExecutionSummary.ArtifactsSummary.builder();
+  public ArtifactsSummary mapArtifactsOutcomeToSummary(Optional<ArtifactsOutcome> artifactsOutcomeOptional) {
+    ArtifactsSummaryBuilder artifactsSummaryBuilder = ArtifactsSummary.builder();
     if (artifactsOutcomeOptional == null || !artifactsOutcomeOptional.isPresent()) {
       return artifactsSummaryBuilder.build();
     }
@@ -62,7 +65,7 @@ public class CDNGModuleInfoProvider implements ExecutionSummaryModuleInfoProvide
       artifactsSummaryBuilder.primary(artifactsOutcome.getPrimary().getArtifactSummary());
     }
 
-    if (EmptyPredicate.isNotEmpty(artifactsOutcome.getSidecars())) {
+    if (isNotEmpty(artifactsOutcome.getSidecars())) {
       artifactsSummaryBuilder.sidecars(artifactsOutcome.getSidecars()
                                            .values()
                                            .stream()
@@ -108,7 +111,8 @@ public class CDNGModuleInfoProvider implements ExecutionSummaryModuleInfoProvide
   }
 
   private boolean isInfrastructureNodeAndCompleted(StepType stepType, Status status) {
-    return Objects.equals(stepType, InfrastructureStep.STEP_TYPE) && StatusUtils.isFinalStatus(status);
+    return List.of(InfrastructureStep.STEP_TYPE, GitopsClustersStep.STEP_TYPE).contains(stepType)
+        && StatusUtils.isFinalStatus(status);
   }
 
   @Override
