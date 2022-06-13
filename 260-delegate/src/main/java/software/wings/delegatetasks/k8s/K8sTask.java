@@ -107,7 +107,6 @@ public class K8sTask extends AbstractDelegateRunnableTask {
                 .ocPath(k8sGlobalConfigService.getOcPath())
                 .kustomizeBinaryPath(
                     k8sGlobalConfigService.getKustomizePath(k8sTaskParameters.isUseLatestKustomizeVersion()))
-                .useLatestKustomizeVersion(k8sTaskParameters.isUseLatestKustomizeVersion())
                 .build();
 
         logK8sVersion(k8sTaskParameters, k8SDelegateTaskParams);

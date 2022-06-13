@@ -2373,7 +2373,7 @@ public class K8sTaskHelperBase {
       case KUSTOMIZE:
         KustomizeManifestDelegateConfig kustomizeManifest = (KustomizeManifestDelegateConfig) manifestDelegateConfig;
         return kustomizeTaskHelper.buildForApply(k8sDelegateTaskParams.getKustomizeBinaryPath(),
-            kustomizeManifest.getPluginPath(), manifestFilesDirectory, filesList, true, manifestOverrideFiles,
+            kustomizeManifest.getPluginPath(), manifestFilesDirectory, filesList, manifestOverrideFiles,
             executionLogCallback);
 
       default:
