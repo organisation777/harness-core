@@ -47,6 +47,7 @@ public class QueueStepInfoTest {
   @Category(UnitTests.class)
   public void shouldVerifyFixedSpecParameters() {
     QueueStepInfo step = new QueueStepInfo();
+    step.setScope(QueueHoldingScope.PIPELINE);
 
     SpecParameters spec = step.getSpecParameters();
     assertThat(spec).isNotNull();

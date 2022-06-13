@@ -37,6 +37,7 @@ import io.harness.plancreator.steps.http.HTTPStepVariableCreator;
 import io.harness.plancreator.steps.internal.FlagConfigurationStepPlanCreator;
 import io.harness.plancreator.steps.internal.PMSStepPlanCreator;
 import io.harness.plancreator.steps.internal.PmsStepFilterJsonCreator;
+import io.harness.plancreator.steps.resourceconstraint.QueueStepPlanCreator;
 import io.harness.plancreator.steps.resourceconstraint.ResourceConstraintStepPlanCreator;
 import io.harness.plancreator.strategy.StrategyConfigPlanCreator;
 import io.harness.pms.contracts.steps.StepInfo;
@@ -100,7 +101,7 @@ public class PipelineServiceInternalInfoProviderTest extends CategoryTest {
             .stream()
             .map(e -> e.getClass())
             .collect(Collectors.toSet());
-    assertThat(planCreatorClasses).hasSize(25);
+    assertThat(planCreatorClasses).hasSize(26);
     assertThat(planCreatorClasses.contains(NGPipelinePlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(StagesPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(ParallelPlanCreator.class)).isTrue();
@@ -124,6 +125,7 @@ public class PipelineServiceInternalInfoProviderTest extends CategoryTest {
     assertThat(planCreatorClasses.contains(ServiceNowUpdateStepPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(StrategyConfigPlanCreator.class)).isTrue();
     assertThat(planCreatorClasses.contains(CustomStagePlanCreator.class)).isTrue();
+    assertThat(planCreatorClasses.contains(QueueStepPlanCreator.class)).isTrue();
   }
 
   @Test
