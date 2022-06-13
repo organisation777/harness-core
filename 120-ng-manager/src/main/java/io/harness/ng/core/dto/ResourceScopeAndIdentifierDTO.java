@@ -1,6 +1,9 @@
 package io.harness.ng.core.dto;
 
-import static io.harness.NGCommonEntityConstants.*;
+import static io.harness.NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.IDENTIFIER_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.ORG_PARAM_MESSAGE;
+import static io.harness.NGCommonEntityConstants.PROJECT_PARAM_MESSAGE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
