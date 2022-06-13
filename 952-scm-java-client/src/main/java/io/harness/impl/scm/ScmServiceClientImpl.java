@@ -87,6 +87,7 @@ import io.harness.product.ci.scm.proto.ListCommitsRequest;
 import io.harness.product.ci.scm.proto.ListCommitsResponse;
 import io.harness.product.ci.scm.proto.ListWebhooksRequest;
 import io.harness.product.ci.scm.proto.ListWebhooksResponse;
+import io.harness.product.ci.scm.proto.NativeEvents;
 import io.harness.product.ci.scm.proto.PRFile;
 import io.harness.product.ci.scm.proto.PageRequest;
 import io.harness.product.ci.scm.proto.Provider;
@@ -621,7 +622,7 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     String slug = scmGitProviderHelper.getSlug(scmConnector);
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
     CreateWebhookRequest createWebhookRequest =
-        getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null);
+        getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, null, null);
     CreateWebhookResponse createWebhookResponse =
         ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
     ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
@@ -630,22 +631,26 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   }
 
   private CreateWebhookResponse createWebhook(ScmConnector scmConnector, GitWebhookDetails gitWebhookDetails,
-      SCMGrpc.SCMBlockingStub scmBlockingStub, WebhookResponse exisitingWebhook) {
+      SCMGrpc.SCMBlockingStub scmBlockingStub, WebhookResponse exisitingWebhook,
+      List<NativeEvents> exisitingNativeEventsList) {
     String slug = scmGitProviderHelper.getSlug(scmConnector);
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
-    CreateWebhookRequest createWebhookRequest =
-        getCreateWebhookRequest(slug, gitProvider, gitWebhookDetails, scmConnector, exisitingWebhook);
+    CreateWebhookRequest createWebhookRequest = getCreateWebhookRequest(
+       slug, gitProvider, gitWebhookDetails, scmConnector, exisitingWebhook, exisitingNativeEventsList);
     return ScmGrpcClientUtils.retryAndProcessException(scmBlockingStub::createWebhook, createWebhookRequest);
   }
 
   private CreateWebhookRequest getCreateWebhookRequest(String slug, Provider gitProvider,
-      GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector, WebhookResponse identicalTarget) {
+      GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector, WebhookResponse identicalTarget,
+      List<NativeEvents> exisitingNativeEventsList) {
+    String target = gitWebhookDetails.getTarget();
+    target = target.replaceFirst("localhost:7457", "www.example.com");
     final CreateWebhookRequest.Builder createWebhookRequestBuilder = CreateWebhookRequest.newBuilder()
                                                                          .setSlug(slug)
                                                                          .setProvider(gitProvider)
-                                                                         .setTarget(gitWebhookDetails.getTarget());
+                                                                         .setTarget(target);
     return ScmGitWebhookHelper.getCreateWebhookRequest(
-        createWebhookRequestBuilder, gitWebhookDetails, scmConnector, identicalTarget);
+        createWebhookRequestBuilder, gitWebhookDetails, scmConnector, identicalTarget, exisitingNativeEventsList);
   }
 
   @Override
@@ -675,19 +680,27 @@ public class ScmServiceClientImpl implements ScmServiceClient {
     ListWebhooksResponse listWebhooksResponse = listWebhook(scmConnector, scmBlockingStub);
     final List<WebhookResponse> webhooksList = listWebhooksResponse.getWebhooksList();
     WebhookResponse existingWebhook = null;
+
+    List<NativeEvents> allNativeEventsList = isNotEmpty(webhooksList)
+        ? webhooksList.stream().map(WebhookResponse::getNativeEvents).collect(toList())
+        : Collections.emptyList();
+    List<NativeEvents> existingNativeEventsList = new ArrayList<>();
+
     for (WebhookResponse webhookResponse : webhooksList) {
-      if (isIdentical(webhookResponse, gitWebhookDetails, scmConnector)) {
+      if (isIdentical(webhookResponse, gitWebhookDetails, scmConnector, allNativeEventsList)) {
         return CreateWebhookResponse.newBuilder().setWebhook(webhookResponse).setStatus(200).build();
       }
       if (isIdenticalTarget(webhookResponse, gitWebhookDetails)) {
         existingWebhook = webhookResponse;
+        existingNativeEventsList.add(webhookResponse.getNativeEvents());
         final DeleteWebhookResponse deleteWebhookResponse =
             deleteWebhook(scmConnector, webhookResponse.getId(), scmBlockingStub);
         ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(deleteWebhookResponse.getStatus(), null);
       }
     }
+
     CreateWebhookResponse createWebhookResponse =
-        createWebhook(scmConnector, gitWebhookDetails, scmBlockingStub, existingWebhook);
+        createWebhook(scmConnector, gitWebhookDetails, scmBlockingStub, existingWebhook, existingNativeEventsList);
     ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
         createWebhookResponse.getStatus(), createWebhookResponse.getError());
     return createWebhookResponse;
@@ -842,14 +855,18 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   }
 
   private boolean isIdenticalTarget(WebhookResponse webhookResponse, GitWebhookDetails gitWebhookDetails) {
+    String target = gitWebhookDetails.getTarget();
+    target = target.replaceFirst("localhost:7457", "www.example.com");
     // Currently we don't add secret however we receive it in response with empty value
-    return webhookResponse.getTarget().replace("&secret=", "").equals(gitWebhookDetails.getTarget());
+    return webhookResponse.getTarget().replace("&secret=", "").equals(target);
   }
 
   private boolean isIdentical(
-      WebhookResponse webhookResponse, GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector) {
+          WebhookResponse webhookResponse, GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector,
+          List<NativeEvents> nativeEventsList) {
     return isIdenticalTarget(webhookResponse, gitWebhookDetails)
-        && ScmGitWebhookHelper.isIdenticalEvents(webhookResponse, gitWebhookDetails.getHookEventType(), scmConnector);
+        && ScmGitWebhookHelper.isIdenticalEvents(webhookResponse, gitWebhookDetails.getHookEventType(), scmConnector,
+        nativeEventsList);
   }
 
   private GetLatestCommitOnFileResponse getLatestCommitOnFile(
