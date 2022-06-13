@@ -19,12 +19,20 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.SelectField;
 import org.jooq.Table;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
 public class PipelineDashboardQueryService {
   @Inject private DSLContext dsl;
 
   private String CD_TableName = "pipeline_execution_summary_cd";
+
+  public boolean isConnectionError(DataAccessException ex) {
+    if (ex.getMessage().contains("Error getting connection from data source")) {
+      return true;
+    }
+    return false;
+  }
 
   public List<StatusAndTime> getPipelineExecutionStatusAndTime(String accountId, String orgId, String projectId,
       String pipelineId, long startInterval, long endInterval, String tableName) {
@@ -56,6 +64,13 @@ public class PipelineDashboardQueryService {
       }
       statusAndTime = this.dsl.select(select).from(from).where(conditions).fetch().into(StatusAndTime.class);
       return statusAndTime;
+    } catch (DataAccessException ex) {
+      if (isConnectionError(ex)) {
+        throw new InvalidRequestException(
+            "Unable to fetch Dashboard data for executions, Please ensure timescale is enabled", ex);
+      } else {
+        throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
+      }
     } catch (Exception ex) {
       throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
     }
@@ -95,6 +110,13 @@ public class PipelineDashboardQueryService {
       }
       mean = this.dsl.select(select).from(from).where(conditions).fetch().into(long.class);
       return mean.get(0);
+    } catch (DataAccessException ex) {
+      if (isConnectionError(ex)) {
+        throw new InvalidRequestException(
+            "Unable to fetch Dashboard data for executions, Please ensure timescale is enabled", ex);
+      } else {
+        throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
+      }
     } catch (Exception ex) {
       throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
     }
@@ -132,6 +154,13 @@ public class PipelineDashboardQueryService {
       }
       median = this.dsl.select(select).from(from).where(conditions).fetch().into(long.class);
       return median.get(0);
+    } catch (DataAccessException ex) {
+      if (isConnectionError(ex)) {
+        throw new InvalidRequestException(
+            "Unable to fetch Dashboard data for executions, Please ensure timescale is enabled", ex);
+      } else {
+        throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
+      }
     } catch (Exception ex) {
       throw new InvalidRequestException("Unable to fetch Dashboard data for executions", ex);
     }
