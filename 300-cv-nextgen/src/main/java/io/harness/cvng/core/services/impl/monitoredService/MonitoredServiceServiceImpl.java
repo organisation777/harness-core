@@ -1020,7 +1020,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .build();
   }
 
-  private MonitoredServiceListDashboardDTO listV2(ProjectParams projectParams, String environmentIdentifier,
+  @Override
+  public MonitoredServiceListDashboardDTO listV2(ProjectParams projectParams, String environmentIdentifier,
       Integer offset, Integer pageSize, String filter, boolean servicesAtRiskFilter) {
     List<MonitoredService> monitoredServices = getMonitoredServices(projectParams, environmentIdentifier, filter);
     Map<String, MonitoredService> idToMonitoredServiceMap =
