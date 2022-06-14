@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.springframework.data.annotation.TypeAlias;
 
 @TypeAlias("dependencyType")
-@RecasterAlias("io.harness.beans.dependencies.dependencyType")
+@RecasterAlias("io.harness.beans.dependencies.DependencyType")
 public enum DependencyType {
   @JsonProperty(DependencyConstants.SERVICE_TYPE) SERVICE(DependencyConstants.SERVICE_TYPE);
 

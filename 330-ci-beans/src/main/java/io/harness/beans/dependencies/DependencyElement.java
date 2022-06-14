@@ -36,7 +36,7 @@ import org.springframework.data.annotation.TypeAlias;
 @NoArgsConstructor
 @JsonTypeName("dependency")
 @TypeAlias("dependencyElement")
-@RecasterAlias("io.harness.beans.dependencies.dependencyElement")
+@RecasterAlias("io.harness.beans.dependencies.DependencyElement")
 @OwnedBy(CI)
 public class DependencyElement implements WithIdentifier {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)

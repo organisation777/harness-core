@@ -22,7 +22,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Data
 @Builder
 @TypeAlias("serviceDependency")
-@RecasterAlias("io.harness.beans.dependencies.serviceDependency")
+@RecasterAlias("io.harness.beans.dependencies.ServiceDependency")
 public class ServiceDependency {
   @JsonProperty(YamlNode.UUID_FIELD_NAME)
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })

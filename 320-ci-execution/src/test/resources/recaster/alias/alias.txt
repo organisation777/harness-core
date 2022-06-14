@@ -198,8 +198,8 @@ io.harness.beans.quantity.CpuQuantity
 io.harness.beans.execution.CustomExecutionSource
 io.harness.beans.yaml.extended.CustomSecretVariable
 io.harness.beans.quantity.unit.DecimalQuantityUnit
-io.harness.beans.dependencies.dependencyElement
-io.harness.beans.dependencies.dependencyType
+io.harness.beans.dependencies.DependencyElement
+io.harness.beans.dependencies.DependencyType
 io.harness.beans.yaml.extended.volumes.EmptyDirYaml
 io.harness.beans.GCPArtifactUploadInfo
 io.harness.beans.yaml.extended.volumes.HostPathYaml
@@ -221,7 +221,7 @@ io.harness.beans.execution.PublishedImageArtifact
 io.harness.beans.execution.Repository
 io.harness.beans.yaml.extended.infrastrucutre.k8.SecurityContext
 io.harness.beans.environment.ServiceDefinitionInfo
-io.harness.beans.dependencies.serviceDependency
+io.harness.beans.dependencies.ServiceDependency
 io.harness.beans.steps.outcome.StepArtifacts
 io.harness.ci.config.StepImageConfig
 io.harness.beans.quantity.StorageQuantity
