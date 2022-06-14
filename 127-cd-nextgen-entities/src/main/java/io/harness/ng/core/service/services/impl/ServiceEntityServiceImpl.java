@@ -82,7 +82,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.support.TransactionTemplate;
-;
 
 @OwnedBy(PIPELINE)
 @Singleton
