@@ -14,6 +14,7 @@ import static io.harness.expression.EngineExpressionEvaluator.EXPR_START;
 import static io.harness.remote.client.NGRestUtils.getResponse;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.dto.UserGroupDTO;
 import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.notification.NotificationSettingConfigDTO;
@@ -32,6 +33,7 @@ import io.harness.user.remote.UserClient;
 import io.harness.user.remote.UserFilterNG;
 import io.harness.usergroups.UserGroupClient;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -121,9 +123,7 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
       NotificationChannelType notificationChannelType, String accountId, long expressionFunctorToken) {
     List<UserGroupDTO> userGroups = getUserGroups(notificationUserGroups, accountId);
     List<String> notificationSetting = getNotificationSettings(notificationChannelType, userGroups, accountId);
-    return notificationChannelType.equals(NotificationChannelType.EMAIL)
-        ? notificationSetting
-        : resolveUserGroups(notificationSetting, expressionFunctorToken);
+    return resolveUserGroups(notificationChannelType, notificationSetting, expressionFunctorToken);
   }
 
   @Override
@@ -148,24 +148,33 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
     return Lists.newArrayList(notificationSettings);
   }
 
-  private List<String> resolveUserGroups(List<String> notificationSetting, long expressionFunctorToken) {
-    List<String> resolvedGroups = new ArrayList<>();
-    List<String> secrets = new ArrayList<>();
-    if (!notificationSetting.isEmpty()) {
-      for (String notification : notificationSetting) {
-        if (notification.startsWith(EXPR_START) && notification.endsWith(EXPR_END)) {
-          secrets.add(notification);
-        } else {
-          resolvedGroups.add(notification);
-        }
-      }
-      SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
-      Object object = evaluator.resolve(secrets, true);
-      resolvedGroups.addAll(
-          Stream.of(object).filter(Objects::nonNull).map(Object::toString).collect(Collectors.toList()));
-      return resolvedGroups;
-    } else {
+  @VisibleForTesting
+  List<String> resolveUserGroups(
+      NotificationChannelType notificationChannelType, List<String> notificationSetting, long expressionFunctorToken) {
+    if (notificationChannelType.equals(NotificationChannelType.EMAIL)) {
       return notificationSetting;
+    } else {
+      if (!notificationSetting.isEmpty()) {
+        if (notificationSetting.get(0).startsWith(EXPR_START) && notificationSetting.get(0).endsWith(EXPR_END)) {
+          if (!notificationSetting.get(0).contains("secrets.getValue")) {
+            throw new InvalidRequestException("Expression provided is not valid");
+          }
+          SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
+          try {
+            Object object = evaluator.resolve(notificationSetting, true);
+            if (object == null) {
+              throw new InvalidRequestException("Expression provided is not valid");
+            }
+            return (List<String>) object;
+          } catch (Exception e) {
+            throw new InvalidRequestException("Provided is not a valid expression", e);
+          }
+        } else {
+          return notificationSetting;
+        }
+      } else {
+        return notificationSetting;
+      }
     }
   }
 
