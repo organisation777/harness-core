@@ -953,7 +953,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .stream()
             .map(monitoredService -> toMonitorServiceListDTO(monitoredService))
             .collect(Collectors.toList());
-    Set<String> enabledServices = getEnabledMonitoredServices(projectParams.getAccountIdentifier())
+    Set<String> enabledServices = getEnabledMonitoredServices(projectParams)
                                       .stream()
                                       .filter(distinctByKey(x -> x.getServiceIdentifier()))
                                       .map(MonitoredService::getServiceIdentifier)
@@ -1029,9 +1029,11 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .build();
   }
 
-  private List<MonitoredService> getEnabledMonitoredServices(String accountId) {
+  private List<MonitoredService> getEnabledMonitoredServices(ProjectParams projectParams) {
     return hPersistence.createQuery(MonitoredService.class)
-        .filter(MonitoredServiceKeys.accountId, accountId)
+        .filter(MonitoredServiceKeys.accountId, projectParams.getAccountIdentifier())
+        .filter(MonitoredServiceKeys.orgIdentifier, projectParams.getOrgIdentifier())
+        .filter(MonitoredServiceKeys.projectIdentifier, projectParams.getProjectIdentifier())
         .filter(MonitoredServiceKeys.enabled, true)
         .asList();
   }
