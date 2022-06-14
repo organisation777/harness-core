@@ -345,10 +345,7 @@ public class DelegateSelectionLogsServiceImpl implements DelegateSelectionLogsSe
       return EMPTY;
     }
     List<String> taskSelectors = new ArrayList<>();
-    List<SelectorCapability> selectorCapabilities = executionCapabilities.stream()
-                                                        .filter(capability -> capability instanceof SelectorCapability)
-                                                        .map(s -> (SelectorCapability) s)
-                                                        .collect(Collectors.toList());
+    List<SelectorCapability> selectorCapabilities = delegateTaskServiceClassic.fetchTaskSelectorCapabilities(executionCapabilities);
     if (isEmpty(selectorCapabilities)) {
       return EMPTY;
     }
