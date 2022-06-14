@@ -372,9 +372,9 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
         gitAwareEntityHelper.updateFileImportedFromGit(pipelineToSave, yamlToPush, scope);
       }
       PipelineEntity savedPipelineEntity = mongoTemplate.save(pipelineToSave);
+      checkForMetadataAndSaveIfAbsent(savedPipelineEntity);
       outboxService.save(
           new PipelineCreateEvent(accountIdentifier, orgIdentifier, projectIdentifier, savedPipelineEntity));
-      checkForMetadataAndSaveIfAbsent(savedPipelineEntity);
       return savedPipelineEntity;
     });
   }
