@@ -33,6 +33,7 @@ import io.harness.ccm.communication.CESlackWebhookService;
 import io.harness.ccm.communication.entities.CESlackWebhook;
 import io.harness.timescaledb.TimeScaleDBService;
 
+import org.apache.commons.lang3.StringUtils;
 import software.wings.beans.User;
 import software.wings.beans.notification.SlackNotificationConfiguration;
 import software.wings.beans.notification.SlackNotificationSetting;
@@ -105,23 +106,22 @@ public class BudgetAlertsServiceImpl {
 
     List<String> userGroupIds = Arrays.asList(Optional.ofNullable(budget.getUserGroupIds()).orElse(new String[0]));
     emailAddresses.addAll(getEmailsForUserGroup(budget.getAccountId(), userGroupIds));
-    CESlackWebhook slackWebhook = ceSlackWebhookService.getByAccountId(budget.getAccountId());
 
     // For sending alerts based on actual cost
     AlertThreshold[] alertsBasedOnActualCost =
         BudgetUtils.getSortedAlertThresholds(ACTUAL_COST, budget.getAlertThresholds());
     double actualCost = budget.getActualCost();
-    checkAlertThresholdsAndSendAlerts(budget, alertsBasedOnActualCost, slackWebhook, emailAddresses, actualCost);
+    checkAlertThresholdsAndSendAlerts(budget, alertsBasedOnActualCost, emailAddresses, actualCost);
 
     // For sending alerts based on forecast cost
     AlertThreshold[] alertsBasedOnForecastCost =
         BudgetUtils.getSortedAlertThresholds(FORECASTED_COST, budget.getAlertThresholds());
     double forecastCost = budget.getForecastCost();
-    checkAlertThresholdsAndSendAlerts(budget, alertsBasedOnForecastCost, slackWebhook, emailAddresses, forecastCost);
+    checkAlertThresholdsAndSendAlerts(budget, alertsBasedOnForecastCost, emailAddresses, forecastCost);
   }
 
   private void checkAlertThresholdsAndSendAlerts(Budget budget, AlertThreshold[] alertThresholds,
-      CESlackWebhook slackWebhook, List<String> emailAddresses, double cost) {
+      List<String> emailAddresses, double cost) {
     for (AlertThreshold alertThreshold : alertThresholds) {
       List<String> userGroupIds =
           Arrays.asList(Optional.ofNullable(alertThreshold.getUserGroupIds()).orElse(new String[0]));
@@ -130,9 +130,13 @@ public class BudgetAlertsServiceImpl {
         emailAddresses.addAll(Arrays.asList(alertThreshold.getEmailAddresses()));
       }
 
-      if (slackWebhook == null && isEmpty(emailAddresses)) {
-        log.warn("The budget with id={} has no associated communication channels.", budget.getUuid());
-        return;
+      List<String> slackWebhooks =
+          Arrays.asList(Optional.ofNullable(alertThreshold.getSlackWebhooks()).orElse(new String[0]));
+      slackWebhooks.addAll(getSlackWebhooksForUserGroup(budget.getAccountId(), userGroupIds));
+
+      if (isEmpty(slackWebhooks) && isEmpty(emailAddresses)) {
+        log.warn("The budget with id={} has no associated communication channels for threshold={}.", budget.getUuid(), alertThreshold);
+        continue;
       }
 
       BudgetAlertsData data = BudgetAlertsData.builder()
@@ -162,7 +166,7 @@ public class BudgetAlertsServiceImpl {
 
       if (exceedsThreshold(cost, getThresholdAmount(budget, alertThreshold))) {
         try {
-          sendBudgetAlertViaSlack(budget, alertThreshold, slackWebhook);
+          sendBudgetAlertViaSlack(budget, alertThreshold, slackWebhooks);
         } catch (Exception e) {
           log.error("Notification via slack not send : ", e);
         }
@@ -175,14 +179,9 @@ public class BudgetAlertsServiceImpl {
     }
   }
 
-  private void sendBudgetAlertViaSlack(Budget budget, AlertThreshold alertThreshold, CESlackWebhook slackWebhook) {
-    if ((slackWebhook == null || !budget.isNotifyOnSlack()) && alertThreshold.getSlackWebhooks() == null) {
+  private void sendBudgetAlertViaSlack(Budget budget, AlertThreshold alertThreshold, List<String> slackWebhooks) {
+    if ((isEmpty(slackWebhooks) || !budget.isNotifyOnSlack()) && alertThreshold.getSlackWebhooks() == null) {
       return;
-    }
-    List<String> slackWebhooks =
-        Arrays.asList(Optional.ofNullable(alertThreshold.getSlackWebhooks()).orElse(new String[0]));
-    if (slackWebhook != null && budget.isNotifyOnSlack()) {
-      slackWebhooks.add(slackWebhook.getWebhookUrl());
     }
     slackWebhooks.forEach(webhook -> {
       SlackNotificationConfiguration slackConfig = new SlackNotificationSetting("#ccm-test", webhook);
@@ -194,6 +193,7 @@ public class BudgetAlertsServiceImpl {
               .put("BUDGET_NAME", budget.getName())
               .build();
       String slackMessage = replace(slackMessageTemplate, params);
+      log.info("** Sending slack alert **");
       slackNotificationService.sendMessage(
           slackConfig, stripToEmpty(slackConfig.getName()), HARNESS_NAME, slackMessage, budget.getAccountId());
     });
@@ -214,6 +214,20 @@ public class BudgetAlertsServiceImpl {
       }
     }
     return emailAddresses;
+  }
+
+  private List<String> getSlackWebhooksForUserGroup(String accountId, List<String> userGroupIds) {
+    List<String> slackWebhooks = new ArrayList<>();
+    for (String userGroupId : userGroupIds) {
+      UserGroup userGroup = cloudToHarnessMappingService.getUserGroup(accountId, userGroupId, true);
+      if (userGroup != null && userGroup.getNotificationSettings() != null) {
+        SlackNotificationSetting slackNotificationSetting = userGroup.getNotificationSettings().getSlackConfig();
+        if (!StringUtils.isEmpty(slackNotificationSetting.getOutgoingWebhookUrl())) {
+          slackWebhooks.add(slackNotificationSetting.getOutgoingWebhookUrl());
+        }
+      }
+    }
+    return slackWebhooks;
   }
 
   private void sendBudgetAlertMail(String accountId, List<String> emailAddresses, String budgetId, String budgetName,
