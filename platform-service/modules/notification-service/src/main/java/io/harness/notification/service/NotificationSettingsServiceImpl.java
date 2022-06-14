@@ -56,7 +56,7 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
   private final UserClient userClient;
   private final NotificationSettingRepository notificationSettingRepository;
   private final SmtpConfigClient smtpConfigClient;
-  private static final Pattern VALID_EXPRESSION_PATTERN = Pattern.compile("</+secrets.getValue([a-zA-Z])>");
+  private static final Pattern VALID_EXPRESSION_PATTERN = Pattern.compile("\\<\\+secrets.getValue\\(\\'\\w*\\'\\)>");
 
   private List<UserGroupDTO> getUserGroups(List<String> userGroupIds) {
     if (isEmpty(userGroupIds)) {
@@ -156,22 +156,16 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
     } else {
       if (!notificationSetting.isEmpty()) {
         if (notificationSetting.get(0).startsWith(EXPR_START) && notificationSetting.get(0).endsWith(EXPR_END)) {
-          if (!notificationSetting.get(0).contains("secrets.getValue")) {
+          if (!VALID_EXPRESSION_PATTERN.matcher(notificationSetting.get(0)).matches()) {
             throw new InvalidRequestException("Expression provided is not valid");
           }
-          log.info("Resolving UserGroup expression" +notificationSetting.get(0) );
+          log.info("Resolving UserGroup expression");
           SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
-          try {
-            Object object = evaluator.resolve(notificationSetting, true);
-            if (object == null) {
-              throw new InvalidRequestException("Expression provided is not valid");
-            }
-            List<String> temp = (List<String>) object;
-            log.info("Resolved UserGroups successfully: " + temp.get(0));
-            return (List<String>) object;
-          } catch (Exception e) {
-            throw new InvalidRequestException("Provided is not a valid expression", e);
+          Object resolvedExpressions = evaluator.resolve(notificationSetting, true);
+          if (resolvedExpressions == null) {
+            throw new InvalidRequestException("Expression provided is not valid");
           }
+          return (List<String>) resolvedExpressions;
         } else {
           return notificationSetting;
         }
