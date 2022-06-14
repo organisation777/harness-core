@@ -10,7 +10,16 @@ package io.harness.ng.core.template;
 import static io.harness.NGCommonEntityConstants.IDENTIFIER_KEY;
 import static io.harness.NGCommonEntityConstants.NAME_KEY;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
-import static io.harness.ng.core.template.TemplateEntityConstants.*;
+import static io.harness.ng.core.template.TemplateEntityConstants.MONITORED_SERVICE;
+import static io.harness.ng.core.template.TemplateEntityConstants.MONITORED_SERVICE_ROOT_FIELD;
+import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE;
+import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE_ROOT_FIELD;
+import static io.harness.ng.core.template.TemplateEntityConstants.SCRIPT;
+import static io.harness.ng.core.template.TemplateEntityConstants.SCRIPT_ROOT_FIELD;
+import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
+import static io.harness.ng.core.template.TemplateEntityConstants.STAGE_ROOT_FIELD;
+import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
+import static io.harness.ng.core.template.TemplateEntityConstants.STEP_ROOT_FIELD;
 
 import static java.util.Arrays.asList;
 
