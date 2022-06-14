@@ -8,11 +8,13 @@
 package io.harness.ccm;
 
 import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
+import static io.harness.AuthorizationServiceHeader.NG_MANAGER;
 import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.CONNECTOR_ENTITY;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
 
+import io.harness.AccessControlClientModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.retry.MethodExecutionHelper;
 import io.harness.annotations.retry.RetryOnException;
@@ -247,6 +249,8 @@ public class CENextGenModule extends AbstractModule {
         configuration.getNgManagerServiceSecret(), CE_NEXT_GEN.getServiceId(),
         configuration.getEnforcementClientConfiguration()));
     install(new MetricsModule());
+    install(AccessControlClientModule.getInstance(
+        configuration.getAccessControlClientConfiguration(), CE_NEXT_GEN.getServiceId()));
 
     install(new SecretNGManagerClientModule(configuration.getNgManagerClientConfig(),
         configuration.getNgManagerServiceSecret(), CE_NEXT_GEN.getServiceId()));
