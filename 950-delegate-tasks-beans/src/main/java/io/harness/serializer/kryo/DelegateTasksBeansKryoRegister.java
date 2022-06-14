@@ -150,6 +150,14 @@ import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskParamsRequest;
 import io.harness.delegate.beans.connector.awsconnector.AwsCFTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsDelegateTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsIAMRolesResponse;
+import io.harness.delegate.beans.connector.awsconnector.AwsListASGInstancesTaskParamsRequest;
+import io.harness.delegate.beans.connector.awsconnector.AwsListASGNamesTaskResponse;
+import io.harness.delegate.beans.connector.awsconnector.AwsListEC2InstancesTaskParamsRequest;
+import io.harness.delegate.beans.connector.awsconnector.AwsListEC2InstancesTaskResponse;
+import io.harness.delegate.beans.connector.awsconnector.AwsListLoadBalancersTaskResponse;
+import io.harness.delegate.beans.connector.awsconnector.AwsListTagsTaskParamsRequest;
+import io.harness.delegate.beans.connector.awsconnector.AwsListTagsTaskResponse;
+import io.harness.delegate.beans.connector.awsconnector.AwsListVpcTaskResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsS3BucketResponse;
 import io.harness.delegate.beans.connector.awsconnector.AwsTaskParams;
 import io.harness.delegate.beans.connector.awsconnector.AwsTaskType;
@@ -176,6 +184,7 @@ import io.harness.delegate.beans.connector.helm.HttpHelmConnectivityTaskResponse
 import io.harness.delegate.beans.connector.helm.HttpHelmValidationParams;
 import io.harness.delegate.beans.connector.helm.OciHelmConnectivityTaskParams;
 import io.harness.delegate.beans.connector.helm.OciHelmConnectivityTaskResponse;
+import io.harness.delegate.beans.connector.helm.OciHelmValidationParams;
 import io.harness.delegate.beans.connector.jenkins.JenkinsCapabilityHelper;
 import io.harness.delegate.beans.connector.jenkins.JenkinsTestConnectionTaskParams;
 import io.harness.delegate.beans.connector.jenkins.JenkinsTestConnectionTaskResponse;
@@ -706,6 +715,7 @@ import software.wings.service.impl.aws.model.AwsAmiPreDeploymentData;
 import software.wings.service.impl.aws.model.AwsAsgGetRunningCountData;
 import software.wings.service.impl.aws.model.AwsCFTemplateParamsData;
 import software.wings.service.impl.aws.model.AwsCodeDeployS3LocationData;
+import software.wings.service.impl.aws.model.AwsEC2Instance;
 import software.wings.service.impl.aws.model.AwsLambdaFunctionParams;
 import software.wings.service.impl.aws.model.AwsLambdaVpcConfig;
 import software.wings.service.impl.aws.model.AwsSecurityGroup;
@@ -1098,6 +1108,7 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(HttpHelmValidationParams.class, 19549);
     kryo.register(ConnectorValidationParameterResponse.class, 19551);
 
+    kryo.register(OciHelmValidationParams.class, 19630);
     kryo.register(HttpHelmConnectivityTaskParams.class, 19640);
     kryo.register(HttpHelmConnectivityTaskResponse.class, 19641);
     kryo.register(HttpHelmStoreDelegateConfig.class, 19642);
@@ -1430,6 +1441,16 @@ public class DelegateTasksBeansKryoRegister implements KryoRegistrar {
     kryo.register(EcsContainerInfo.class, 5166);
     kryo.register(KubernetesContainerInfo.class, 5165);
     kryo.register(S3FileRequest.class, 8067);
+    kryo.register(AwsListEC2InstancesTaskParamsRequest.class, 83071);
+    kryo.register(AwsListEC2InstancesTaskResponse.class, 83072);
+    kryo.register(AwsEC2Instance.class, 83073);
+    kryo.register(AwsListASGInstancesTaskParamsRequest.class, 83074);
+    kryo.register(AwsListVpcTaskResponse.class, 83075);
+    kryo.register(AwsListTagsTaskParamsRequest.class, 83076);
+    kryo.register(AwsListTagsTaskResponse.class, 83077);
+    kryo.register(AwsListLoadBalancersTaskResponse.class, 83078);
+    kryo.register(AwsListASGNamesTaskResponse.class, 83079);
+
     // WinRm
     kryo.register(WinRmCredentialsSpecDTO.class, 600001);
     kryo.register(WinRmAuthScheme.class, 600002);

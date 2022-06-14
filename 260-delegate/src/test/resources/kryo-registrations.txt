@@ -1110,6 +1110,9 @@
 9107:io.harness.delegate.task.git.NGGitOpsTaskParams
 9108:io.harness.delegate.task.git.NGGitOpsResponse
 9109:io.harness.delegate.task.git.GitOpsTaskType
+9110:io.harness.cvng.beans.SplunkMetricDataCollectionInfo
+9111:io.harness.cvng.beans.SplunkMetricDataCollectionInfo.MetricInfo
+9112:io.harness.cvng.beans.splunk.SplunkMetricSampleDataCollectionRequest
 9501:io.harness.timeout.trackers.absolute.AbsoluteTimeoutParameters
 9701:io.harness.logging.UnitProgress
 9702:io.harness.logging.UnitStatus
@@ -1485,6 +1488,7 @@
 19550:io.harness.delegate.beans.executioncapability.GitInstallationCapability
 19551:io.harness.delegate.beans.connector.ConnectorValidationParameterResponse
 19552:io.harness.delegate.beans.connector.scm.github.GithubOauthDTO
+19630:io.harness.delegate.beans.connector.helm.OciHelmValidationParams
 19640:io.harness.delegate.beans.connector.helm.HttpHelmConnectivityTaskParams
 19641:io.harness.delegate.beans.connector.helm.HttpHelmConnectivityTaskResponse
 19642:io.harness.delegate.beans.storeconfig.HttpHelmStoreDelegateConfig
@@ -1705,6 +1709,15 @@
 73985:io.harness.delegate.beans.DelegateEntityOwner
 73986:io.harness.delegate.beans.DelegateSizeDetails
 73987:io.harness.delegate.beans.DelegateSize
+83071:io.harness.delegate.beans.connector.awsconnector.AwsListEC2InstancesTaskParamsRequest
+83072:io.harness.delegate.beans.connector.awsconnector.AwsListEC2InstancesTaskResponse
+83073:software.wings.service.impl.aws.model.AwsEC2Instance
+83074:io.harness.delegate.beans.connector.awsconnector.AwsListASGInstancesTaskParamsRequest
+83075:io.harness.delegate.beans.connector.awsconnector.AwsListVpcTaskResponse
+83076:io.harness.delegate.beans.connector.awsconnector.AwsListTagsTaskParamsRequest
+83077:io.harness.delegate.beans.connector.awsconnector.AwsListTagsTaskResponse
+83078:io.harness.delegate.beans.connector.awsconnector.AwsListLoadBalancersTaskResponse
+83079:io.harness.delegate.beans.connector.awsconnector.AwsListASGNamesTaskResponse
 95001:io.harness.delegate.beans.logstreaming.UnitProgressData
 95002:io.harness.waiter.WaitInstanceTimeoutCallback
 96001:io.harness.springdata.exceptions.WingsTransactionFailureException
