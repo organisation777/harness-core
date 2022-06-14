@@ -56,7 +56,8 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
   private final UserClient userClient;
   private final NotificationSettingRepository notificationSettingRepository;
   private final SmtpConfigClient smtpConfigClient;
-  private static final Pattern VALID_EXPRESSION_PATTERN = Pattern.compile("\\<\\+secrets.getValue\\(\\'\\w*\\'\\)>");
+  private static final Pattern VALID_EXPRESSION_PATTERN =
+      Pattern.compile("\\<\\+secrets.getValue\\((\\\"|\\')\\w*(\\\"|\\')\\)>");
 
   private List<UserGroupDTO> getUserGroups(List<String> userGroupIds) {
     if (isEmpty(userGroupIds)) {

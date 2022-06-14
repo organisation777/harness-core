@@ -37,6 +37,7 @@ public class NotificationSettingsServiceImplTest extends CategoryTest {
   private String slackWebhookurl = "https://hooks.slack.com/services/TL81600E8/B027JT97D5X/";
   private String slackSecret1 = "<+secrets.getValue('SlackWebhookUrlSecret1')>";
   private String slackSecret2 = "<+secrets.getValue('SlackWebhookUrlSecret2')>";
+  private String slackSecret3 = "<+secrets.getValue(\"SlackWebhookUrlSecret3\")>";
   private String pagerDutySecret = "<+secrets.getValue('PagerDutyWebhookUrlSecret')>";
 
   @Before
@@ -112,5 +113,19 @@ public class NotificationSettingsServiceImplTest extends CategoryTest {
     List<String> resolvedUserGroups = notificationSettingsService.resolveUserGroups(
         NotificationChannelType.SLACK, new ArrayList<>(), expressionFunctorToken);
     assertTrue(resolvedUserGroups.isEmpty());
+  }
+
+  @Test
+  @Owner(developers = ADITHYA)
+  @Category(UnitTests.class)
+  public void testRegex() {
+    List<String> notificationSettings = new ArrayList<>();
+    notificationSettings.add(slackSecret3);
+    long expressionFunctorToken = HashGenerator.generateIntegerHash();
+    List<String> resolvedUserGroups = notificationSettingsService.resolveUserGroups(
+        NotificationChannelType.SLACK, notificationSettings, expressionFunctorToken);
+    String expectedUserGroup1 =
+        String.format("${ngSecretManager.obtain(\"SlackWebhookUrlSecret3\", %d)}", expressionFunctorToken);
+    assertEquals(expectedUserGroup1, resolvedUserGroups.get(0));
   }
 }
