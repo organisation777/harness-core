@@ -67,7 +67,7 @@ public class ClusterMasterUrlValidationCapability implements ExecutionCapability
 
   @Override
   public String getCapabilityToString() {
-    return isNotEmpty(fetchCapabilityBasis()) ? String.format("Capability to reach,  %s ", fetchCapabilityBasis())
+    return isNotEmpty(fetchCapabilityBasis()) ? String.format("Cluster master URL,  %s ", fetchCapabilityBasis())
                                               : null;
   }
 }
