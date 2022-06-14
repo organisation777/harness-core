@@ -344,6 +344,7 @@ public class NGTriggerServiceImpl implements NGTriggerService {
       if (!hardDeleteResult.wasAcknowledged()) {
         throw new InvalidRequestException(String.format("NGTrigger [%s] couldn't hard delete", identifier));
       }
+      log.info("NGTrigger {} hard delete successful", identifier);
     } else{
       UpdateResult deleteResult = ngTriggerRepository.delete(criteria);
       if (!deleteResult.wasAcknowledged() || deleteResult.getModifiedCount() != 1) {
