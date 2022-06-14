@@ -281,8 +281,7 @@ public class ImagePullSecretUtils {
       } else {
         AzureInheritFromDelegateDetailsDTO config =
             (AzureInheritFromDelegateDetailsDTO) connectorConfig.getCredential().getConfig();
-        if (((AzureMSIAuthUADTO) config.getAuthDTO()).getAzureManagedIdentityType()
-            == AzureManagedIdentityType.USER_ASSIGNED_MANAGED_IDENTITY) {
+        if (config.getAuthDTO() instanceof AzureMSIAuthUADTO) {
           log.info("Generating image pull credentials for User-Assigned MSI");
           log.info(format("Fetching access token for clientId: %s",
               ((AzureMSIAuthUADTO) config.getAuthDTO()).getCredentials().getClientId()));
@@ -298,6 +297,7 @@ public class ImagePullSecretUtils {
 
   private void generateAcrImageDetailsBuilder(Ambiance ambiance, AzureConnectorDTO connectorConfig,
       AcrArtifactOutcome acrArtifactOutcome, ImageDetailsBuilder imageDetailsBuilder) {
+    log.info("Generating ACR image details");
     BaseNGAccess baseNGAccess = azureHelperService.getBaseNGAccess(AmbianceUtils.getAccountId(ambiance),
         AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance));
 

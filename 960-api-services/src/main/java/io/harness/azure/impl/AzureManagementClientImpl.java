@@ -622,6 +622,14 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
   @Override
   public String getClusterCredentials(AzureConfig azureConfig, String accessToken, String subscriptionId,
       String resourceGroup, String aksClusterName, boolean shouldGetAdminCredentials) {
+    log.info(format(
+        "Fetching cluster credentials [subscription: %s] [resourceGroup: %s] [aksClusterName: %s] [credentials: %s]",
+        subscriptionId, resourceGroup, aksClusterName, shouldGetAdminCredentials ? "admin" : "user"));
+
+    if (log.isDebugEnabled()) {
+      log.debug(format("Using token: %s", accessToken));
+    }
+
     Call<AksClusterCredentials> request;
     String error;
     try {
@@ -635,7 +643,13 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
 
       Response<AksClusterCredentials> response = request.execute();
       if (response.isSuccessful()) {
-        return response.body().getKubeconfigs().get(0).getValue();
+        String clusterCredentials = response.body().getKubeconfigs().get(0).getValue();
+
+        if (log.isDebugEnabled()) {
+          log.debug(format("Cluster credentials (base64): %s", clusterCredentials));
+        }
+
+        return clusterCredentials;
       }
 
       error = response.errorBody().string();
