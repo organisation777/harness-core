@@ -169,6 +169,8 @@ public class LicenseServiceImpl implements LicenseService {
 
       LicenseInfo licenseInfo = account.getLicenseInfo();
 
+      checkAtLeastOneModuleLicenseActive(account, licenseInfo, ngLicenseDecision);
+
       if (licenseInfo == null) {
         return;
       }
@@ -621,5 +623,17 @@ public class LicenseServiceImpl implements LicenseService {
       return false;
     }
     return true;
+  }
+
+  private void checkAtLeastOneModuleLicenseActive(
+      Account account, LicenseInfo licenseInfo, CheckExpiryResultDTO ngLicenseDecision) {
+    CeLicenseInfo ceLicenseInfo = account.getCeLicenseInfo();
+    if (!ngLicenseDecision.isShouldDelete()
+        || (licenseInfo != null && licenseInfo.getAccountStatus().equals(AccountStatus.ACTIVE))
+        || (ceLicenseInfo != null && ceLicenseInfo.getExpiryTime() > System.currentTimeMillis())) {
+      account.setAtLeastOneModuleLicenseActive(true);
+    } else {
+      account.setAtLeastOneModuleLicenseActive(false);
+    }
   }
 }

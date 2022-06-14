@@ -162,6 +162,7 @@ public class Account extends Base implements PersistentRegularIterable {
 
   @Getter private boolean cloudCostEnabled;
   @Getter @Setter private boolean ceAutoCollectK8sEvents;
+  @Getter @Setter private boolean atLeastOneModuleLicenseActive;
 
   @Getter @Setter private TrialSignupOptions trialSignupOptions;
 
