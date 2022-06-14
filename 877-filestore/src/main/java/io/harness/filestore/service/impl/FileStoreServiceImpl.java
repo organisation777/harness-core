@@ -483,7 +483,7 @@ public class FileStoreServiceImpl implements FileStoreService {
 
     if (identifier.equals(fileDto.getParentIdentifier())) {
       throw new InvalidArgumentsException(
-          format("File or folder identifier [%s] cannot be its parent folder identifier [%s]", identifier,
+          format("File or folder identifier [%s] cannot be the same as parent folder identifier [%s]", identifier,
               fileDto.getParentIdentifier()));
     }
 
