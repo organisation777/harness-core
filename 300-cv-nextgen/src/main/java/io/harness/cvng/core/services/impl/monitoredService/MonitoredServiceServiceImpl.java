@@ -1004,7 +1004,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
       ChangeSummaryDTO changeSummary = changeSourceService.getChangeSummary(monitoredServiceParams,
           idToMonitoredServiceMap.get(monitoredServiceListDTOBuilder.getIdentifier()).getChangeSourceIdentifiers(),
           clock.instant().minus(Duration.ofDays(1)), clock.instant());
-      boolean serviceEnabled = enabledServices.contains(monitoredServiceListDTOBuilder.getServiceRef());
+      boolean serviceLicenseEnabled = enabledServices.contains(monitoredServiceListDTOBuilder.getServiceRef());
 
       monitoredServiceListDTOS.add(
           monitoredServiceListDTOBuilder.historicalTrend(historicalTrend)
@@ -1014,7 +1014,7 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
               .environmentName(environmentName)
               .changeSummary(changeSummary)
               .sloHealthIndicators(sloHealthIndicatorDTOMap.get(monitoredServiceListDTOBuilder.getIdentifier()))
-              .serviceEnabled(serviceEnabled)
+              .serviceLicenseEnabled(serviceLicenseEnabled)
               .build());
     }
     return PageResponse.<MonitoredServiceListItemDTO>builder()
