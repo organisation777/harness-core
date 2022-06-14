@@ -79,4 +79,9 @@ public class AzureRepoPRSpec implements AzureRepoEventSpec {
   public String fetchJexlCondition() {
     return jexlCondition;
   }
+
+  @Override
+  public boolean fetchAutoAbortPreviousExecutions() {
+    return autoAbortPreviousExecutions;
+  }
 }

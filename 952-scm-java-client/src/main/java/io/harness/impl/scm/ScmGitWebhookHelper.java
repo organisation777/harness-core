@@ -45,7 +45,7 @@ import org.apache.commons.lang3.NotImplementedException;
 public class ScmGitWebhookHelper {
   public static boolean isIdenticalEvents(
       WebhookResponse webhookResponse, HookEventType hookEventType, ScmConnector scmConnector,
-      List<NativeEvents> nativeEventsList) {
+      List<NativeEvents> allNativeEventsList) {
     if (scmConnector instanceof GithubConnectorDTO) {
       return compareEvents(
           webhookResponse.getNativeEvents().getGithub().getEventsList(), hookEventType.githubWebhookEvents);
@@ -63,7 +63,7 @@ public class ScmGitWebhookHelper {
     } else if (scmConnector instanceof AzureRepoConnectorDTO) {
       // create list of events
       List<AzureWebhookEvent> azureWebhookEvents = new ArrayList<>();
-      nativeEventsList.forEach(nativeEvents -> azureWebhookEvents.addAll(nativeEvents.getAzure().getEventsList()));
+      allNativeEventsList.forEach(nativeEvents -> azureWebhookEvents.addAll(nativeEvents.getAzure().getEventsList()));
       return compareEvents(azureWebhookEvents, hookEventType.azureWebhookEvents);
     } else {
       throw new NotImplementedException(

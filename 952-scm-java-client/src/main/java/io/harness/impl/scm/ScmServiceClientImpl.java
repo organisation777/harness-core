@@ -643,12 +643,10 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   private CreateWebhookRequest getCreateWebhookRequest(String slug, Provider gitProvider,
       GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector, WebhookResponse identicalTarget,
       List<NativeEvents> exisitingNativeEventsList) {
-    String target = gitWebhookDetails.getTarget();
-    target = target.replaceFirst("localhost:7457", "www.example.com");
     final CreateWebhookRequest.Builder createWebhookRequestBuilder = CreateWebhookRequest.newBuilder()
                                                                          .setSlug(slug)
                                                                          .setProvider(gitProvider)
-                                                                         .setTarget(target);
+                                                                         .setTarget(gitWebhookDetails.getTarget());
     return ScmGitWebhookHelper.getCreateWebhookRequest(
         createWebhookRequestBuilder, gitWebhookDetails, scmConnector, identicalTarget, exisitingNativeEventsList);
   }
@@ -855,18 +853,16 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   }
 
   private boolean isIdenticalTarget(WebhookResponse webhookResponse, GitWebhookDetails gitWebhookDetails) {
-    String target = gitWebhookDetails.getTarget();
-    target = target.replaceFirst("localhost:7457", "www.example.com");
     // Currently we don't add secret however we receive it in response with empty value
-    return webhookResponse.getTarget().replace("&secret=", "").equals(target);
+    return webhookResponse.getTarget().replace("&secret=", "").equals(gitWebhookDetails.getTarget());
   }
 
   private boolean isIdentical(
           WebhookResponse webhookResponse, GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector,
-          List<NativeEvents> nativeEventsList) {
+          List<NativeEvents> allNativeEventsList) {
     return isIdenticalTarget(webhookResponse, gitWebhookDetails)
         && ScmGitWebhookHelper.isIdenticalEvents(webhookResponse, gitWebhookDetails.getHookEventType(), scmConnector,
-        nativeEventsList);
+        allNativeEventsList);
   }
 
   private GetLatestCommitOnFileResponse getLatestCommitOnFile(
