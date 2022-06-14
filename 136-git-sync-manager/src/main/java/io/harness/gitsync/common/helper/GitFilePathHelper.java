@@ -47,10 +47,10 @@ public class GitFilePathHelper {
     validateFilePathHasCorrectExtension(filePath);
   }
 
-  public String getFileUrl(Scope scope, String connectorRef, String repoName, String branchName, String filePath) {
+  public String getFileUrl(Scope scope, String connectorRef, String repoName, String branchName, String filePath, String repoProjectName) {
     ScmConnector scmConnector = gitSyncConnectorHelper.getScmConnectorForGivenRepo(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), connectorRef, repoName);
-    return scmConnector.getFileUrl(branchName, filePath, GitRepositoryDTO.builder().name(repoName).build());
+    return scmConnector.getFileUrl(branchName, filePath, GitRepositoryDTO.builder().name(repoName).projectName(repoProjectName).build());
   }
 
   private static void validateFilePathFormat(String filePath) {

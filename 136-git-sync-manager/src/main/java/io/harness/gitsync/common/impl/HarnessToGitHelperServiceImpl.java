@@ -550,7 +550,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                 .setBlobId(scmGetFileResponseDTO.getBlobId())
                 .setFilePath(getFileRequest.getFilePath())
                 .setFileUrl(gitFilePathHelper.getFileUrl(scope, getFileRequest.getConnectorRef(),
-                    getFileRequest.getRepoName(), getFileRequest.getBranchName(), getFileRequest.getFilePath()))
+                    getFileRequest.getRepoName(), getFileRequest.getBranchName(), getFileRequest.getFilePath(), null))
                 .build())
         .build();
   }
@@ -567,7 +567,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                             .setBlobId(scmCommitFileResponseDTO.getBlobId())
                             .setFileUrl(gitFilePathHelper.getFileUrl(scope, createFileRequest.getConnectorRef(),
                                 createFileRequest.getRepoName(), createFileRequest.getBranchName(),
-                                createFileRequest.getFilePath()))
+                                createFileRequest.getFilePath(), null))
                             .build())
         .build();
   }
@@ -584,7 +584,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
                             .setBlobId(scmCommitFileResponseDTO.getBlobId())
                             .setFileUrl(gitFilePathHelper.getFileUrl(scope, updateFileRequest.getConnectorRef(),
                                 updateFileRequest.getRepoName(), updateFileRequest.getBranchName(),
-                                updateFileRequest.getFilePath()))
+                                updateFileRequest.getFilePath(), null))
                             .build())
         .build();
   }
