@@ -27,4 +27,5 @@ public class ResourceConstraintDetailDTO {
   String pipelineIdentifier;
   String planExecutionId;
   State state;
+  Long startTs;
 }

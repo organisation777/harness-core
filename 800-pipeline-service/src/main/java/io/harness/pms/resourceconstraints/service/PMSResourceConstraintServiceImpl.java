@@ -71,6 +71,7 @@ public class PMSResourceConstraintServiceImpl implements PMSResourceConstraintSe
                                             .pipelineIdentifier(planExecutionMap.get(instance.getReleaseEntityId())
                                                                     .getMetadata()
                                                                     .getPipelineIdentifier())
+                                            .startTs(planExecutionMap.get(instance.getReleaseEntityId()).getStartTs())
                                             .planExecutionId(instance.getReleaseEntityId())
                                             .state(instance.getState())
                                             .build())
