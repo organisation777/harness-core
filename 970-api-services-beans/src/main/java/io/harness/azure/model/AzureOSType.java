@@ -7,4 +7,37 @@
 
 package io.harness.azure.model;
 
-public enum AzureOSType { LINUX, WINDOWS }
+import static io.harness.annotations.dev.HarnessTeam.CDP;
+
+import io.harness.annotations.dev.OwnedBy;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+@OwnedBy(CDP)
+public enum AzureOSType {
+  LINUX("LINUX"),
+  WINDOWS("WINDOWS");
+
+  AzureOSType(String value) {
+    this.value = value;
+  }
+
+  private final String value;
+
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+  public static AzureOSType fromString(final String value) {
+    for (AzureOSType type : AzureOSType.values()) {
+      if (type.toString().equalsIgnoreCase(value)) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException(String.format("Unrecognized Azure OS Type, value: %s,", value));
+  }
+
+  @JsonValue
+  @Override
+  public String toString() {
+    return this.value;
+  }
+}
