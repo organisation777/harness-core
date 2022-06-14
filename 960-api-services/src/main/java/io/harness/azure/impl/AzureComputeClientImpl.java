@@ -18,6 +18,7 @@ import static io.harness.azure.model.AzureConstants.HARNESS_AUTOSCALING_GROUP_TA
 import static io.harness.azure.model.AzureConstants.NAME_TAG;
 import static io.harness.azure.model.AzureConstants.NEW_VIRTUAL_MACHINE_SCALE_SET_NAME_IS_NULL_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.NUMBER_OF_VM_INSTANCES_VALIDATION_MSG;
+import static io.harness.azure.model.AzureConstants.OS_TYPE_NULL_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.PRIMARY_INTERNET_FACING_LOAD_BALANCER_NULL_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.RESOURCE_GROUP_NAME_NULL_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.VIRTUAL_MACHINE_SCALE_SET_ID_NULL_VALIDATION_MSG;
@@ -610,6 +611,13 @@ public class AzureComputeClientImpl extends AzureClient implements AzureComputeC
   @Override
   public List<VirtualMachineData> listHosts(AzureConfig azureConfig, String subscriptionId, String resourceGroup,
       AzureOSType osType, Map<String, String> tags) {
+    if (isBlank(resourceGroup)) {
+      throw new IllegalArgumentException(RESOURCE_GROUP_NAME_NULL_VALIDATION_MSG);
+    }
+    if (isNull(osType)) {
+      throw new IllegalArgumentException(OS_TYPE_NULL_VALIDATION_MSG);
+    }
+
     List<VirtualMachine> virtualMachines =
         getAzureClient(azureConfig, subscriptionId).virtualMachines().listByResourceGroup(resourceGroup);
 
