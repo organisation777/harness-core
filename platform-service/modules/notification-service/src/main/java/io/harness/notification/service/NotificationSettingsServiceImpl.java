@@ -41,11 +41,10 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,6 +56,7 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
   private final UserClient userClient;
   private final NotificationSettingRepository notificationSettingRepository;
   private final SmtpConfigClient smtpConfigClient;
+  private static final Pattern VALID_EXPRESSION_PATTERN = Pattern.compile("</+secrets.getValue([a-zA-Z])>");
 
   private List<UserGroupDTO> getUserGroups(List<String> userGroupIds) {
     if (isEmpty(userGroupIds)) {
@@ -159,6 +159,7 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
           if (!notificationSetting.get(0).contains("secrets.getValue")) {
             throw new InvalidRequestException("Expression provided is not valid");
           }
+          log.info("Resolving UserGroup expression" +notificationSetting.get(0) );
           SecretExpressionEvaluator evaluator = new SecretExpressionEvaluator(expressionFunctorToken);
           try {
             Object object = evaluator.resolve(notificationSetting, true);
