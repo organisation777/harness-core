@@ -127,9 +127,6 @@ public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider 
           if (isNotEmpty(initializeStepInfo.getCiCodebase().getRepoName().getValue())) {
             repoName = initializeStepInfo.getCiCodebase().getRepoName().getValue();
           }
-          if (initializeStepInfo.getCiCodebase().getConnectorRef().getValue() == null) {
-            throw new Exception("rutvij");
-          }
           if (initializeStepInfo.getCiCodebase().getConnectorRef().getValue() != null) {
             try {
               ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(

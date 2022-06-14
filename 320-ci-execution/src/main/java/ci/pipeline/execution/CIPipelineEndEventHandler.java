@@ -7,6 +7,7 @@
 
 package ci.pipeline.execution;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.ci.pipeline.executions.beans.CIImageDetails;
@@ -43,10 +44,10 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   private static final String PRIVATE_REPO = "private_repo";
   private static final String REPO_NAME = "repo_name";
 
-  private static final String SCM_URL_LIST = "scm_provider";
-  private static final String SCM_PROVIDER_LIST = "scm_provider";
-  private static final String SCM_AUTH_METHOD_LIST = "scm_auth_method";
-  private static final String SCM_HOST_TYPE_LIST = "scm_host_type";
+  private static final String SCM_URL_LIST = "scm_url_list";
+  private static final String SCM_PROVIDER_LIST = "scm_provider_list";
+  private static final String SCM_AUTH_METHOD_LIST = "scm_auth_method_list";
+  private static final String SCM_HOST_TYPE_LIST = "scm_host_type_list";
 
   private static final String INFRA_TYPE_LIST = "infra_type_list";
   private static final String INFRA_OS_LIST = "infra_os_list";
@@ -92,16 +93,16 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     ciBuiltMap.put(REPO_NAME, moduleInfo.getRepoName());
 
     // SCM Vendor details
-    if (moduleInfo.getScmDetailsList() != null && moduleInfo.getScmDetailsList().size() != 0) {
+    if (isNotEmpty(moduleInfo.getScmDetailsList())) {
       List<String> scmUrlList = new ArrayList<>();
       List<String> scmProviderList = new ArrayList<>();
       List<String> scmAuthTypeList = new ArrayList<>();
       List<String> scmHostTypeList = new ArrayList<>();
-      for (CIScmDetails infraDetails : moduleInfo.getScmDetailsList()) {
-        scmUrlList.add(infraDetails.getScmProvider());
-        scmProviderList.add(infraDetails.getScmProvider());
-        scmAuthTypeList.add(infraDetails.getScmAuthType());
-        scmHostTypeList.add(infraDetails.getScmHostType());
+      for (CIScmDetails scmDetails : moduleInfo.getScmDetailsList()) {
+        scmUrlList.add(scmDetails.getScmUrl());
+        scmProviderList.add(scmDetails.getScmProvider());
+        scmAuthTypeList.add(scmDetails.getScmAuthType());
+        scmHostTypeList.add(scmDetails.getScmHostType());
       }
       ciBuiltMap.put(SCM_URL_LIST, scmUrlList);
       ciBuiltMap.put(SCM_PROVIDER_LIST, scmProviderList);
@@ -112,7 +113,7 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     }
 
     ciBuiltMap.put(USED_CODEBASE, false);
-    if (ciBuiltMap.getOrDefault(URL, null) != null) {
+    if (ciBuiltMap.get(URL) != null) {
       ciBuiltMap.put(USED_CODEBASE, true);
     }
 
