@@ -17,8 +17,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@ApiModel("GitlabOauthSpec")
-@Schema(name = "GitlabOauthSpec",
+@ApiModel("GitlabOauth")
+@Schema(name = "GitlabOauth",
         description = "This contains details of the information such as references of tokens needed for Gitlab API access")
 public class GitlabOauthDTO implements GitlabApiAccessSpecDTO, GitlabHttpCredentialsSpecDTO {
     public static String userName = "Oauth";
