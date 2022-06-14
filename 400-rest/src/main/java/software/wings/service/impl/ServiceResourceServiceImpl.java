@@ -509,49 +509,49 @@ public class ServiceResourceServiceImpl implements ServiceResourceService, DataP
       case KUBERNETES:
         if(service.getArtifactType() != ArtifactType.DOCKER) {
           throw new InvalidRequestException(
-                  "Only Docker ArtifactType allowed for KUBERNETES Deployment Type "
+                  "Only Docker ArtifactType allowed for KUBERNETES Deployment Type"
           );
         }
         break;
       case HELM:
         if( service.getArtifactType() != ArtifactType.DOCKER){
           throw new InvalidRequestException(
-                  "Only Docker ArtifactType allowed for given Deployment Type "
+                  "Only Docker ArtifactType allowed for HELM Deployment Type"
           );
         }
         break;
       case ECS:
         if( service.getArtifactType() != ArtifactType.DOCKER) {
           throw new InvalidRequestException(
-                  "Only DOCKER ArtifactType allowed for given Deployment Type "
+                  "Only DOCKER ArtifactType allowed for Amazon EC2 Container Services (ECS) Deployment Type"
           );
         }
         break;
       case AWS_CODEDEPLOY:
         if( service.getArtifactType() != ArtifactType.AWS_CODEDEPLOY){
           throw new InvalidRequestException(
-                  "Only AWS_CODEDEPLOY ArtifactType allowed for given Deployment Type "
+                  "Only AWS CODEDEPLOY ArtifactType allowed for AWS CODEDEPLOY Deployment Type"
           );
         }
         break;
       case AWS_LAMBDA:
         if(service.getArtifactType() != ArtifactType.AWS_LAMBDA){
           throw new InvalidRequestException(
-                  "Only AWS_Lambda ArtifactType allowed for given Deployment Type "
+                  "Only AWS Lambda ArtifactType allowed for AWS Lambda Deployment Type"
           );
         }
         break;
       case AMI:
         if(service.getArtifactType() != ArtifactType.AMI){
           throw new InvalidRequestException(
-                  "Only AMI ArtifactType allowed for given Deployment Type "
+                  "Only AMI ArtifactType allowed for AMI Deployment Type"
           );
         }
         break;
       case PCF:
         if(service.getArtifactType() != ArtifactType.PCF){
           throw new InvalidRequestException(
-                  "Only PCF ArtifactType allowed for given Deployment Type "
+                  "Only PCF ArtifactType allowed for Tanzu Application Services Deployment Type"
           );
         }
         break;

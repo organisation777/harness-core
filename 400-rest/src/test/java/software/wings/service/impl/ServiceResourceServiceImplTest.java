@@ -1130,7 +1130,7 @@ public class ServiceResourceServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = TARUN_UBA)
   @Category(UnitTests.class)
-  public void testSavingK8Artifact() {
+  public void testSavingK8ArtifactSuccess() {
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(featureFlagService.isEnabled(FeatureName.HARNESS_TAGS, ACCOUNT_ID)).thenReturn(true);
     when(limitCheckerFactory.getInstance(new Action(anyString(), ActionType.CREATE_SERVICE)))
@@ -1145,6 +1145,30 @@ public class ServiceResourceServiceImplTest extends WingsBaseTest {
             .description("Description")
             .isK8sV2(true)
             .build();
-    Service service = serviceResourceService.save(k8sService);
+    serviceResourceService.save(k8sService);
+  }
+  @Test
+  @Owner(developers = TARUN_UBA)
+  @Category(UnitTests.class)
+  public void testSavingK8ArtifactFail() {
+    when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
+    when(featureFlagService.isEnabled(FeatureName.HARNESS_TAGS, ACCOUNT_ID)).thenReturn(true);
+    when(limitCheckerFactory.getInstance(new Action(anyString(), ActionType.CREATE_SERVICE)))
+            .thenReturn(new MockChecker(true, ActionType.CREATE_SERVICE));
+
+    Service k8sService = Service.builder()
+            .name(SERVICE_NAME)
+            .accountId(ACCOUNT_ID)
+            .appId(APP_ID)
+            .deploymentType(KUBERNETES)
+            .artifactType(ArtifactType.NUGET)
+            .description("Description")
+            .isK8sV2(true)
+            .build();
+
+    assertThatThrownBy(() -> serviceResourceService.save(k8sService))
+            .isInstanceOf(InvalidRequestException.class)
+            .hasMessage("Only Docker ArtifactType allowed for KUBERNETES Deployment Type");
+
   }
 }
