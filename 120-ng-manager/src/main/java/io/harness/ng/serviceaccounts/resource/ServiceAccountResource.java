@@ -124,7 +124,7 @@ public class ServiceAccountResource {
   @PUT
   @Path("{identifier}")
   @ApiOperation(value = "Update service account", nickname = "updateServiceAccount")
-  @Operation(operationId = "updateServiceAccount", summary = "Update Service Account.",
+  @Operation(operationId = "updateServiceAccount", summary = "Update Service Account",
       description = "Updates the Service Account.",
       responses =
       {
@@ -151,7 +151,7 @@ public class ServiceAccountResource {
   @DELETE
   @Path("{identifier}")
   @ApiOperation(value = "Delete service account", nickname = "deleteServiceAccount")
-  @Operation(operationId = "deleteServiceAccount", summary = "Delete service Account",
+  @Operation(operationId = "deleteServiceAccount", summary = "Delete Service Account",
       description = "Deletes Service Account by ID",
       responses =
       {
@@ -177,7 +177,7 @@ public class ServiceAccountResource {
 
   @GET
   @ApiOperation(value = "List service account", nickname = "listServiceAccount")
-  @Operation(operationId = "listServiceAccount", summary = "List service account",
+  @Operation(operationId = "listServiceAccount", summary = "List Service Accounts by filter",
       description = "Fetches the list of Service Accounts corresponding to the request's filter criteria.",
       responses =
       {
@@ -203,7 +203,7 @@ public class ServiceAccountResource {
   @GET
   @Path("aggregate")
   @ApiOperation(value = "List service account", nickname = "listAggregatedServiceAccounts")
-  @Operation(operationId = "listAggregatedServiceAccounts", summary = "List aggregated service account.",
+  @Operation(operationId = "listAggregatedServiceAccounts", summary = "List aggregated Service Accounts",
       description = "Fetches the list of Aggregated Service Accounts corresponding to the request's filter criteria.",
       responses =
       {
@@ -246,7 +246,7 @@ public class ServiceAccountResource {
   @GET
   @Path("aggregate/{identifier}")
   @ApiOperation(value = "Get service account", nickname = "getAggregatedServiceAccount")
-  @Operation(operationId = "getAggregatedServiceAccount", summary = "Get aggregated service account",
+  @Operation(operationId = "getAggregatedServiceAccount", summary = "Get aggregated Service Account",
       description = "Get the Service Account by accountIdentifier and Service Account ID and Scope.",
       responses =
       {
