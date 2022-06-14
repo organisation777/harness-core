@@ -9,12 +9,9 @@ package io.harness.accesscontrol.acl.persistence;
 
 import static io.harness.accesscontrol.acl.persistence.ACL.getAclQueryString;
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.accesscontrol.acl.PermissionCheck;
 import io.harness.accesscontrol.acl.api.Principal;
-import io.harness.accesscontrol.acl.conditions.ACLExpressionEvaluator;
-import io.harness.accesscontrol.acl.conditions.ACLExpressionEvaluatorProvider;
 import io.harness.accesscontrol.acl.persistence.repositories.ACLRepository;
 import io.harness.accesscontrol.scopes.core.Scope;
 import io.harness.accesscontrol.scopes.core.ScopeLevel;
@@ -30,7 +27,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -43,13 +39,10 @@ public class ACLDAOImpl implements ACLDAO {
   private static final String INCLUDE_CHILD_SCOPES_IDENTIFIER = "**";
   private final ACLRepository aclRepository;
   private final Set<String> scopeResourceTypes;
-  private final ACLExpressionEvaluatorProvider aclExpressionEvaluatorProvider;
 
   @Inject
-  public ACLDAOImpl(@Named(ACL.PRIMARY_COLLECTION) ACLRepository aclRepository, Map<String, ScopeLevel> scopeLevels,
-      ACLExpressionEvaluatorProvider aclExpressionEvaluatorProvider) {
+  public ACLDAOImpl(@Named(ACL.PRIMARY_COLLECTION) ACLRepository aclRepository, Map<String, ScopeLevel> scopeLevels) {
     this.aclRepository = aclRepository;
-    this.aclExpressionEvaluatorProvider = aclExpressionEvaluatorProvider;
     this.scopeResourceTypes =
         scopeLevels.values().stream().map(ScopeLevel::getResourceType).collect(Collectors.toSet());
   }
@@ -149,8 +142,7 @@ public class ACLDAOImpl implements ACLDAO {
   }
 
   @Override
-  public List<Boolean> checkForAccess(
-      Principal principal, List<PermissionCheck> permissionChecks, List<Map<String, String>> attributes) {
+  public List<List<ACL>> getMatchingACLs(Principal principal, List<PermissionCheck> permissionChecks) {
     List<Set<String>> aclQueryStringsPerPermission = new ArrayList<>();
     List<String> aclQueryStrings = new ArrayList<>();
     permissionChecks.forEach(permissionCheck -> {
@@ -160,38 +152,11 @@ public class ACLDAOImpl implements ACLDAO {
     });
 
     List<ACL> aclsPresentInDB = aclRepository.getByAclQueryStringInAndEnabled(aclQueryStrings, true);
-    List<List<ACL>> matchedACLs =
-        aclQueryStringsPerPermission.stream()
-            .map(queryStringsForPermission
-                -> aclsPresentInDB.stream()
-                       .filter(acl -> queryStringsForPermission.contains(acl.getAclQueryString()))
-                       .collect(Collectors.toList()))
-            .collect(Collectors.toList());
-
-    List<Boolean> accessFromWithoutConditionACLs =
-        matchedACLs.stream()
-            .map(matchedACLsForPermission -> matchedACLsForPermission.stream().anyMatch(acl -> !acl.isConditional()))
-            .collect(Collectors.toList());
-
-    List<List<ACL>> conditionalACLs =
-        matchedACLs.stream()
-            .map(matchedACLsForPermission
-                -> matchedACLsForPermission.stream().filter(ACL::isConditional).collect(Collectors.toList()))
-            .collect(Collectors.toList());
-
-    return IntStream.range(0, permissionChecks.size())
-        .mapToObj(i -> {
-          Boolean accessFromWithoutConditionACLsForPermission = accessFromWithoutConditionACLs.get(i);
-          List<ACL> conditionalACLsForPermission = conditionalACLs.get(i);
-          if (accessFromWithoutConditionACLsForPermission || isEmpty(conditionalACLsForPermission)) {
-            return true;
-          }
-          return conditionalACLsForPermission.stream().anyMatch(conditionalACL -> {
-            ACLExpressionEvaluator engineExpressionEvaluator =
-                aclExpressionEvaluatorProvider.get(permissionChecks.get(i), attributes.get(i));
-            return engineExpressionEvaluator.evaluateExpression(conditionalACL.getJexlCondition());
-          });
-        })
+    return aclQueryStringsPerPermission.stream()
+        .map(queryStringsForPermission
+            -> aclsPresentInDB.stream()
+                   .filter(acl -> queryStringsForPermission.contains(acl.getAclQueryString()))
+                   .collect(Collectors.toList()))
         .collect(Collectors.toList());
   }
 }

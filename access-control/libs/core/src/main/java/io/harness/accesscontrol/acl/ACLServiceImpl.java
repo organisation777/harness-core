@@ -11,8 +11,12 @@ import static io.harness.accesscontrol.permissions.PermissionStatus.EXPERIMENTAL
 import static io.harness.accesscontrol.permissions.PermissionStatus.INACTIVE;
 import static io.harness.accesscontrol.permissions.PermissionStatus.STAGING;
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.accesscontrol.acl.api.Principal;
+import io.harness.accesscontrol.acl.conditions.ACLExpressionEvaluator;
+import io.harness.accesscontrol.acl.conditions.ACLExpressionEvaluatorProvider;
+import io.harness.accesscontrol.acl.persistence.ACL;
 import io.harness.accesscontrol.acl.persistence.ACLDAO;
 import io.harness.accesscontrol.permissions.Permission;
 import io.harness.accesscontrol.permissions.PermissionFilter;
@@ -23,10 +27,12 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,11 +46,14 @@ public class ACLServiceImpl implements ACLService {
   private static final PermissionFilter permissionFilter =
       PermissionFilter.builder().statusFilter(Sets.newHashSet(INACTIVE, EXPERIMENTAL, STAGING)).build();
   private volatile Set<String> disabledPermissions;
+  private final ACLExpressionEvaluatorProvider aclExpressionEvaluatorProvider;
 
   @Inject
-  public ACLServiceImpl(ACLDAO aclDAO, PermissionService permissionService) {
+  public ACLServiceImpl(ACLDAO aclDAO, PermissionService permissionService,
+      ACLExpressionEvaluatorProvider aclExpressionEvaluatorProvider) {
     this.aclDAO = aclDAO;
     this.permissionService = permissionService;
+    this.aclExpressionEvaluatorProvider = aclExpressionEvaluatorProvider;
   }
 
   private PermissionCheckResult getPermissionCheckResult(PermissionCheck permissionCheck, boolean permitted) {
@@ -58,9 +67,9 @@ public class ACLServiceImpl implements ACLService {
   }
 
   @Override
-  public List<PermissionCheckResult> checkAccess(
-      Principal principal, List<PermissionCheck> permissionChecks, List<Map<String, String>> attributes) {
-    List<Boolean> allowedAccessList = aclDAO.checkForAccess(principal, permissionChecks, attributes);
+  public List<PermissionCheckResult> checkAccess(Principal principal, List<PermissionCheck> permissionChecks) {
+    List<List<ACL>> matchingACLs = aclDAO.getMatchingACLs(principal, permissionChecks);
+    List<Boolean> allowedAccessList = checkAccessInternal(permissionChecks, matchingACLs);
     List<PermissionCheckResult> permissionCheckResults = new ArrayList<>();
     ensureDisabledPermissions();
 
@@ -74,6 +83,44 @@ public class ACLServiceImpl implements ACLService {
     }
 
     return permissionCheckResults;
+  }
+
+  private List<Boolean> checkAccessInternal(List<PermissionCheck> permissionChecks, List<List<ACL>> matchedACLs) {
+    List<Boolean> accessFromWithoutConditionACLs =
+        matchedACLs.stream()
+            .map(matchedACLsForPermission -> matchedACLsForPermission.stream().anyMatch(acl -> !acl.isConditional()))
+            .collect(Collectors.toList());
+
+    List<List<ACL>> conditionalACLs =
+        matchedACLs.stream()
+            .map(matchedACLsForPermission
+                -> matchedACLsForPermission.stream().filter(ACL::isConditional).collect(Collectors.toList()))
+            .collect(Collectors.toList());
+
+    return IntStream.range(0, permissionChecks.size())
+        .mapToObj(i -> {
+          Boolean accessFromWithoutConditionACLsForPermission = accessFromWithoutConditionACLs.get(i);
+          List<ACL> conditionalACLsForPermission = conditionalACLs.get(i);
+          if (accessFromWithoutConditionACLsForPermission) {
+            return true;
+          }
+          if (isEmpty(conditionalACLsForPermission)) {
+            return false;
+          }
+          Map<String, String> attributes = getAttributes(permissionChecks.get(i));
+          return conditionalACLsForPermission.stream().anyMatch(conditionalACL -> {
+            ACLExpressionEvaluator engineExpressionEvaluator =
+                aclExpressionEvaluatorProvider.get(permissionChecks.get(i), attributes);
+            return engineExpressionEvaluator.evaluateExpression(conditionalACL.getJexlCondition());
+          });
+        })
+        .collect(Collectors.toList());
+  }
+
+  private Map<String, String> getAttributes(PermissionCheck permissionCheck) {
+    HashMap<String, String> attributes = new HashMap<>();
+    attributes.put("connectorType", "PRODUCTION");
+    return attributes;
   }
 
   private void ensureDisabledPermissions() {

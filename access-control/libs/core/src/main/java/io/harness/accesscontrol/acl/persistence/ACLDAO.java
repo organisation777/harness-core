@@ -14,10 +14,8 @@ import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.annotations.dev.OwnedBy;
 
 import java.util.List;
-import java.util.Map;
 
 @OwnedBy(PL)
 public interface ACLDAO {
-  List<Boolean> checkForAccess(
-      Principal principal, List<PermissionCheck> permissionChecks, List<Map<String, String>> attributes);
+  List<List<ACL>> getMatchingACLs(Principal principal, List<PermissionCheck> permissionChecks);
 }
