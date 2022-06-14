@@ -10,26 +10,14 @@ package io.harness.cvng.core.services.impl.monitoredService;
 import static io.harness.cvng.core.utils.DateTimeUtils.roundDownTo5MinBoundary;
 import static io.harness.cvng.dashboard.entities.HeatMap.HeatMapResolution.FIVE_MIN;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.rule.OwnerRule.ABHIJITH;
-import static io.harness.rule.OwnerRule.ANJAN;
-import static io.harness.rule.OwnerRule.ARPITJ;
-import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
-import static io.harness.rule.OwnerRule.KAMAL;
-import static io.harness.rule.OwnerRule.KANHAIYA;
-import static io.harness.rule.OwnerRule.KAPIL;
-import static io.harness.rule.OwnerRule.NAVEEN;
-import static io.harness.rule.OwnerRule.PRAVEEN;
-import static io.harness.rule.OwnerRule.SOWMYA;
+import static io.harness.rule.OwnerRule.*;
 
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.audit.ResourceTypeConstants;
@@ -888,7 +876,7 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ARPITJ)
   @Category(UnitTests.class)
-  public void testCountUniqueEnabledServices_allUnique() {
+  public void testList_allUniqueServices() {
     MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTOBuilder("ms1", "service1", "evn1").build();
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
     monitoredServiceDTO = createMonitoredServiceDTOBuilder("ms2", "service2", "evn1").build();
@@ -915,7 +903,7 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ARPITJ)
   @Category(UnitTests.class)
-  public void testCountUniqueEnabledServices_someCommon() {
+  public void testList_someCommonServices() {
     MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTOBuilder("ms1", "service1", "env1").build();
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
     monitoredServiceDTO = createMonitoredServiceDTOBuilder("ms2", "service2", "env1").build();
