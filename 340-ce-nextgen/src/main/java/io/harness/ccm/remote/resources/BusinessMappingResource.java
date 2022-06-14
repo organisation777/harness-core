@@ -10,7 +10,10 @@ package io.harness.ccm.remote.resources;
 import static io.harness.annotations.dev.HarnessTeam.CE;
 
 import io.harness.NGCommonEntityConstants;
+import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ccm.rbac.CCMRbacPermissions;
+import io.harness.ccm.rbac.CCMResources;
 import io.harness.ccm.views.businessMapping.entities.BusinessMapping;
 import io.harness.ccm.views.businessMapping.service.intf.BusinessMappingService;
 import io.harness.rest.RestResponse;
@@ -47,15 +50,18 @@ public class BusinessMappingResource {
   @POST
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(
+      resourceType = CCMResources.COST_CATEGORY, permission = CCMRbacPermissions.COST_CATEGORY_CREATE_AND_EDIT)
   @ApiOperation(value = "Create Business Mapping", nickname = "createBusinessMapping")
-  public RestResponse<BusinessMapping> save(
-      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId, BusinessMapping businessMapping) {
+  public RestResponse<BusinessMapping>
+  save(@QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId, BusinessMapping businessMapping) {
     return new RestResponse<>(businessMappingService.save(businessMapping));
   }
 
   @GET
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.COST_CATEGORY, permission = CCMRbacPermissions.COST_CATEGORY_VIEW)
   @ApiOperation(value = "Get List Of Business Mappings", nickname = "getBusinessMappingList")
   public RestResponse<List<BusinessMapping>> list(@QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId) {
     return new RestResponse<>(businessMappingService.list(accountId));
@@ -65,6 +71,7 @@ public class BusinessMappingResource {
   @Path("{id}")
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.COST_CATEGORY, permission = CCMRbacPermissions.COST_CATEGORY_VIEW)
   @ApiOperation(value = "Get Business Mapping", nickname = "getBusinessMapping")
   public RestResponse<BusinessMapping> get(
       @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId, @PathParam("id") String businessMappingId) {
@@ -74,9 +81,11 @@ public class BusinessMappingResource {
   @PUT
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(
+      resourceType = CCMResources.COST_CATEGORY, permission = CCMRbacPermissions.COST_CATEGORY_CREATE_AND_EDIT)
   @ApiOperation(value = "Update Business Mapping", nickname = "updateBusinessMapping")
-  public RestResponse<String> update(
-      @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId, BusinessMapping businessMapping) {
+  public RestResponse<String>
+  update(@QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId, BusinessMapping businessMapping) {
     businessMappingService.update(businessMapping);
     return new RestResponse<>("Successfully updated the Business Mapping");
   }
@@ -85,6 +94,7 @@ public class BusinessMappingResource {
   @Path("{id}")
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.COST_CATEGORY, permission = CCMRbacPermissions.COST_CATEGORY_DELETE)
   @ApiOperation(value = "Delete Business Mapping", nickname = "deleteBusinessMapping")
   public RestResponse<String> delete(@NotEmpty @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @PathParam("id") String businessMappingId) {

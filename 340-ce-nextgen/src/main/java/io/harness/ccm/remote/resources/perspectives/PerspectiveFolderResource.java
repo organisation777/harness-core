@@ -13,7 +13,10 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
+import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ccm.rbac.CCMRbacPermissions;
+import io.harness.ccm.rbac.CCMResources;
 import io.harness.ccm.utils.LogAccountIdentifier;
 import io.harness.ccm.views.dto.CreatePerspectiveFolderDTO;
 import io.harness.ccm.views.dto.MovePerspectiveDTO;
@@ -99,6 +102,7 @@ public class PerspectiveFolderResource {
   @Timed
   @ExceptionMetered
   @Consumes(MediaType.APPLICATION_JSON)
+  @NGAccessControlCheck(resourceType = CCMResources.FOLDER, permission = CCMRbacPermissions.FOLDER_CREATE_AND_EDIT)
   @ApiOperation(value = "Create perspective folder", nickname = "createPerspectiveFolder")
   @FeatureRestrictionCheck(FeatureRestrictionName.PERSPECTIVES)
   @LogAccountIdentifier
@@ -136,6 +140,7 @@ public class PerspectiveFolderResource {
   @GET
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.FOLDER, permission = CCMRbacPermissions.FOLDER_VIEW)
   @ApiOperation(value = "Get folders for account", nickname = "getFolders")
   @LogAccountIdentifier
   @Produces(MediaType.APPLICATION_JSON)
@@ -158,6 +163,7 @@ public class PerspectiveFolderResource {
   @Path("{folderId}/perspectives")
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.FOLDER, permission = CCMRbacPermissions.FOLDER_VIEW)
   @ApiOperation(value = "Get All perspectives in a folder", nickname = "getAllFolderPerspectives")
   @LogAccountIdentifier
   @Produces(MediaType.APPLICATION_JSON)
@@ -181,6 +187,7 @@ public class PerspectiveFolderResource {
   @Timed
   @ExceptionMetered
   @Consumes(MediaType.APPLICATION_JSON)
+  @NGAccessControlCheck(resourceType = CCMResources.FOLDER, permission = CCMRbacPermissions.FOLDER_CREATE_AND_EDIT)
   @ApiOperation(value = "Update a folder", nickname = "updateFolder")
   @LogAccountIdentifier
   @Operation(operationId = "updateFolder", description = "Update a folder", summary = "Update a folder",
@@ -201,6 +208,8 @@ public class PerspectiveFolderResource {
   @Path("movePerspectives")
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(
+      resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_CREATE_AND_EDIT)
   @ApiOperation(value = "Move perspectives", nickname = "movePerspectives")
   @FeatureRestrictionCheck(FeatureRestrictionName.PERSPECTIVES)
   @LogAccountIdentifier
@@ -225,6 +234,7 @@ public class PerspectiveFolderResource {
   @Path("{folderId}")
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.FOLDER, permission = CCMRbacPermissions.FOLDER_DELETE)
   @ApiOperation(value = "Delete folder", nickname = "deleteFolder")
   @LogAccountIdentifier
   @Operation(operationId = "deleteFolder", description = "Delete a Folder for the given Folder ID.",

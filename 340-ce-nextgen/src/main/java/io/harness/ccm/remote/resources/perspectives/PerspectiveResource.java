@@ -14,12 +14,15 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.NGCommonEntityConstants;
 import io.harness.accesscontrol.AccountIdentifier;
+import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.budget.BudgetPeriod;
 import io.harness.ccm.commons.utils.BigQueryHelper;
 import io.harness.ccm.graphql.core.budget.BudgetCostService;
 import io.harness.ccm.graphql.core.budget.BudgetService;
+import io.harness.ccm.rbac.CCMRbacPermissions;
+import io.harness.ccm.rbac.CCMResources;
 import io.harness.ccm.service.intf.CCMNotificationService;
 import io.harness.ccm.utils.LogAccountIdentifier;
 import io.harness.ccm.views.entities.CEView;
@@ -128,6 +131,7 @@ public class PerspectiveResource {
   @Hidden
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_VIEW)
   @ApiOperation(value = "Get last month cost for perspective", nickname = "getLastMonthCostV2")
   @Operation(operationId = "getLastMonthCostV2",
       description = "Fetch cost details of a Perspective for the previous month for the given  Perspective ID.",
@@ -151,6 +155,7 @@ public class PerspectiveResource {
   @Timed
   @LogAccountIdentifier
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_VIEW)
   @ApiOperation(value = "Get last period cost for perspective", nickname = "getLastPeriodCost")
   @Operation(operationId = "getLastPeriodCost", description = "Get last period cost for a Perspective",
       summary = "Get the last period cost for a Perspective",
@@ -178,6 +183,7 @@ public class PerspectiveResource {
   @Timed
   @Hidden
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_VIEW)
   @ApiOperation(value = "Get forecast cost for perspective", nickname = "getForecastCostV2")
   @Operation(operationId = "getForecastCostV2",
       description = "Fetch forecasted cost details of a Perspective for the next 30 days for the given Perspective ID.",
@@ -201,6 +207,7 @@ public class PerspectiveResource {
   @Timed
   @Hidden
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_VIEW)
   @ApiOperation(value = "Get forecast cost for perspective for given period", nickname = "getForecastCostForPeriod")
   @Operation(operationId = "getForecastCostForPeriod",
       description = "Get the forecasted cost of a Perspective for next period",
@@ -228,6 +235,8 @@ public class PerspectiveResource {
   @Timed
   @ExceptionMetered
   @Consumes(MediaType.APPLICATION_JSON)
+  @NGAccessControlCheck(
+      resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_CREATE_AND_EDIT)
   @ApiOperation(value = "Create perspective", nickname = "createPerspective")
   @FeatureRestrictionCheck(FeatureRestrictionName.PERSPECTIVES)
   @LogAccountIdentifier
@@ -280,6 +289,7 @@ public class PerspectiveResource {
   @GET
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_VIEW)
   @ApiOperation(value = "Get perspective", nickname = "getPerspective")
   @LogAccountIdentifier
   @Produces(MediaType.APPLICATION_JSON)
@@ -307,6 +317,7 @@ public class PerspectiveResource {
   @Path("getAllPerspectives")
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_VIEW)
   @ApiOperation(value = "Get All perspectives", nickname = "getAllPerspectives")
   @LogAccountIdentifier
   @Produces(MediaType.APPLICATION_JSON)
@@ -328,6 +339,8 @@ public class PerspectiveResource {
   @Timed
   @ExceptionMetered
   @Consumes(MediaType.APPLICATION_JSON)
+  @NGAccessControlCheck(
+      resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_CREATE_AND_EDIT)
   @ApiOperation(value = "Update perspective", nickname = "updatePerspective")
   @LogAccountIdentifier
   @Operation(operationId = "updatePerspective",
@@ -353,6 +366,7 @@ public class PerspectiveResource {
   @DELETE
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_DELETE)
   @ApiOperation(value = "Delete perspective", nickname = "deletePerspective")
   @LogAccountIdentifier
   @Operation(operationId = "deletePerspective", description = "Delete a Perspective for the given Perspective ID.",
@@ -383,6 +397,8 @@ public class PerspectiveResource {
   @Hidden
   @Timed
   @ExceptionMetered
+  @NGAccessControlCheck(
+      resourceType = CCMResources.PERSPECTIVE, permission = CCMRbacPermissions.PERSPECTIVE_CREATE_AND_EDIT)
   @ApiOperation(value = "Clone perspective", nickname = "clonePerspective")
   @FeatureRestrictionCheck(FeatureRestrictionName.PERSPECTIVES)
   @LogAccountIdentifier
