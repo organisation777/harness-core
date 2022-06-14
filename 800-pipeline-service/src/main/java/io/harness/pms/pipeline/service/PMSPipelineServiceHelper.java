@@ -418,7 +418,8 @@ public class PMSPipelineServiceHelper {
       try {
         importedPipeline = YamlUtils.writeYamlString(pipelineYamlField).replace("---\n", "");
       } catch (IOException e) {
-        throw new UnexpectedException("Unexpected error when trying to set description");
+        log.error("Unexpected error when trying to set description", e);
+        throw new UnexpectedException("Unexpected error when trying to set Pipeline Metadata. Please try again.", e);
       }
     }
     return importedPipeline;

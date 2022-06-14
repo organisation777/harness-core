@@ -429,21 +429,24 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Override
   public PipelineEntity importPipelineFromRemote(String accountId, String orgIdentifier, String projectIdentifier,
       String pipelineIdentifier, PipelineImportRequestDTO pipelineImportRequest) {
-    String importedPipeline =
+    String importedPipelineYAML =
         pmsPipelineRepository.importPipelineFromRemote(accountId, orgIdentifier, projectIdentifier);
 
     String updatedImportedPipeline = PMSPipelineServiceHelper.updateFieldsInImportedPipeline(
-        orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineImportRequest, importedPipeline);
+        orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineImportRequest, importedPipelineYAML);
 
     PipelineEntity pipelineEntity =
         PMSPipelineDtoMapper.toPipelineEntity(accountId, orgIdentifier, projectIdentifier, updatedImportedPipeline);
     try {
       PipelineEntity entityWithUpdatedInfo = pmsPipelineServiceHelper.updatePipelineInfo(pipelineEntity);
       PipelineEntity savedPipelineEntity = pmsPipelineRepository.savePipelineEntityForImportedYAML(
-          entityWithUpdatedInfo, !updatedImportedPipeline.equals(importedPipeline));
+          entityWithUpdatedInfo, !updatedImportedPipeline.equals(importedPipelineYAML));
       pmsPipelineServiceHelper.sendPipelineSaveTelemetryEvent(savedPipelineEntity, CREATING_PIPELINE);
       return savedPipelineEntity;
     } catch (DuplicateKeyException ex) {
+      log.error(format(DUP_KEY_EXP_FORMAT_STRING, pipelineEntity.getIdentifier(), pipelineEntity.getProjectIdentifier(),
+                    pipelineEntity.getOrgIdentifier()),
+          ex);
       throw new DuplicateFieldException(format(DUP_KEY_EXP_FORMAT_STRING, pipelineEntity.getIdentifier(),
                                             pipelineEntity.getProjectIdentifier(), pipelineEntity.getOrgIdentifier()),
           USER_SRE, ex);
