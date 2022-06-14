@@ -60,6 +60,7 @@ import software.wings.audit.EntityAuditRecord;
 import software.wings.audit.EntityAuditRecord.EntityAuditRecordBuilder;
 import software.wings.audit.ResourceType;
 import software.wings.beans.ApiKeyEntry;
+import software.wings.beans.ApiKeyEntryYaml;
 import software.wings.beans.AuditPreference;
 import software.wings.beans.EntityType;
 import software.wings.beans.EntityYamlRecord;
@@ -143,6 +144,7 @@ public class AuditServiceImpl implements AuditService {
   @Inject private UserService userService;
   @Inject private AuditHelper auditHelper;
   @Inject private ApiKeyService apiKeyService;
+  @Inject private ApiKeyAuditHelper apiKeyAuditHelper;
 
   private WingsPersistence wingsPersistence;
 
@@ -755,6 +757,8 @@ public class AuditServiceImpl implements AuditService {
       } else if (entity instanceof UserGroup) {
         UserGroup userGroupAudit = ((UserGroup) entity).buildUserGroupAudit();
         yamlContent = toYamlString(userGroupAudit);
+      } else if (entity instanceof ApiKeyEntry) {
+        yamlContent = toYamlString(apiKeyAuditHelper.getApiKeyDtoFromApiKey(((ApiKeyEntry) entity)));
       } else {
         YamlPayload resource = yamlResourceService.obtainEntityYamlVersion(accountId, entity).getResource();
         yamlContent = resource.getYaml();
