@@ -430,7 +430,7 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   public PipelineEntity importPipelineFromRemote(String accountId, String orgIdentifier, String projectIdentifier,
       String pipelineIdentifier, PipelineImportRequestDTO pipelineImportRequest) {
     String importedPipelineYAML =
-        pmsPipelineRepository.importPipelineFromRemote(accountId, orgIdentifier, projectIdentifier);
+        pmsPipelineServiceHelper.importPipelineFromRemote(accountId, orgIdentifier, projectIdentifier);
 
     String updatedImportedPipeline = PMSPipelineServiceHelper.updateFieldsInImportedPipeline(
         orgIdentifier, projectIdentifier, pipelineIdentifier, pipelineImportRequest, importedPipelineYAML);

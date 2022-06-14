@@ -17,6 +17,7 @@ import io.harness.ModuleType;
 import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
+import io.harness.beans.Scope;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.HarnessStringUtils;
 import io.harness.engine.GovernanceService;
@@ -28,7 +29,9 @@ import io.harness.exception.ngexception.beans.yamlschema.YamlSchemaErrorWrapperD
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
+import io.harness.gitaware.dto.GitContextRequestParams;
 import io.harness.gitaware.helper.GitAwareContextHelper;
+import io.harness.gitaware.helper.GitAwareEntityHelper;
 import io.harness.gitsync.helpers.GitContextHelper;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
@@ -95,6 +98,7 @@ public class PMSPipelineServiceHelper {
   @Inject private final PmsFeatureFlagService pmsFeatureFlagService;
   @Inject private final PmsGitSyncHelper gitSyncHelper;
   @Inject private final TelemetryReporter telemetryReporter;
+  @Inject private final GitAwareEntityHelper gitAwareEntityHelper;
 
   public static String PIPELINE_SAVE = "pipeline_save";
   public static String PIPELINE_SAVE_ACTION_TYPE = "action";
@@ -354,6 +358,18 @@ public class PMSPipelineServiceHelper {
     InvalidYamlException invalidYamlException = new InvalidYamlException(errorMessage, errorWrapperDTO);
     invalidYamlException.setYaml(pipelineYaml);
     return invalidYamlException;
+  }
+
+  public String importPipelineFromRemote(String accountId, String orgIdentifier, String projectIdentifier) {
+    GitEntityInfo gitEntityInfo = GitAwareContextHelper.getGitRequestParamsInfo();
+    Scope scope = Scope.of(accountId, orgIdentifier, projectIdentifier);
+    GitContextRequestParams gitContextRequestParams = GitContextRequestParams.builder()
+                                                          .branchName(gitEntityInfo.getBranch())
+                                                          .connectorRef(gitEntityInfo.getConnectorRef())
+                                                          .filePath(gitEntityInfo.getFilePath())
+                                                          .repoName(gitEntityInfo.getRepoName())
+                                                          .build();
+    return gitAwareEntityHelper.fetchYAMLFromRemote(scope, gitContextRequestParams, Collections.emptyMap());
   }
 
   public static String updateFieldsInImportedPipeline(String orgIdentifier, String projectIdentifier,
