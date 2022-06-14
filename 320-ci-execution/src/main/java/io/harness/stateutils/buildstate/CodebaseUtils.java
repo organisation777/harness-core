@@ -219,7 +219,8 @@ public class CodebaseUtils {
       case HTTP:
         GithubHttpCredentialsDTO gitAuth = (GithubHttpCredentialsDTO) gitConfigDTO.getAuthentication().getCredentials();
         if (gitAuth.getType() != GithubHttpAuthenticationType.USERNAME_AND_PASSWORD
-            && gitAuth.getType() != GithubHttpAuthenticationType.USERNAME_AND_TOKEN) {
+            && gitAuth.getType() != GithubHttpAuthenticationType.USERNAME_AND_TOKEN
+            && gitAuth.getType() != GithubHttpAuthenticationType.OAUTH) {
           throw new CIStageExecutionException("Unsupported github connector auth type" + gitAuth.getType());
         }
         break;
@@ -424,8 +425,8 @@ public class CodebaseUtils {
   }
 
   public static String getCompleteUrlForAccountLevelAzureConnector(String url, String projectName, String repoName) {
-    String azureCompleteUrl = StringUtils.join(StringUtils.stripEnd(url, PATH_SEPARATOR), PATH_SEPARATOR,
-        StringUtils.stripStart(projectName, PATH_SEPARATOR));
+    String azureCompleteUrl = StringUtils.join(
+        StringUtils.stripEnd(url, PATH_SEPARATOR), PATH_SEPARATOR, StringUtils.stripStart(projectName, PATH_SEPARATOR));
     if (GitClientHelper.isHTTPProtocol(azureCompleteUrl)) {
       azureCompleteUrl = StringUtils.join(azureCompleteUrl, AZURE_REPO_GIT_LABEL);
     } else if (GitClientHelper.isSSHProtocol(azureCompleteUrl)) {

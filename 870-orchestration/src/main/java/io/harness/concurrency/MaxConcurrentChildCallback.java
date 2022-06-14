@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.concurrency;
 
 import io.harness.OrchestrationPublisherName;
@@ -67,12 +74,6 @@ public class MaxConcurrentChildCallback implements OldNotifyCallback {
     NodeExecution nodeExecution =
         nodeExecutionService.getWithFieldsIncluded(nodeExecutionToStart, NodeProjectionUtils.withAmbianceAndStatus);
     engine.startNodeExecution(nodeExecution.getAmbiance());
-    MaxConcurrentChildCallback maxConcurrentChildCallback = MaxConcurrentChildCallback.builder()
-                                                                .parentNodeExecutionId(parentNodeExecutionId)
-                                                                .ambiance(ambiance)
-                                                                .maxConcurrency(maxConcurrency)
-                                                                .build();
-    waitNotifyEngine.waitForAllOn(publisherName, maxConcurrentChildCallback, nodeExecution.getUuid());
   }
 
   @Override
