@@ -166,7 +166,8 @@ public class NotificationSettingsServiceImpl implements NotificationSettingsServ
             if (object == null) {
               throw new InvalidRequestException("Expression provided is not valid");
             }
-            log.info("Resolved UserGroups successfully: " + object);
+            List<String> temp = (List<String>) object;
+            log.info("Resolved UserGroups successfully: " + temp.get(0));
             return (List<String>) object;
           } catch (Exception e) {
             throw new InvalidRequestException("Provided is not a valid expression", e);
