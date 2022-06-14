@@ -14,7 +14,19 @@ import static io.harness.beans.SearchFilter.Operator.OR;
 import static io.harness.k8s.model.HelmVersion.V2;
 import static io.harness.k8s.model.HelmVersion.V3;
 
-import static io.harness.rule.OwnerRule.*;
+import static io.harness.rule.OwnerRule.AGORODETKI;
+import static io.harness.rule.OwnerRule.ANSHUL;
+import static io.harness.rule.OwnerRule.ARVIND;
+import static io.harness.rule.OwnerRule.IVAN;
+import static io.harness.rule.OwnerRule.MILOS;
+import static io.harness.rule.OwnerRule.POOJA;
+import static io.harness.rule.OwnerRule.RAMA;
+import static io.harness.rule.OwnerRule.ROHITKARELIA;
+import static io.harness.rule.OwnerRule.TATHAGAT;
+import static io.harness.rule.OwnerRule.VAIBHAV_SI;
+import static io.harness.rule.OwnerRule.YOGESH;
+import static io.harness.rule.OwnerRule.TARUN_UBA;
+
 import static software.wings.api.DeploymentType.AWS_CODEDEPLOY;
 import static software.wings.api.DeploymentType.CUSTOM;
 import static software.wings.api.DeploymentType.HELM;
@@ -1147,6 +1159,7 @@ public class ServiceResourceServiceImplTest extends WingsBaseTest {
             .build();
     serviceResourceService.save(k8sService);
   }
+
   @Test
   @Owner(developers = TARUN_UBA)
   @Category(UnitTests.class)
