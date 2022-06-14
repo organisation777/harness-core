@@ -18,9 +18,7 @@ import static io.harness.azure.model.AzureConstants.MANAGEMENT_GROUP_ID_BLANK_VA
 import static io.harness.azure.model.AzureConstants.NEXT_PAGE_LINK_BLANK_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.RESOURCE_GROUP_NAME_NULL_VALIDATION_MSG;
 import static io.harness.azure.model.AzureConstants.SUBSCRIPTION_ID_NULL_VALIDATION_MSG;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
-import static com.microsoft.azure.management.compute.PowerState.RUNNING;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -35,8 +33,6 @@ import io.harness.azure.model.ARMScopeType;
 import io.harness.azure.model.AzureARMRGTemplateExportOptions;
 import io.harness.azure.model.AzureARMTemplate;
 import io.harness.azure.model.AzureConfig;
-import io.harness.azure.model.AzureOSType;
-import io.harness.azure.model.VirtualMachineData;
 import io.harness.azure.model.management.ManagementGroupInfo;
 import io.harness.azure.model.tag.TagDetails;
 import io.harness.azure.utility.AzureUtils;
@@ -49,7 +45,6 @@ import com.microsoft.azure.CloudException;
 import com.microsoft.azure.Page;
 import com.microsoft.azure.PagedList;
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.resources.Deployment;
 import com.microsoft.azure.management.resources.DeploymentMode;
 import com.microsoft.azure.management.resources.DeploymentProperties;
@@ -66,9 +61,7 @@ import com.microsoft.azure.management.resources.implementation.PageImpl;
 import com.microsoft.rest.ServiceResponse;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ResponseBody;
@@ -631,53 +624,6 @@ public class AzureManagementClientImpl extends AzureClient implements AzureManag
         return listTagsNextSinglePageAsync(azureConfig, nextPageLink).toBlocking().single().body();
       }
     };
-  }
-
-  @Override
-  public List<VirtualMachineData> listHosts(AzureConfig azureConfig, String subscriptionId, String resourceGroup,
-      AzureOSType osType, Map<String, String> tags) {
-    List<VirtualMachine> virtualMachines =
-        getAzureClient(azureConfig, subscriptionId).virtualMachines().listByResourceGroup(resourceGroup);
-
-    if (isEmpty(virtualMachines)) {
-      log.info("List VMs did not find any matching VMs in Azure for subscription :  {}", subscriptionId);
-      return Collections.emptyList();
-    }
-
-    return virtualMachines.stream()
-        .filter(this::isVmRunning)
-        .filter(virtualMachine -> filterOsType(virtualMachine, osType))
-        .filter(virtualMachine -> filterTags(virtualMachine, tags))
-        .map(this::toVirtualMachineData)
-        .collect(Collectors.toList());
-  }
-
-  private boolean filterOsType(VirtualMachine virtualMachine, AzureOSType osType) {
-    if (virtualMachine.osProfile() == null) {
-      // unknown OS, remove vm from stream
-      return false;
-    }
-
-    return AzureOSType.WINDOWS.equals(osType) && virtualMachine.osProfile().windowsConfiguration() != null
-        || AzureOSType.LINUX.equals(osType) && virtualMachine.osProfile().linuxConfiguration() != null;
-  }
-
-  private boolean isVmRunning(VirtualMachine virtualMachine) {
-    return virtualMachine.powerState().equals(RUNNING);
-  }
-
-  private boolean filterTags(VirtualMachine virtualMachine, Map<String, String> tags) {
-    if (isEmpty(tags)) {
-      // tags are optional
-      return true;
-    }
-
-    return virtualMachine.tags().keySet().containsAll(tags.keySet())
-        && virtualMachine.tags().values().containsAll(tags.values());
-  }
-
-  private VirtualMachineData toVirtualMachineData(VirtualMachine virtualMachine) {
-    return VirtualMachineData.builder().hostName(virtualMachine.name()).build();
   }
 
   private Observable<ServiceResponse<Page<TagDetails>>> listTagsSinglePageAsync(

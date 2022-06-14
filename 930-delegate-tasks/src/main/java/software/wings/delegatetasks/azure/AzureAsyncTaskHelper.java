@@ -251,7 +251,7 @@ public class AzureAsyncTaskHelper {
         azureConnector.getAzureEnvironmentType(), secretDecryptionService);
 
     return AzureHostsResponse.builder()
-        .hosts(azureManagementClient.listHosts(azureConfig, subscriptionId, resourceGroup, osType, tags)
+        .hosts(azureComputeClient.listHosts(azureConfig, subscriptionId, resourceGroup, osType, tags)
                    .stream()
                    .map(this::toAzureHost)
                    .collect(Collectors.toList()))
