@@ -49,6 +49,7 @@ import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthSADTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureManagedIdentityType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
@@ -367,7 +368,7 @@ public class ImagePullSecretUtilsTest extends CategoryTest {
         .thenThrow(new RuntimeException("some unexpected exception"));
 
     assertThatThrownBy(() -> imagePullSecretUtils.getImagePullSecret(artifactOutcome, ambiance))
-        .isInstanceOf(InvalidRequestException.class);
+        .isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -485,7 +486,7 @@ public class ImagePullSecretUtilsTest extends CategoryTest {
 
   private AzureCredentialDTO getAzureCredentialsForSystemAssignedMSI() {
     AzureMSIAuthDTO azureMSIAuthDTO =
-        AzureMSIAuthUADTO.builder()
+        AzureMSIAuthSADTO.builder()
             .azureManagedIdentityType(AzureManagedIdentityType.SYSTEM_ASSIGNED_MANAGED_IDENTITY)
             .build();
 

@@ -39,7 +39,6 @@ import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
-import io.harness.delegate.beans.connector.azureconnector.AzureManagedIdentityType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
 import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
@@ -278,7 +277,8 @@ public class ImagePullSecretUtils {
               ((AzureManualDetailsDTO) connectorConfig.getCredential().getConfig()).getClientId()));
           generateAcrImageDetailsBuilder(ambiance, connectorConfig, acrArtifactOutcome, imageDetailsBuilder);
         }
-      } else {
+      } else if (connectorConfig.getCredential() != null
+          && connectorConfig.getCredential().getAzureCredentialType() == AzureCredentialType.INHERIT_FROM_DELEGATE) {
         AzureInheritFromDelegateDetailsDTO config =
             (AzureInheritFromDelegateDetailsDTO) connectorConfig.getCredential().getConfig();
         if (config.getAuthDTO() instanceof AzureMSIAuthUADTO) {
@@ -289,9 +289,16 @@ public class ImagePullSecretUtils {
           log.info("Generating image pull credentials for System-Assigned MSI");
         }
         generateAcrImageDetailsBuilder(ambiance, connectorConfig, acrArtifactOutcome, imageDetailsBuilder);
+      } else {
+        if (connectorConfig.getCredential() == null) {
+          throw new Exception(format("Connector credentials are missing. Can not generate Image details."));
+        }
+
+        throw new Exception(
+            format("AzureCredentialType [%s] is invalid", connectorConfig.getCredential().getAzureCredentialType()));
       }
     } catch (Exception e) {
-      throw new InvalidRequestException(e.getMessage(), e);
+      throw new RuntimeException(e.getMessage(), e);
     }
   }
 

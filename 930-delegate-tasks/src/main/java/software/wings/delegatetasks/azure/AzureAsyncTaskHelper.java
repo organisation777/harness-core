@@ -386,7 +386,7 @@ public class AzureAsyncTaskHelper {
 
   public BuildDetailsInternal getLastSuccessfulBuildFromRegex(
       AzureConfig azureConfig, String subscription, String registry, String repository, String tagRegex) {
-    log.info(format("Fetching image tag from subscription %s registry %s and repository %s based on regex: ",
+    log.info(format("Fetching image tag from subscription %s registry %s and repository %s based on regex %s",
         subscription, registry, repository, tagRegex));
     try {
       Pattern.compile(tagRegex);
@@ -453,7 +453,7 @@ public class AzureAsyncTaskHelper {
           getKubeConfigContent(azureConfig, subscriptionId, resourceGroup, cluster, shouldGetAdminCredentials);
 
       if (log.isDebugEnabled()) {
-        log.debug(format("Cluster credentials: \n%s", kubeConfigContent));
+        log.debug(format("Cluster credentials: \n %s", kubeConfigContent));
       }
 
       AzureKubeConfig azureKubeConfig = getAzureKubeConfig(kubeConfigContent);

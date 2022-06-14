@@ -734,11 +734,16 @@ public class AzureAsyncTaskHelperTest extends CategoryTest {
     when(azureManagementClient.getClusterCredentials(any(), any(), any(), any(), any(), anyBoolean()))
         .thenReturn(readResourceFileContent("azure/userKubeConfigContent.yaml"));
 
-    when(azureAuthorizationClient.getUserAccessToken(azureConfig, "6dae42f8-4368-4678-94ff-3960e28e3630/.default"))
+    String scope = "6dae42f8-4368-4678-94ff-3960e28e3630";
+    if (azureConfig.getAzureAuthenticationType() == AzureAuthenticationType.SERVICE_PRINCIPAL_CERT
+        || azureConfig.getAzureAuthenticationType() == AzureAuthenticationType.SERVICE_PRINCIPAL_SECRET) {
+      scope += "/.default";
+    }
+    when(azureAuthorizationClient.getUserAccessToken(azureConfig, scope))
         .thenReturn(azureIdentityAccessTokenResponseAADToken);
 
     KubernetesConfig clusterConfig = azureAsyncTaskHelper.getClusterConfig(
-        azureConnectorDTO, SUBSCRIPTION_ID, RESOURCE_GROUP, CLUSTER, "default", null, true);
+        azureConnectorDTO, SUBSCRIPTION_ID, RESOURCE_GROUP, CLUSTER, "default", null, false);
 
     assertThat(clusterConfig.getMasterUrl())
         .isEqualTo("https://cdp-azure-test-aks-dns-baa4bbdc.hcp.eastus.azmk8s.io:443");
