@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class InstanceStatsCollectorImpl implements StatsCollector {
   private static final int SYNC_INTERVAL_MINUTES = 10;
   private static final long SYNC_INTERVAL = TimeUnit.MINUTES.toMinutes(SYNC_INTERVAL_MINUTES);
+  private static final long RELAXED_SYNC_INTERVAL_IN_MILLIS = 15 * 60 * 1000L;
 
   private InstanceStatsService instanceStatsService;
   private InstanceService instanceService;
@@ -77,7 +78,10 @@ public class InstanceStatsCollectorImpl implements StatsCollector {
   private boolean createStats(String accountId, Instant instant) {
     List<InstanceDTO> instances = null;
     try {
-      instances = instanceService.getActiveInstancesByAccount(accountId, instant.toEpochMilli());
+      instances = instanceService.getActiveInstancesByAccount(accountId,
+          Instant.now().toEpochMilli() - instant.toEpochMilli() < RELAXED_SYNC_INTERVAL_IN_MILLIS
+              ? -1
+              : instant.toEpochMilli());
       log.info("Fetched instances. Count: {}, Account: {}, Time: {}", instances.size(), accountId, instant);
 
       usageMetricsEventPublisher.publishInstanceStatsTimeSeries(accountId, instant.toEpochMilli(), instances);
