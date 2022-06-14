@@ -43,7 +43,6 @@ import io.harness.pms.inputset.InputSetSchemaConstants;
 import io.harness.pms.inputset.MergeInputSetRequestDTOPMS;
 import io.harness.pms.inputset.MergeInputSetResponseDTOPMS;
 import io.harness.pms.inputset.MergeInputSetTemplateRequestDTO;
-import io.harness.pms.inputset.OverlayInputSetErrorWrapperDTOPMS;
 import io.harness.pms.merger.helpers.InputSetYamlHelper;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity.InputSetEntityKeys;
@@ -54,7 +53,6 @@ import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetSummaryResponse
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateRequestDTO;
 import io.harness.pms.ngpipeline.inputset.beans.resource.InputSetTemplateResponseDTOPMS;
 import io.harness.pms.ngpipeline.inputset.exceptions.InvalidInputSetException;
-import io.harness.pms.ngpipeline.inputset.exceptions.InvalidOverlayInputSetException;
 import io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer;
 import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.ngpipeline.inputset.mappers.PMSInputSetElementMapper;
@@ -273,12 +271,6 @@ public class InputSetResourcePMS {
     log.info(String.format("Create input set with identifier %s for pipeline %s in project %s, org %s, account %s",
         entity.getIdentifier(), pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
 
-    InputSetErrorWrapperDTOPMS errorWrapperDTO = validateAndMergeHelper.validateInputSet(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, pipelineBranch, pipelineRepoID);
-    if (errorWrapperDTO != null) {
-      throw new InvalidInputSetException("Exception in creating the Input Set", errorWrapperDTO);
-    }
-
     InputSetEntity createdEntity = pmsInputSetService.create(entity);
     return ResponseDTO.newResponse(
         createdEntity.getVersion().toString(), PMSInputSetElementMapper.toInputSetResponseDTOPMS(createdEntity));
@@ -316,16 +308,6 @@ public class InputSetResourcePMS {
     log.info(
         String.format("Create overlay input set with identifier %s for pipeline %s in project %s, org %s, account %s",
             entity.getIdentifier(), pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
-
-    Map<String, String> invalidReferences = validateAndMergeHelper.validateOverlayInputSet(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
-    if (!invalidReferences.isEmpty()) {
-      OverlayInputSetErrorWrapperDTOPMS overlayInputSetErrorWrapperDTOPMS =
-          OverlayInputSetErrorWrapperDTOPMS.builder().invalidReferences(invalidReferences).build();
-
-      throw new InvalidOverlayInputSetException(
-          "Exception in creating the Overlay Input Set", overlayInputSetErrorWrapperDTOPMS);
-    }
 
     InputSetEntity createdEntity = pmsInputSetService.create(entity);
     return ResponseDTO.newResponse(
@@ -372,12 +354,6 @@ public class InputSetResourcePMS {
         inputSetIdentifier, pipelineIdentifier, projectIdentifier, orgIdentifier, accountId));
     yaml = removeRuntimeInputFromYaml(yaml);
 
-    InputSetErrorWrapperDTOPMS errorWrapperDTO = validateAndMergeHelper.validateInputSet(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml, pipelineBranch, pipelineRepoID);
-    if (errorWrapperDTO != null) {
-      throw new InvalidInputSetException("Exception in updating the Input Set", errorWrapperDTO);
-    }
-
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntity(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
     InputSetEntity entityWithVersion = entity.withVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
@@ -422,16 +398,6 @@ public class InputSetResourcePMS {
     InputSetEntity entity = PMSInputSetElementMapper.toInputSetEntityForOverlay(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
     InputSetEntity entityWithVersion = entity.withVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
-
-    Map<String, String> invalidReferences = validateAndMergeHelper.validateOverlayInputSet(
-        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, yaml);
-    if (!invalidReferences.isEmpty()) {
-      OverlayInputSetErrorWrapperDTOPMS overlayInputSetErrorWrapperDTOPMS =
-          OverlayInputSetErrorWrapperDTOPMS.builder().invalidReferences(invalidReferences).build();
-
-      throw new InvalidOverlayInputSetException(
-          "Exception in updating the Overlay Input Set", overlayInputSetErrorWrapperDTOPMS);
-    }
 
     InputSetEntity updatedEntity = pmsInputSetService.update(entityWithVersion, ChangeType.MODIFY);
     return ResponseDTO.newResponse(
