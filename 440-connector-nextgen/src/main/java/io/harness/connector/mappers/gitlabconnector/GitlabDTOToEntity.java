@@ -9,6 +9,7 @@ package io.harness.connector.mappers.gitlabconnector;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.connector.entities.embedded.gitlabconnector.GitlabApiAccess;
 import io.harness.connector.entities.embedded.gitlabconnector.GitlabAuthentication;
 import io.harness.connector.entities.embedded.gitlabconnector.GitlabConnector;
 import io.harness.connector.entities.embedded.gitlabconnector.GitlabHttpAuth;
@@ -48,7 +49,7 @@ public class GitlabDTOToEntity implements ConnectorDTOToEntityMapper<GitlabConne
         buildAuthenticationDetails(gitAuthType, configDTO.getAuthentication().getCredentials());
     boolean hasApiAccess = hasApiAccess(configDTO.getApiAccess());
     GitlabApiAccessType apiAccessType = null;
-    GitlabTokenApiAccess gitlabApiAccess = null;
+    GitlabApiAccess gitlabApiAccess = null;
     if (hasApiAccess) {
       apiAccessType = getApiAccessType(configDTO.getApiAccess());
       gitlabApiAccess = getApiAcessByType(configDTO.getApiAccess().getSpec(), apiAccessType);
@@ -58,6 +59,7 @@ public class GitlabDTOToEntity implements ConnectorDTOToEntityMapper<GitlabConne
         .authType(gitAuthType)
         .hasApiAccess(hasApiAccess)
         .authenticationDetails(gitlabAuthentication)
+        .apiAccessType(apiAccessType)
         .gitlabApiAccess(gitlabApiAccess)
         .url(configDTO.getUrl())
         .validationRepo(configDTO.getValidationRepo())
@@ -126,11 +128,23 @@ public class GitlabDTOToEntity implements ConnectorDTOToEntityMapper<GitlabConne
     return usernameRef;
   }
 
-  private GitlabTokenApiAccess getApiAcessByType(GitlabApiAccessSpecDTO spec, GitlabApiAccessType apiAccessType) {
-    final GitlabTokenSpecDTO tokenSpec = (GitlabTokenSpecDTO) spec;
-    return GitlabTokenApiAccess.builder()
-        .tokenRef(SecretRefHelper.getSecretConfigString(tokenSpec.getTokenRef()))
-        .build();
+  private GitlabApiAccess getApiAcessByType(GitlabApiAccessSpecDTO spec, GitlabApiAccessType apiAccessType) {
+    switch (apiAccessType) {
+      case TOKEN:
+        final GitlabTokenSpecDTO tokenSpec = (GitlabTokenSpecDTO) spec;
+        return GitlabTokenApiAccess.builder()
+            .tokenRef(SecretRefHelper.getSecretConfigString(tokenSpec.getTokenRef()))
+            .build();
+      case OAUTH:
+        final GitlabOauthDTO gitlabOauthDTO = (GitlabOauthDTO) spec;
+        return GitlabOauth.builder()
+            .tokenRef(SecretRefHelper.getSecretConfigString(gitlabOauthDTO.getTokenRef()))
+            .refreshTokenRef(SecretRefHelper.getSecretConfigString(gitlabOauthDTO.getRefreshTokenRef()))
+            .build();
+      default:
+        throw new UnknownEnumTypeException(
+            "Gitlab Api Type", apiAccessType == null ? null : apiAccessType.getDisplayName());
+    }
   }
 
   private GitlabApiAccessType getApiAccessType(GitlabApiAccessDTO apiAccess) {
