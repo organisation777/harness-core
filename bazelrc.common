@@ -6,8 +6,8 @@ build --enable_platform_specific_config
 build --javabase=@local_jdk//:jdk
 build --host_javabase=@local_jdk//:jdk
 
-build --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
-build --java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
+# build --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
+# build --java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
 
 build --action_env=HARNESS_GENERATION_PASSPHRASE
 
@@ -35,12 +35,12 @@ test --define=HARNESS_ARGS=
 build --define=HARNESS_ARGS=
 
 # Bazel SonarQube Integration
-coverage --java_toolchain=@bazel_tools//tools/jdk:toolchain_java11
-coverage --collect_code_coverage
-coverage --combined_report=lcov
-coverage --coverage_report_generator=//tools/bazel/sonarqube:sonarqube_coverage_generator
-coverage --experimental_fetch_all_coverage_outputs
-coverage --strict_java_deps=off
-coverage --cache_test_results=yes
-coverage --test_output=summary
-coverage --build_runfile_links
+#coverage --java_toolchain=@bazel_tools//tools/jdk:toolchain_java11
+#coverage --collect_code_coverage
+#coverage --combined_report=lcov
+#coverage --coverage_report_generator=//tools/bazel/sonarqube:sonarqube_coverage_generator
+#coverage --experimental_fetch_all_coverage_outputs
+#coverage --strict_java_deps=off
+#coverage --cache_test_results=yes
+#coverage --test_output=summary
+#coverage --build_runfile_links
