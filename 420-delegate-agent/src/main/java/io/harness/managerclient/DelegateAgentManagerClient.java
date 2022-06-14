@@ -30,6 +30,8 @@ import io.harness.rest.RestResponse;
 import io.harness.serializer.kryo.KryoRequest;
 import io.harness.serializer.kryo.KryoResponse;
 
+import software.wings.beans.ConfigFileDto;
+
 import java.util.List;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -107,11 +109,11 @@ public interface DelegateAgentManagerClient {
   Call<DelegateTaskEventsResponse> pollTaskEvents(
       @Path("delegateId") String delegateId, @Query("accountId") String accountId);
 
-  @POST("agent/delegates/instance-sync/{perpetualTaskId}")
+  @POST("instancesync/instance-sync/{perpetualTaskId}")
   Call<RestResponse<Boolean>> publishInstanceSyncResult(@Path("perpetualTaskId") String perpetualTaskId,
       @Query("accountId") String accountId, @Body DelegateResponseData responseData);
 
-  @POST("agent/delegates/instance-sync-ng/{perpetualTaskId}")
+  @POST("instancesync/instance-sync-ng/{perpetualTaskId}")
   Call<RestResponse<Boolean>> processInstanceSyncNGResult(@Path("perpetualTaskId") String perpetualTaskId,
       @Query("accountId") String accountId, @Body InstanceSyncPerpetualTaskResponse responseData);
 
@@ -154,9 +156,10 @@ public interface DelegateAgentManagerClient {
   Call<RestResponse<DelegateHeartbeatResponse>> delegateHeartbeat(
       @Query("accountId") String accountId, @Body DelegateParams delegateParams);
 
-  @GET("service-templates/{templateId}/compute-files")
-  Call<RestResponse<String>> getConfigFiles(@Path("templateId") String templateId, @Query("accountId") String accountId,
-      @Query("appId") String appId, @Query("envId") String envId, @Query("hostId") String hostId);
+  @GET("service-templates/{templateId}/compute-files-dto")
+  Call<RestResponse<List<ConfigFileDto>>> getConfigFiles(@Path("templateId") String templateId,
+      @Query("accountId") String accountId, @Query("appId") String appId, @Query("envId") String envId,
+      @Query("hostId") String hostId);
 
   @KryoResponse
   @POST("agent/delegates/{delegateId}/tasks/{taskId}/report")

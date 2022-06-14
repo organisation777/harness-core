@@ -10,7 +10,7 @@ package software.wings.sm.states;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.ExecutionStatus.FAILED;
 import static io.harness.beans.ExecutionStatus.SUCCESS;
-import static io.harness.beans.FeatureName.DISABLE_ARTIFACT_COLLECTION;
+import static io.harness.beans.FeatureName.ARTIFACT_COLLECTION_CONFIGURABLE;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
@@ -57,7 +57,7 @@ import software.wings.beans.TemplateExpression;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.CustomArtifactStream;
@@ -83,6 +83,7 @@ import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.State;
 import software.wings.stencils.DefaultValue;
+import software.wings.utils.MappingUtils;
 
 import com.github.reinert.jjschema.Attributes;
 import com.github.reinert.jjschema.SchemaIgnore;
@@ -279,7 +280,7 @@ public class ArtifactCollectionState extends State {
   }
 
   private boolean shouldCollectArtifact(ExecutionContext context) {
-    return featureFlagService.isEnabled(DISABLE_ARTIFACT_COLLECTION, context.getAccountId());
+    return featureFlagService.isEnabled(ARTIFACT_COLLECTION_CONFIGURABLE, context.getAccountId());
   }
 
   private ExecutionResponse collectArtifact(ExecutionContext context, ArtifactStream artifactStream) {
@@ -299,6 +300,17 @@ public class ArtifactCollectionState extends State {
     DelegateTaskBuilder delegateTaskBuilder;
 
     if (CUSTOM.name().equals(artifactStream.getArtifactStreamType())) {
+      CustomArtifactStream customArtifactStream = (CustomArtifactStream) artifactStream;
+      CustomArtifactStream.Script versionScript =
+          customArtifactStream.getScripts()
+              .stream()
+              .filter(script
+                  -> script.getAction() == null || script.getAction() == CustomArtifactStream.Action.FETCH_VERSIONS)
+              .findFirst()
+              .orElse(CustomArtifactStream.Script.builder().build());
+      if (Boolean.FALSE.equals(artifactStream.getCollectionEnabled()) && isEmpty(versionScript.getScriptString())) {
+        return saveCustomArtifactResponse(customArtifactStream, evaluatedBuildNo, timeout);
+      }
       ArtifactStreamAttributes artifactStreamAttributes =
           artifactCollectionUtils.renderCustomArtifactScriptString((CustomArtifactStream) artifactStream);
       artifactStreamAttributes.setCustomScriptTimeout(valueOf(timeout));
@@ -360,6 +372,25 @@ public class ArtifactCollectionState extends State {
         .correlationIds(singletonList(waitId))
         .stateExecutionData(artifactCollectionExecutionData)
         .delegateTaskId(delegateTaskId)
+        .build();
+  }
+
+  private ExecutionResponse saveCustomArtifactResponse(
+      CustomArtifactStream customArtifactStream, String buildNo, Integer timeout) {
+    BuildDetails buildDetails = BuildDetails.Builder.aBuildDetails().withNumber(buildNo).build();
+
+    Artifact artifact = artifactService.create(artifactCollectionUtils.getArtifact(customArtifactStream, buildDetails));
+    ArtifactCollectionExecutionData artifactCollectionExecutionData =
+        ArtifactCollectionExecutionData.builder()
+            .timeout(valueOf(timeout))
+            .artifactSource(customArtifactStream.getSourceName())
+            .buildNo(buildNo)
+            .artifactId(artifact.getUuid())
+            .artifactSource(customArtifactStream.getSourceName())
+            .build();
+    return ExecutionResponse.builder()
+        .executionStatus(SUCCESS)
+        .stateExecutionData(artifactCollectionExecutionData)
         .build();
   }
 
@@ -512,17 +543,18 @@ public class ArtifactCollectionState extends State {
         }
         Artifact artifact = artifactCollectionUtils.getArtifact(artifactStream, buildDetail);
         Artifact savedArtifact = artifactService.create(artifact, artifactStream, false);
+        Map<String, String> metadata = MappingUtils.safeCopy(artifact.getMetadata());
         if (savedArtifact.isDuplicate()) {
           if (shouldUpdateMetadata(artifact, savedArtifact)) {
             artifactService.updateMetadataAndRevision(
-                savedArtifact.getUuid(), savedArtifact.getAccountId(), artifact.getMetadata(), artifact.getRevision());
+                savedArtifact.getUuid(), savedArtifact.getAccountId(), metadata, artifact.getRevision());
           }
         }
         ArtifactCollectionExecutionData artifactCollectionExecutionData =
             ArtifactCollectionExecutionData.builder()
                 .artifactStreamId(artifactStreamId)
                 .buildNo(artifact.getBuildNo())
-                .metadata(artifact.getMetadata())
+                .metadata(metadata)
                 .artifactSource(artifactStream.getSourceName())
                 .revision(artifact.getRevision())
                 .artifactId(savedArtifact.getUuid())

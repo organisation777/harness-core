@@ -16,18 +16,24 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.azure.AzureEnvironmentType;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
 import io.harness.connector.helper.EncryptionHelper;
+import io.harness.delegate.beans.azure.response.AzureValidateTaskResponse;
 import io.harness.delegate.beans.connector.azureconnector.AzureAuthDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureClientSecretKeyDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
+import io.harness.delegate.beans.connector.azureconnector.AzureInheritFromDelegateDetailsDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthSADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureMSIAuthUADTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureManagedIdentityType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureSecretType;
-import io.harness.delegate.beans.connector.azureconnector.response.AzureValidateTaskResponse;
+import io.harness.delegate.beans.connector.azureconnector.AzureUserAssignedMSIAuthDTO;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.rule.Owner;
@@ -60,7 +66,7 @@ public class AzureConnectorValidatorTest extends CategoryTest {
   @Test
   @Owner(developers = OwnerRule.BUHA)
   @Category(UnitTests.class)
-  public void validateAzureConnectionWithManualCredentials() {
+  public void validateAzureConnectionWithManualCredentialsWithSecret() {
     SecretRefData secretRef = SecretRefData.builder().identifier("secretKey").scope(Scope.ACCOUNT).build();
     AzureConnectorDTO azureConnectorDTO =
         AzureConnectorDTO.builder()
@@ -91,14 +97,24 @@ public class AzureConnectorValidatorTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = OwnerRule.BUHA)
+  @Owner(developers = OwnerRule.MLUKIC)
   @Category(UnitTests.class)
-  public void validateAzureConnectionWithInherentFromDelegate() {
+  public void validateAzureConnectionWithManualCredentialsWithCertificate() {
+    SecretRefData secretRef = SecretRefData.builder().identifier("certificate").scope(Scope.ACCOUNT).build();
     AzureConnectorDTO azureConnectorDTO =
         AzureConnectorDTO.builder()
-            .delegateSelectors(Collections.singleton("foo"))
-            .credential(
-                AzureCredentialDTO.builder().azureCredentialType(AzureCredentialType.INHERIT_FROM_DELEGATE).build())
+            .credential(AzureCredentialDTO.builder()
+                            .azureCredentialType(AzureCredentialType.MANUAL_CREDENTIALS)
+                            .config(AzureManualDetailsDTO.builder()
+                                        .clientId("client")
+                                        .tenantId("tenant")
+                                        .authDTO(AzureAuthDTO.builder()
+                                                     .azureSecretType(AzureSecretType.KEY_CERT)
+                                                     .credentials(
+                                                         AzureClientSecretKeyDTO.builder().secretKey(secretRef).build())
+                                                     .build())
+                                        .build())
+                            .build())
             .build();
     when(ngSecretService.getEncryptionDetails(any(), any())).thenReturn(null);
     when(encryptionHelper.getEncryptionDetail(any(), any(), any(), any())).thenReturn(null);
@@ -111,5 +127,58 @@ public class AzureConnectorValidatorTest extends CategoryTest {
     azureConnectorValidator.validate(
         azureConnectorDTO, "accountIdentifier", "orgIdentifier", "projectIdentifier", "identifier");
     verify(delegateGrpcClientWrapper, times(1)).executeSyncTask(any());
+  }
+
+  @Test
+  @Owner(developers = {OwnerRule.BUHA, OwnerRule.MLUKIC})
+  @Category(UnitTests.class)
+  public void validateAzureConnectionWithInherentFromDelegate() {
+    AzureConnectorDTO azureConnectorDTO =
+        AzureConnectorDTO.builder()
+            .delegateSelectors(Collections.singleton("foo"))
+            .azureEnvironmentType(AzureEnvironmentType.AZURE)
+            .credential(AzureCredentialDTO.builder()
+                            .azureCredentialType(AzureCredentialType.INHERIT_FROM_DELEGATE)
+                            .config(AzureInheritFromDelegateDetailsDTO.builder()
+                                        .authDTO(AzureMSIAuthSADTO.builder()
+                                                     .azureManagedIdentityType(
+                                                         AzureManagedIdentityType.SYSTEM_ASSIGNED_MANAGED_IDENTITY)
+                                                     .build())
+                                        .build())
+                            .build())
+            .build();
+    when(ngSecretService.getEncryptionDetails(any(), any())).thenReturn(null);
+    when(encryptionHelper.getEncryptionDetail(any(), any(), any(), any())).thenReturn(null);
+
+    when(delegateGrpcClientWrapper.executeSyncTask(any()))
+        .thenReturn(AzureValidateTaskResponse.builder()
+                        .connectorValidationResult(
+                            ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build())
+                        .build());
+    azureConnectorValidator.validate(
+        azureConnectorDTO, "accountIdentifier", "orgIdentifier", "projectIdentifier", "identifier");
+    verify(delegateGrpcClientWrapper, times(1)).executeSyncTask(any());
+
+    azureConnectorDTO =
+        AzureConnectorDTO.builder()
+            .delegateSelectors(Collections.singleton("foo"))
+            .azureEnvironmentType(AzureEnvironmentType.AZURE)
+            .credential(
+                AzureCredentialDTO.builder()
+                    .azureCredentialType(AzureCredentialType.INHERIT_FROM_DELEGATE)
+                    .config(
+                        AzureInheritFromDelegateDetailsDTO.builder()
+                            .authDTO(
+                                AzureMSIAuthUADTO.builder()
+                                    .azureManagedIdentityType(AzureManagedIdentityType.USER_ASSIGNED_MANAGED_IDENTITY)
+                                    .credentials(AzureUserAssignedMSIAuthDTO.builder().clientId("testClientId").build())
+                                    .build())
+                            .build())
+                    .build())
+            .build();
+
+    azureConnectorValidator.validate(
+        azureConnectorDTO, "accountIdentifier", "orgIdentifier", "projectIdentifier", "identifier");
+    verify(delegateGrpcClientWrapper, times(2)).executeSyncTask(any());
   }
 }

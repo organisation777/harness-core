@@ -22,13 +22,16 @@ import io.harness.ff.FeatureFlagConfig;
 import io.harness.grpc.client.GrpcClientConfig;
 import io.harness.mongo.MongoConfig;
 import io.harness.remote.CEAzureSetupConfig;
+import io.harness.remote.CEGcpSetupConfig;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.secret.ConfigSecret;
 import io.harness.secret.SecretsConfiguration;
+import io.harness.telemetry.segment.SegmentConfiguration;
 import io.harness.timescaledb.TimeScaleDBConfig;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.Level;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
@@ -68,6 +71,7 @@ public class CENextGenConfiguration extends Configuration {
   public static final String SERVICE_ROOT_PATH = "/ccm/api";
   public static final String SERVICE_ID = "cenextgen-microservice";
   public static final String BASE_PACKAGE = "io.harness.ccm";
+  public static final String FILTER_PACKAGE = "io.harness.filter";
 
   public static final List<String> RESOURCE_PACKAGES = ImmutableList.of("io.harness.ccm.remote.resources");
   public static final String LICENSE_PACKAGE = "io.harness.licensing.usage.resources";
@@ -94,10 +98,15 @@ public class CENextGenConfiguration extends Configuration {
 
   @JsonProperty(value = "gcpConfig") private GcpConfig gcpConfig;
   @JsonProperty(value = "ceAzureSetupConfig") @ConfigSecret private CEAzureSetupConfig ceAzureSetupConfig;
+  @JsonProperty(value = "ceGcpSetupConfig") @ConfigSecret private CEGcpSetupConfig ceGcpSetupConfig;
   @JsonProperty(value = "awsConfig") @ConfigSecret private AwsConfig awsConfig;
 
-  @JsonProperty(value = "hostname") private String hostname;
-  @JsonProperty(value = "basePathPrefix") private String basePathPrefix;
+  @JsonProperty("segmentConfiguration") @ConfigSecret private SegmentConfiguration segmentConfiguration;
+
+  @JsonProperty(value = "hostname") private String hostname = "localhost";
+  @JsonProperty(value = "basePathPrefix") private String basePathPrefix = "";
+  @JsonProperty(value = "awsConnectorCreatedInstantForPolicyCheck")
+  private String awsConnectorCreatedInstantForPolicyCheck;
 
   @JsonProperty("secretsConfiguration") private SecretsConfiguration secretsConfiguration;
 
@@ -118,7 +127,8 @@ public class CENextGenConfiguration extends Configuration {
   }
 
   public static Collection<Class<?>> getResourceClasses() {
-    final Reflections reflections = new Reflections(RESOURCE_PACKAGES, LICENSE_PACKAGE, ENFORCEMENT_CLIENT_PACKAGE);
+    final Reflections reflections =
+        new Reflections(RESOURCE_PACKAGES, LICENSE_PACKAGE, ENFORCEMENT_CLIENT_PACKAGE, FILTER_PACKAGE);
 
     return reflections.getTypesAnnotatedWith(Path.class);
   }
@@ -146,7 +156,8 @@ public class CENextGenConfiguration extends Configuration {
     return logbackAccessRequestLogFactory;
   }
 
-  protected OpenAPIConfiguration getOasConfig() {
+  @JsonIgnore
+  public OpenAPIConfiguration getOasConfig() {
     OpenAPI oas = new OpenAPI();
     Info info =
         new Info()

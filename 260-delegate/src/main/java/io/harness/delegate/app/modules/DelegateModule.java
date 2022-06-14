@@ -50,6 +50,7 @@ import io.harness.azure.impl.AzureNetworkClientImpl;
 import io.harness.azure.impl.AzureWebClientImpl;
 import io.harness.cdng.notification.task.MailSenderDelegateTask;
 import io.harness.cdng.secrets.tasks.SSHConfigValidationDelegateTask;
+import io.harness.cdng.secrets.tasks.WinRmConfigValidationDelegateTask;
 import io.harness.cistatus.service.GithubService;
 import io.harness.cistatus.service.GithubServiceImpl;
 import io.harness.cistatus.service.bitbucket.BitbucketService;
@@ -82,8 +83,6 @@ import io.harness.delegate.cf.PcfRollbackCommandTaskHandler;
 import io.harness.delegate.cf.PcfRouteUpdateCommandTaskHandler;
 import io.harness.delegate.cf.PcfRunPluginCommandTaskHandler;
 import io.harness.delegate.cf.PcfValidationCommandTaskHandler;
-import io.harness.delegate.chartmuseum.NGChartMuseumService;
-import io.harness.delegate.chartmuseum.NGChartMuseumServiceImpl;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.delegate.exceptionhandler.handler.AmazonClientExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.AmazonServiceExceptionHandler;
@@ -95,7 +94,6 @@ import io.harness.delegate.exceptionhandler.handler.GcpClientExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.HashicorpVaultExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.HelmClientRuntimeExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.InterruptedIOExceptionHandler;
-import io.harness.delegate.exceptionhandler.handler.JGitExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.SCMExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.SecretExceptionHandler;
 import io.harness.delegate.exceptionhandler.handler.SocketExceptionHandler;
@@ -116,6 +114,9 @@ import io.harness.delegate.message.MessageServiceImpl;
 import io.harness.delegate.message.MessengerType;
 import io.harness.delegate.provider.DelegateConfigurationServiceProviderImpl;
 import io.harness.delegate.provider.DelegatePropertiesServiceProviderImpl;
+import io.harness.delegate.serverless.ServerlessAwsLambdaDeployCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessAwsLambdaRollbackCommandTaskHandler;
+import io.harness.delegate.serverless.ServerlessCommandTaskHandler;
 import io.harness.delegate.service.DelegateAgentService;
 import io.harness.delegate.service.DelegateAgentServiceImpl;
 import io.harness.delegate.service.DelegateCVActivityLogServiceImpl;
@@ -140,11 +141,18 @@ import io.harness.delegate.task.artifacts.DelegateArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactTaskNG;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryGenericArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.azure.AcrArtifactTaskNG;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactTaskNG;
 import io.harness.delegate.task.artifacts.ecr.EcrArtifactTaskNG;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactTaskNG;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactTaskHandler;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactTaskNG;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactTaskHandler;
 import io.harness.delegate.task.artifacts.nexus.NexusArtifactTaskNG;
@@ -152,9 +160,13 @@ import io.harness.delegate.task.aws.AwsCodeCommitApiDelegateTask;
 import io.harness.delegate.task.aws.AwsCodeCommitDelegateTask;
 import io.harness.delegate.task.aws.AwsDelegateTask;
 import io.harness.delegate.task.aws.AwsValidationHandler;
-import io.harness.delegate.task.azure.AzureTask;
+import io.harness.delegate.task.aws.S3FetchFilesTaskNG;
 import io.harness.delegate.task.azure.AzureValidationHandler;
 import io.harness.delegate.task.azure.appservice.AzureAppServiceTaskParameters.AzureAppServiceTaskType;
+import io.harness.delegate.task.azure.appservice.webapp.AzureWebAppTaskNG;
+import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppRequestHandler;
+import io.harness.delegate.task.azure.appservice.webapp.handler.AzureWebAppSlotDeploymentRequestHandler;
+import io.harness.delegate.task.azure.appservice.webapp.ng.AzureWebAppRequestType;
 import io.harness.delegate.task.azure.arm.AzureARMTaskParameters;
 import io.harness.delegate.task.azure.resource.operation.AzureResourceProvider;
 import io.harness.delegate.task.cek8s.CEKubernetesTestConnectionDelegateTask;
@@ -184,6 +196,7 @@ import io.harness.delegate.task.gcp.taskHandlers.GcpValidationTaskHandler;
 import io.harness.delegate.task.gcp.taskHandlers.TaskHandler;
 import io.harness.delegate.task.git.GitFetchTaskNG;
 import io.harness.delegate.task.git.NGGitCommandTask;
+import io.harness.delegate.task.git.NGGitOpsCommandTask;
 import io.harness.delegate.task.gitapi.DecryptGitAPIAccessTask;
 import io.harness.delegate.task.gitapi.GitApiTask;
 import io.harness.delegate.task.helm.HelmCommandTaskNG;
@@ -192,6 +205,10 @@ import io.harness.delegate.task.helm.HelmDeployServiceNG;
 import io.harness.delegate.task.helm.HelmValuesFetchTaskNG;
 import io.harness.delegate.task.helm.HttpHelmConnectivityDelegateTask;
 import io.harness.delegate.task.helm.HttpHelmValidationHandler;
+import io.harness.delegate.task.helm.OciHelmConnectivityDelegateTask;
+import io.harness.delegate.task.helm.OciHelmValidationHandler;
+import io.harness.delegate.task.jenkins.JenkinsTestConnectionDelegateTask;
+import io.harness.delegate.task.jenkins.JenkinsValidationHandler;
 import io.harness.delegate.task.jira.JiraTaskNG;
 import io.harness.delegate.task.jira.JiraValidationHandler;
 import io.harness.delegate.task.jira.connection.JiraTestConnectionTaskNG;
@@ -208,6 +225,7 @@ import io.harness.delegate.task.manifests.CustomManifestValuesFetchTask;
 import io.harness.delegate.task.nexus.NexusDelegateTask;
 import io.harness.delegate.task.nexus.NexusValidationHandler;
 import io.harness.delegate.task.pcf.CfCommandRequest.PcfCommandType;
+import io.harness.delegate.task.pdc.HostConnectivityValidationDelegateTask;
 import io.harness.delegate.task.scm.ScmDelegateClientImpl;
 import io.harness.delegate.task.scm.ScmGitFileTask;
 import io.harness.delegate.task.scm.ScmGitPRTask;
@@ -215,10 +233,23 @@ import io.harness.delegate.task.scm.ScmGitRefTask;
 import io.harness.delegate.task.scm.ScmGitWebhookTask;
 import io.harness.delegate.task.scm.ScmPathFilterEvaluationTask;
 import io.harness.delegate.task.scm.ScmPushTask;
+import io.harness.delegate.task.serverless.ServerlessCommandTask;
+import io.harness.delegate.task.serverless.ServerlessCommandType;
+import io.harness.delegate.task.serverless.ServerlessGitFetchTask;
 import io.harness.delegate.task.servicenow.ServiceNowTaskNG;
 import io.harness.delegate.task.servicenow.ServiceNowValidationHandler;
 import io.harness.delegate.task.servicenow.connection.ServiceNowTestConnectionTaskNG;
+import io.harness.delegate.task.shell.CommandTaskNG;
 import io.harness.delegate.task.shell.ShellScriptTaskNG;
+import io.harness.delegate.task.shell.ssh.ArtifactCommandUnitHandler;
+import io.harness.delegate.task.shell.ssh.ArtifactoryCommandUnitHandler;
+import io.harness.delegate.task.shell.ssh.CommandHandler;
+import io.harness.delegate.task.shell.ssh.SshCleanupCommandHandler;
+import io.harness.delegate.task.shell.ssh.SshCopyCommandHandler;
+import io.harness.delegate.task.shell.ssh.SshInitCommandHandler;
+import io.harness.delegate.task.shell.ssh.SshScriptCommandHandler;
+import io.harness.delegate.task.ssh.NGCommandUnitType;
+import io.harness.delegate.task.ssh.artifact.SshWinRmArtifactType;
 import io.harness.delegate.task.stepstatus.StepStatusTask;
 import io.harness.delegate.task.terraform.TFTaskType;
 import io.harness.delegate.task.terraform.TerraformBaseHelper;
@@ -255,6 +286,7 @@ import io.harness.encryptors.clients.GcpSecretsManagerEncryptor;
 import io.harness.encryptors.clients.HashicorpVaultEncryptor;
 import io.harness.encryptors.clients.LocalEncryptor;
 import io.harness.exception.DelegateServiceDriverExceptionHandler;
+import io.harness.exception.ExplanationException;
 import io.harness.exception.exceptionmanager.ExceptionModule;
 import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionHandler;
 import io.harness.gcp.client.GcpClient;
@@ -394,6 +426,7 @@ import software.wings.delegatetasks.aws.ecs.ecstaskhandler.EcsSetupCommandHandle
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsDeployCommandHandler;
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsDeployRollbackDataFetchCommandHandler;
 import software.wings.delegatetasks.aws.ecs.ecstaskhandler.deploy.EcsRunTaskDeployCommandHandler;
+import software.wings.delegatetasks.azure.AzureTask;
 import software.wings.delegatetasks.azure.AzureVMSSTask;
 import software.wings.delegatetasks.azure.appservice.AbstractAzureAppServiceTaskHandler;
 import software.wings.delegatetasks.azure.appservice.AzureAppServiceTask;
@@ -460,13 +493,10 @@ import software.wings.helpers.ext.artifactory.ArtifactoryService;
 import software.wings.helpers.ext.artifactory.ArtifactoryServiceImpl;
 import software.wings.helpers.ext.azure.AcrService;
 import software.wings.helpers.ext.azure.AcrServiceImpl;
-import software.wings.helpers.ext.azure.AzureHelperService;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsService;
 import software.wings.helpers.ext.azure.devops.AzureArtifactsServiceImpl;
 import software.wings.helpers.ext.bamboo.BambooService;
 import software.wings.helpers.ext.bamboo.BambooServiceImpl;
-import software.wings.helpers.ext.chartmuseum.ChartMuseumClient;
-import software.wings.helpers.ext.chartmuseum.ChartMuseumClientImpl;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.customrepository.CustomRepositoryService;
 import software.wings.helpers.ext.customrepository.CustomRepositoryServiceImpl;
@@ -532,6 +562,7 @@ import software.wings.service.impl.aws.delegate.AwsEcsHelperServiceDelegateImpl;
 import software.wings.service.impl.aws.delegate.AwsElbHelperServiceDelegateImpl;
 import software.wings.service.impl.aws.delegate.AwsIamHelperServiceDelegateImpl;
 import software.wings.service.impl.aws.delegate.AwsLambdaHelperServiceDelegateImpl;
+import software.wings.service.impl.aws.delegate.AwsLambdaHelperServiceDelegateNGImpl;
 import software.wings.service.impl.aws.delegate.AwsRoute53HelperServiceDelegateImpl;
 import software.wings.service.impl.aws.delegate.AwsS3HelperServiceDelegateImpl;
 import software.wings.service.impl.aws.delegate.AwsServiceDiscoveryHelperServiceDelegateImpl;
@@ -590,6 +621,7 @@ import software.wings.service.intfc.aws.delegate.AwsEcsHelperServiceDelegate;
 import software.wings.service.intfc.aws.delegate.AwsElbHelperServiceDelegate;
 import software.wings.service.intfc.aws.delegate.AwsIamHelperServiceDelegate;
 import software.wings.service.intfc.aws.delegate.AwsLambdaHelperServiceDelegate;
+import software.wings.service.intfc.aws.delegate.AwsLambdaHelperServiceDelegateNG;
 import software.wings.service.intfc.aws.delegate.AwsRoute53HelperServiceDelegate;
 import software.wings.service.intfc.aws.delegate.AwsS3HelperServiceDelegate;
 import software.wings.service.intfc.aws.delegate.AwsServiceDiscoveryHelperServiceDelegate;
@@ -612,6 +644,9 @@ import software.wings.settings.SettingValue;
 import software.wings.utils.HostValidationService;
 import software.wings.utils.HostValidationServiceImpl;
 
+import com.google.api.client.auth.oauth2.StoredCredential;
+import com.google.api.client.util.store.DataStore;
+import com.google.api.client.util.store.MemoryDataStoreFactory;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -621,16 +656,19 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClientConfig;
+import java.io.IOException;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 
 @Slf4j
 @TargetModule(HarnessModule._420_DELEGATE_AGENT)
@@ -717,7 +755,7 @@ public class DelegateModule extends AbstractModule {
   @Singleton
   @Named("backgroundExecutor")
   public ExecutorService backgroundExecutor() {
-    return ThreadPool.create(1, 1, 5, TimeUnit.SECONDS,
+    return ThreadPool.create(1, 5, 5, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("background-%d").setPriority(Thread.MIN_PRIORITY).build());
   }
 
@@ -767,7 +805,7 @@ public class DelegateModule extends AbstractModule {
   @Provides
   @Singleton
   @Named("taskExecutor")
-  public ExecutorService taskExecutor() {
+  public ThreadPoolExecutor taskExecutor() {
     int maxPoolSize = Integer.MAX_VALUE;
     long delegateXmx = 0;
     try {
@@ -797,7 +835,7 @@ public class DelegateModule extends AbstractModule {
   @Provides
   @Singleton
   @Named("timeoutExecutor")
-  public ExecutorService timeoutExecutor() {
+  public ThreadPoolExecutor timeoutExecutor() {
     return ThreadPool.create(10, 40, 7, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("timeout-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
@@ -810,14 +848,7 @@ public class DelegateModule extends AbstractModule {
         new ThreadFactoryBuilder().setNameFormat("jenkins-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
-  @Provides
-  @Singleton
-  @Named("perpetualTaskExecutor")
-  public ExecutorService perpetualTaskExecutor() {
-    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("perpetual-task-%d").setPriority(Thread.NORM_PRIORITY).build());
-  }
-
+  // TODO: Club this thread pool with sync/async task thread pool
   @Provides
   @Singleton
   @Named("perpetualTaskTimeoutExecutor")
@@ -871,12 +902,23 @@ public class DelegateModule extends AbstractModule {
     bind(BambooBuildService.class).to(BambooBuildServiceImpl.class);
     bind(DockerBuildService.class).to(DockerBuildServiceImpl.class);
     bind(BambooService.class).to(BambooServiceImpl.class);
-    bind(AsyncHttpClient.class)
-        .toInstance(new AsyncHttpClient(
-            new AsyncHttpClientConfig.Builder().setUseProxyProperties(true).setAcceptAnyCertificate(true).build()));
+    bind(AsyncHttpClient.class).to(DefaultAsyncHttpClient.class);
+    bind(DefaultAsyncHttpClient.class)
+        .toInstance(new DefaultAsyncHttpClient(new DefaultAsyncHttpClientConfig.Builder()
+                                                   .setUseProxyProperties(true)
+                                                   .setUseInsecureTrustManager(true)
+                                                   .build()));
     bind(AwsClusterService.class).to(AwsClusterServiceImpl.class);
     bind(EcsContainerService.class).to(EcsContainerServiceImpl.class);
     bind(GkeClusterService.class).to(GkeClusterServiceImpl.class);
+    try {
+      bind(new TypeLiteral<DataStore<StoredCredential>>() {
+      }).toInstance(StoredCredential.getDefaultDataStore(new MemoryDataStoreFactory()));
+    } catch (IOException e) {
+      String msg =
+          "Could not initialise GKE access token memory cache. This should not never happen with memory data store.";
+      throw new ExplanationException(msg, e);
+    }
     bind(KubernetesContainerService.class).to(KubernetesContainerServiceImpl.class);
     bind(AwsCodeDeployService.class).to(AwsCodeDeployServiceImpl.class);
     bind(AwsCodeDeployService.class).to(AwsCodeDeployServiceImpl.class);
@@ -910,7 +952,6 @@ public class DelegateModule extends AbstractModule {
     bind(AcrService.class).to(AcrServiceImpl.class);
     bind(AcrBuildService.class).to(AcrBuildServiceImpl.class);
     bind(AmiBuildService.class).to(AmiBuildServiceImpl.class);
-    bind(AzureHelperService.class);
     bind(AzureMachineImageBuildService.class).to(AzureMachineImageBuildServiceImpl.class);
     bind(CustomBuildService.class).to(CustomBuildServiceImpl.class);
     bind(CustomRepositoryService.class).to(CustomRepositoryServiceImpl.class);
@@ -942,6 +983,7 @@ public class DelegateModule extends AbstractModule {
     bind(AwsAsgHelperServiceDelegate.class).to(AwsAsgHelperServiceDelegateImpl.class);
     bind(AwsCodeDeployHelperServiceDelegate.class).to(AwsCodeDeployHelperServiceDelegateImpl.class);
     bind(AwsLambdaHelperServiceDelegate.class).to(AwsLambdaHelperServiceDelegateImpl.class);
+    bind(AwsLambdaHelperServiceDelegateNG.class).to(AwsLambdaHelperServiceDelegateNGImpl.class);
     bind(AwsAmiHelperServiceDelegate.class).to(AwsAmiHelperServiceDelegateImpl.class);
     bind(GitService.class).to(GitServiceImpl.class);
     bind(LdapDelegateService.class).to(LdapDelegateServiceImpl.class);
@@ -954,7 +996,6 @@ public class DelegateModule extends AbstractModule {
     bind(AwsRoute53HelperServiceDelegate.class).to(AwsRoute53HelperServiceDelegateImpl.class);
     bind(AwsServiceDiscoveryHelperServiceDelegate.class).to(AwsServiceDiscoveryHelperServiceDelegateImpl.class);
     bind(ServiceNowDelegateService.class).to(ServiceNowDelegateServiceImpl.class);
-    bind(ChartMuseumClient.class).to(ChartMuseumClientImpl.class);
     bind(SpotInstHelperServiceDelegate.class).to(SpotInstHelperServiceDelegateImpl.class);
     bind(AwsS3HelperServiceDelegate.class).to(AwsS3HelperServiceDelegateImpl.class);
     bind(GcbService.class).to(GcbServiceImpl.class);
@@ -1078,7 +1119,6 @@ public class DelegateModule extends AbstractModule {
     bind(AzureManagementClient.class).to(AzureManagementClientImpl.class);
     bind(AzureBlueprintClient.class).to(AzureBlueprintClientImpl.class);
     bind(AzureAuthorizationClient.class).to(AzureAuthorizationClientImpl.class);
-    bind(NGChartMuseumService.class).to(NGChartMuseumServiceImpl.class);
     bind(ScmDelegateClient.class).to(ScmDelegateClientImpl.class);
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(ManifestCollectionService.class).to(HelmChartCollectionService.class);
@@ -1135,6 +1175,13 @@ public class DelegateModule extends AbstractModule {
         .toInstance(DockerArtifactTaskHandler.class);
 
     MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        jenkinsArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    artifactServiceMapBinder.addBinding(JenkinsArtifactDelegateRequest.class)
+        .toInstance(JenkinsArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
         nexusArtifactServiceMapBinder =
             MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
@@ -1142,11 +1189,31 @@ public class DelegateModule extends AbstractModule {
         .toInstance(NexusArtifactTaskHandler.class);
 
     MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
-        artifactoryArtifactServiceMapBinder =
+        artifactoryDockerArtifactServiceMapBinder =
             MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
                 new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
-    artifactoryArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
+    artifactoryDockerArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
         .toInstance(ArtifactoryArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        artifactoryJenkinsArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    artifactoryJenkinsArtifactServiceMapBinder.addBinding(ArtifactoryArtifactDelegateRequest.class)
+        .toInstance(ArtifactoryArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        artifactoryGenericArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    artifactoryGenericArtifactServiceMapBinder.addBinding(ArtifactoryGenericArtifactDelegateRequest.class)
+        .toInstance(ArtifactoryArtifactTaskHandler.class);
+
+    MapBinder<Class<? extends ArtifactSourceDelegateRequest>, Class<? extends DelegateArtifactTaskHandler>>
+        acrArtifactServiceMapBinder =
+            MapBinder.newMapBinder(binder(), new TypeLiteral<Class<? extends ArtifactSourceDelegateRequest>>() {},
+                new TypeLiteral<Class<? extends DelegateArtifactTaskHandler>>() {});
+    acrArtifactServiceMapBinder.addBinding(AcrArtifactDelegateRequest.class).toInstance(AcrArtifactTaskHandler.class);
 
     MapBinder<GcpTaskType, TaskHandler> gcpTaskTypeToTaskHandlerMap =
         MapBinder.newMapBinder(binder(), GcpTaskType.class, TaskHandler.class);
@@ -1195,6 +1262,32 @@ public class DelegateModule extends AbstractModule {
     azureResourceTaskTypeToTaskHandlerMap.addBinding(AzureResourceProvider.CONTAINER_REGISTRY.name())
         .to(ACRResourceProviderTaskHandler.class);
 
+    // Serverless Tasks
+    MapBinder<String, ServerlessCommandTaskHandler> serverlessTaskTypeToTaskHandlerMap =
+        MapBinder.newMapBinder(binder(), String.class, ServerlessCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_DEPLOY.name())
+        .to(ServerlessAwsLambdaDeployCommandTaskHandler.class);
+    serverlessTaskTypeToTaskHandlerMap.addBinding(ServerlessCommandType.SERVERLESS_AWS_LAMBDA_ROLLBACK.name())
+        .to(ServerlessAwsLambdaRollbackCommandTaskHandler.class);
+
+    // Azure Web App NG
+    MapBinder<String, AzureWebAppRequestHandler> azureWebAppRequestTypeToRequestHandlerMap =
+        MapBinder.newMapBinder(binder(), String.class, AzureWebAppRequestHandler.class);
+    azureWebAppRequestTypeToRequestHandlerMap.addBinding(AzureWebAppRequestType.SLOT_DEPLOYMENT.name())
+        .to(AzureWebAppSlotDeploymentRequestHandler.class);
+
+    // Ssh and WinRM task handlers
+    MapBinder<String, CommandHandler> commandUnitHandlers =
+        MapBinder.newMapBinder(binder(), String.class, CommandHandler.class);
+    commandUnitHandlers.addBinding(NGCommandUnitType.INIT).to(SshInitCommandHandler.class);
+    commandUnitHandlers.addBinding(NGCommandUnitType.SCRIPT).to(SshScriptCommandHandler.class);
+    commandUnitHandlers.addBinding(NGCommandUnitType.COPY).to(SshCopyCommandHandler.class);
+    commandUnitHandlers.addBinding(NGCommandUnitType.CLEANUP).to(SshCleanupCommandHandler.class);
+
+    MapBinder<String, ArtifactCommandUnitHandler> artifactCommandHandlers =
+        MapBinder.newMapBinder(binder(), String.class, ArtifactCommandUnitHandler.class);
+    artifactCommandHandlers.addBinding(SshWinRmArtifactType.ARTIFACTORY.name()).to(ArtifactoryCommandUnitHandler.class);
+
     registerSecretManagementBindings();
     registerConnectorValidatorsBindings();
 
@@ -1232,6 +1325,8 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.DOCKER_GET_LABELS).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.DOCKER_VALIDATE_ARTIFACT_SERVER).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.DOCKER_VALIDATE_ARTIFACT_STREAM).toInstance(ServiceImplDelegateTask.class);
+    mapBinder.addBinding(TaskType.DOCKER_GET_ARTIFACT_META_INFO).toInstance(ServiceImplDelegateTask.class);
+    mapBinder.addBinding(TaskType.JENKINS_VALIDATE_ARTIFACT_SERVER).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.ECR_GET_BUILDS).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.ECR_VALIDATE_ARTIFACT_SERVER).toInstance(ServiceImplDelegateTask.class);
     mapBinder.addBinding(TaskType.ECR_GET_PLANS).toInstance(ServiceImplDelegateTask.class);
@@ -1468,8 +1563,10 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.GIT_FETCH_NEXT_GEN_TASK).toInstance(GitFetchTaskNG.class);
     mapBinder.addBinding(TaskType.BUILD_SOURCE_TASK).toInstance(BuildSourceTask.class);
     mapBinder.addBinding(TaskType.DOCKER_ARTIFACT_TASK_NG).toInstance(DockerArtifactTaskNG.class);
+    mapBinder.addBinding(TaskType.JENKINS_ARTIFACT_TASK_NG).toInstance(JenkinsArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.GCR_ARTIFACT_TASK_NG).toInstance(GcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ECR_ARTIFACT_TASK_NG).toInstance(EcrArtifactTaskNG.class);
+    mapBinder.addBinding(TaskType.ACR_ARTIFACT_TASK_NG).toInstance(AcrArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.NEXUS_ARTIFACT_TASK_NG).toInstance(NexusArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.ARTIFACTORY_ARTIFACT_TASK_NG).toInstance(ArtifactoryArtifactTaskNG.class);
     mapBinder.addBinding(TaskType.AWS_ROUTE53_TASK).toInstance(AwsRoute53Task.class);
@@ -1497,11 +1594,15 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.RANCHER_RESOLVE_CLUSTERS).toInstance(RancherResolveClustersTask.class);
 
     // Add all NG tasks below this.
+    mapBinder.addBinding(TaskType.GITOPS_TASK_NG).toInstance(NGGitOpsCommandTask.class);
     mapBinder.addBinding(TaskType.GCP_TASK).toInstance(GcpTask.class);
     mapBinder.addBinding(TaskType.VALIDATE_KUBERNETES_CONFIG).toInstance(KubernetesTestConnectionDelegateTask.class);
     mapBinder.addBinding(TaskType.NG_GIT_COMMAND).toInstance(NGGitCommandTask.class);
     mapBinder.addBinding(TaskType.NG_SSH_VALIDATION).toInstance(SSHConfigValidationDelegateTask.class);
+    mapBinder.addBinding(TaskType.NG_WINRM_VALIDATION).toInstance(WinRmConfigValidationDelegateTask.class);
+    mapBinder.addBinding(TaskType.NG_HOST_CONNECTIVITY_TASK).toInstance(HostConnectivityValidationDelegateTask.class);
     mapBinder.addBinding(TaskType.DOCKER_CONNECTIVITY_TEST_TASK).toInstance(DockerTestConnectionDelegateTask.class);
+    mapBinder.addBinding(TaskType.JENKINS_CONNECTIVITY_TEST_TASK).toInstance(JenkinsTestConnectionDelegateTask.class);
     mapBinder.addBinding(TaskType.NG_AWS_TASK).toInstance(AwsDelegateTask.class);
     mapBinder.addBinding(TaskType.JIRA_CONNECTIVITY_TASK_NG).toInstance(JiraTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.JIRA_TASK_NG).toInstance(JiraTaskNG.class);
@@ -1512,6 +1613,7 @@ public class DelegateModule extends AbstractModule {
         .toInstance(CEKubernetesTestConnectionDelegateTask.class);
     mapBinder.addBinding(TaskType.K8S_SERVICE_ACCOUNT_INFO).toInstance(K8sFetchServiceAccountTask.class);
     mapBinder.addBinding(TaskType.HTTP_HELM_CONNECTIVITY_TASK).toInstance(HttpHelmConnectivityDelegateTask.class);
+    mapBinder.addBinding(TaskType.OCI_HELM_CONNECTIVITY_TASK).toInstance(OciHelmConnectivityDelegateTask.class);
     mapBinder.addBinding(TaskType.NG_AZURE_TASK).toInstance(AzureTask.class);
 
     mapBinder.addBinding(TaskType.K8_FETCH_NAMESPACES).toInstance(ServiceImplDelegateTask.class);
@@ -1537,6 +1639,11 @@ public class DelegateModule extends AbstractModule {
     mapBinder.addBinding(TaskType.SERVICENOW_CONNECTIVITY_TASK_NG).toInstance(ServiceNowTestConnectionTaskNG.class);
     mapBinder.addBinding(TaskType.SERVICENOW_TASK_NG).toInstance(ServiceNowTaskNG.class);
     mapBinder.addBinding(TaskType.CLOUDFORMATION_TASK_NG).toInstance(CloudformationTaskNG.class);
+    mapBinder.addBinding(TaskType.FETCH_S3_FILE_TASK_NG).toInstance(S3FetchFilesTaskNG.class);
+    mapBinder.addBinding(TaskType.SERVERLESS_GIT_FETCH_TASK_NG).toInstance(ServerlessGitFetchTask.class);
+    mapBinder.addBinding(TaskType.SERVERLESS_COMMAND_TASK).toInstance(ServerlessCommandTask.class);
+    mapBinder.addBinding(TaskType.AZURE_WEB_APP_TASK_NG).toInstance(AzureWebAppTaskNG.class);
+    mapBinder.addBinding(TaskType.COMMAND_TASK_NG).toInstance(CommandTaskNG.class);
   }
 
   private void registerSecretManagementBindings() {
@@ -1619,9 +1726,12 @@ public class DelegateModule extends AbstractModule {
         .to(GitValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.DOCKER.getDisplayName())
         .to(DockerValidationHandler.class);
+    connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.JENKINS.getDisplayName())
+        .to(JenkinsValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.HTTP_HELM_REPO.getDisplayName())
         .to(HttpHelmValidationHandler.class);
-
+    connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.OCI_HELM_REPO.getDisplayName())
+        .to(OciHelmValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.VAULT.getDisplayName())
         .to(UpsertSecretTaskValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.AZURE_KEY_VAULT.getDisplayName())
@@ -1664,6 +1774,8 @@ public class DelegateModule extends AbstractModule {
         .to(CVConnectorValidationHandler.class);
     connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.AZURE.getDisplayName())
         .to(AzureValidationHandler.class);
+    connectorTypeToConnectorValidationHandlerMap.addBinding(ConnectorType.AZURE_REPO.getDisplayName())
+        .to(GitValidationHandler.class);
   }
 
   private void bindExceptionHandlers() {
@@ -1690,8 +1802,6 @@ public class DelegateModule extends AbstractModule {
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(InterruptedIOExceptionHandler.class));
     CVConnectorExceptionHandler.exceptions().forEach(
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(CVConnectorExceptionHandler.class));
-    JGitExceptionHandler.exceptions().forEach(
-        exception -> exceptionHandlerMapBinder.addBinding(exception).to(JGitExceptionHandler.class));
     SCMExceptionHandler.exceptions().forEach(
         exception -> exceptionHandlerMapBinder.addBinding(exception).to(SCMExceptionHandler.class));
     AuthenticationExceptionHandler.exceptions().forEach(

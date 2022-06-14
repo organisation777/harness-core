@@ -36,6 +36,7 @@ import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
@@ -55,6 +56,7 @@ import io.harness.ng.core.service.services.ServiceEntityService;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.pms.rbac.NGResourceType;
 import io.harness.rbac.CDNGRbacUtility;
+import io.harness.repositories.UpsertOptions;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.utils.PageUtils;
 
@@ -63,6 +65,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -126,7 +129,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
           @Content(mediaType = NGCommonEntityConstants.APPLICATION_YAML_MEDIA_TYPE,
               schema = @Schema(implementation = ErrorDTO.class))
     })
-@OwnedBy(HarnessTeam.PIPELINE)
+@OwnedBy(HarnessTeam.CDC)
 public class ServiceResourceV2 {
   private final ServiceEntityService serviceEntityService;
   private final AccessControlClient accessControlClient;
@@ -233,10 +236,7 @@ public class ServiceResourceV2 {
   @NGAccessControlCheck(resourceType = NGResourceType.SERVICE, permission = "core_service_delete")
   @Operation(operationId = "deleteServiceV2", summary = "Delete a Service by identifier",
       responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns true if the Service is deleted")
-      })
+      { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns true if the Service is deleted") })
   public ResponseDTO<Boolean>
   delete(@HeaderParam(IF_MATCH) String ifMatch,
       @Parameter(description = SERVICE_PARAM_MESSAGE) @PathParam(
@@ -254,11 +254,7 @@ public class ServiceResourceV2 {
   @PUT
   @ApiOperation(value = "Update a service by identifier", nickname = "updateServiceV2")
   @Operation(operationId = "updateServiceV2", summary = "Update a Service by identifier",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns the updated Service")
-      })
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the updated Service") })
   public ResponseDTO<ServiceResponse>
   update(@HeaderParam(IF_MATCH) String ifMatch,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
@@ -279,11 +275,7 @@ public class ServiceResourceV2 {
   @Path("upsert")
   @ApiOperation(value = "Upsert a service by identifier", nickname = "upsertServiceV2")
   @Operation(operationId = "upsertServiceV2", summary = "Upsert a Service by identifier",
-      responses =
-      {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns the updated Service")
-      })
+      responses = { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the updated Service") })
   public ResponseDTO<ServiceResponse>
   upsert(@HeaderParam(IF_MATCH) String ifMatch,
       @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
@@ -297,7 +289,7 @@ public class ServiceResourceV2 {
     requestService.setVersion(isNumeric(ifMatch) ? parseLong(ifMatch) : null);
     orgAndProjectValidationHelper.checkThatTheOrganizationAndProjectExists(
         requestService.getOrgIdentifier(), requestService.getProjectIdentifier(), requestService.getAccountId());
-    ServiceEntity upsertService = serviceEntityService.upsert(requestService);
+    ServiceEntity upsertService = serviceEntityService.upsert(requestService, UpsertOptions.DEFAULT);
     return ResponseDTO.newResponse(
         upsertService.getVersion().toString(), ServiceElementMapper.toResponseWrapper(upsertService));
   }
@@ -307,8 +299,7 @@ public class ServiceResourceV2 {
   @Operation(operationId = "getServiceList", summary = "Gets Service list",
       responses =
       {
-        @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(responseCode = "default", description = "Returns the list of Services for a Project")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Returns the list of Services for a Project")
       })
   public ResponseDTO<PageResponse<ServiceResponse>>
   listServices(@Parameter(description = NGCommonEntityConstants.PAGE_PARAM_MESSAGE) @QueryParam(
@@ -327,12 +318,13 @@ public class ServiceResourceV2 {
       @Parameter(
           description =
               "Specifies the sorting criteria of the list. Like sorting based on the last updated entity, alphabetical sorting in an ascending or descending order")
-      @QueryParam("sort") List<String> sort) {
+      @QueryParam("sort") List<String> sort,
+      @QueryParam("type") ServiceDefinitionType type) {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgIdentifier, projectIdentifier),
         Resource.of(NGResourceType.SERVICE, null), SERVICE_VIEW_PERMISSION, "Unauthorized to list services");
 
-    Criteria criteria =
-        ServiceFilterHelper.createCriteriaForGetList(accountId, orgIdentifier, projectIdentifier, false, searchTerm);
+    Criteria criteria = ServiceFilterHelper.createCriteriaForGetList(
+        accountId, orgIdentifier, projectIdentifier, false, searchTerm, type);
     Pageable pageRequest;
     if (isNotEmpty(serviceIdentifiers)) {
       criteria.and(ServiceEntityKeys.identifier).in(serviceIdentifiers);
@@ -358,8 +350,8 @@ public class ServiceResourceV2 {
   @Operation(operationId = "getServiceAccessList", summary = "Gets Service Access list",
       responses =
       {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "default", description = "Returns the list of Services for a Project that are accessible")
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(description = "Returns the list of Services for a Project that are accessible")
       })
   public ResponseDTO<List<ServiceResponse>>
   listAccessServices(@Parameter(description = NGCommonEntityConstants.PAGE_PARAM_MESSAGE) @QueryParam(
@@ -382,8 +374,8 @@ public class ServiceResourceV2 {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgIdentifier, projectIdentifier),
         Resource.of(PROJECT, projectIdentifier), VIEW_PROJECT_PERMISSION, "Unauthorized to list services");
 
-    Criteria criteria =
-        ServiceFilterHelper.createCriteriaForGetList(accountId, orgIdentifier, projectIdentifier, false, searchTerm);
+    Criteria criteria = ServiceFilterHelper.createCriteriaForGetList(
+        accountId, orgIdentifier, projectIdentifier, false, searchTerm, null);
     if (isNotEmpty(serviceIdentifiers)) {
       criteria.and(ServiceEntityKeys.identifier).in(serviceIdentifiers);
     }
@@ -396,6 +388,43 @@ public class ServiceResourceV2 {
     List<AccessControlDTO> accessControlList =
         accessControlClient.checkForAccess(permissionCheckDTOS).getAccessControlList();
     return ResponseDTO.newResponse(filterByPermissionAndId(accessControlList, serviceList));
+  }
+
+  @GET
+  @Path("/dummy-serviceConfig-api")
+  @ApiOperation(value = "This is dummy api to expose NGServiceConfig", nickname = "dummyNGServiceConfigApi")
+  @Hidden
+  // do not delete this.
+  public ResponseDTO<NGServiceConfig> getNGServiceConfig() {
+    return ResponseDTO.newResponse(NGServiceConfig.builder().build());
+  }
+
+  @GET
+  @Path("/runtimeInputs/{serviceIdentifier}")
+  @ApiOperation(value = "This api returns runtime input YAML", nickname = "getRuntimeInputsServiceEntity")
+  @Hidden
+  public ResponseDTO<String> getServiceRuntimeInputs(
+      @Parameter(description = SERVICE_PARAM_MESSAGE) @PathParam(
+          "serviceIdentifier") @ResourceIdentifier String serviceIdentifier,
+      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
+      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
+      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectIdentifier) {
+    Optional<ServiceEntity> serviceEntity =
+        serviceEntityService.get(accountId, orgIdentifier, projectIdentifier, serviceIdentifier, false);
+
+    if (serviceEntity.isPresent()) {
+      if (EmptyPredicate.isEmpty(serviceEntity.get().getYaml())) {
+        throw new InvalidRequestException("Service is not configured with a Service definition. Service Yaml is empty");
+      }
+      String serviceInputYaml = serviceEntityService.createServiceInputsYaml(serviceEntity.get().getYaml());
+      return ResponseDTO.newResponse(serviceInputYaml);
+    } else {
+      throw new NotFoundException(String.format("Service with identifier [%s] in project [%s], org [%s] not found",
+          serviceIdentifier, projectIdentifier, orgIdentifier));
+    }
   }
 
   private List<ServiceResponse> filterByPermissionAndId(

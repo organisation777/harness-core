@@ -10,11 +10,13 @@ package io.harness;
 import static io.harness.AuthorizationServiceHeader.TEMPLATE_SERVICE;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
+import static io.harness.ng.core.template.TemplateEntityConstants.MONITORED_SERVICE;
 import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
 import static io.harness.outbox.OutboxSDKConstants.DEFAULT_OUTBOX_POLL_CONFIGURATION;
 
+import io.harness.account.AccountClientModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.PrimaryVersionManagerModule;
 import io.harness.audit.client.remote.AuditClientModule;
@@ -52,11 +54,14 @@ import io.harness.serializer.TemplateServiceModuleRegistrars;
 import io.harness.service.DelegateServiceDriverModule;
 import io.harness.template.events.TemplateOutboxEventHandler;
 import io.harness.template.eventsframework.TemplateEventsFrameworkModule;
+import io.harness.template.handler.PipelineTemplateYamlConversionHandler;
 import io.harness.template.handler.TemplateYamlConversionHandler;
 import io.harness.template.handler.TemplateYamlConversionHandlerRegistry;
 import io.harness.template.mappers.TemplateFilterPropertiesMapper;
 import io.harness.template.services.NGTemplateService;
 import io.harness.template.services.NGTemplateServiceImpl;
+import io.harness.template.services.TemplateRefreshService;
+import io.harness.template.services.TemplateRefreshServiceImpl;
 import io.harness.time.TimeModule;
 import io.harness.token.TokenClientModule;
 import io.harness.waiter.AbstractWaiterModule;
@@ -140,6 +145,8 @@ public class TemplateServiceModule extends AbstractModule {
     install(AccessControlClientModule.getInstance(
         this.templateServiceConfiguration.getAccessControlClientConfiguration(), TEMPLATE_SERVICE.getServiceId()));
     install(new TemplateEventsFrameworkModule(this.templateServiceConfiguration.getEventsFrameworkConfiguration()));
+    install(new AccountClientModule(templateServiceConfiguration.getManagerClientConfig(),
+        templateServiceConfiguration.getManagerServiceSecret(), TEMPLATE_SERVICE.toString()));
 
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("taskPollExecutor"))
@@ -150,6 +157,7 @@ public class TemplateServiceModule extends AbstractModule {
     bind(OutboxEventHandler.class).to(TemplateOutboxEventHandler.class);
     bind(HPersistence.class).to(MongoPersistence.class);
     bind(NGTemplateService.class).to(NGTemplateServiceImpl.class);
+    bind(TemplateRefreshService.class).to(TemplateRefreshServiceImpl.class);
 
     install(EnforcementClientModule.getInstance(templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId(),
@@ -237,7 +245,10 @@ public class TemplateServiceModule extends AbstractModule {
         new TemplateYamlConversionHandlerRegistry();
     templateYamlConversionHandlerRegistry.register(STEP, injector.getInstance(TemplateYamlConversionHandler.class));
     templateYamlConversionHandlerRegistry.register(STAGE, injector.getInstance(TemplateYamlConversionHandler.class));
-    templateYamlConversionHandlerRegistry.register(PIPELINE, injector.getInstance(TemplateYamlConversionHandler.class));
+    templateYamlConversionHandlerRegistry.register(
+        PIPELINE, injector.getInstance(PipelineTemplateYamlConversionHandler.class));
+    templateYamlConversionHandlerRegistry.register(
+        MONITORED_SERVICE, injector.getInstance(TemplateYamlConversionHandler.class));
     return templateYamlConversionHandlerRegistry;
   }
 

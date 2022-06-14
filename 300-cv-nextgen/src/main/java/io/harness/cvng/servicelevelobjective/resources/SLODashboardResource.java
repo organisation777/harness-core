@@ -7,10 +7,7 @@
 
 package io.harness.cvng.servicelevelobjective.resources;
 
-import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.NGAccessControlCheck;
-import io.harness.accesscontrol.OrgIdentifier;
-import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.ExposeInternalException;
 import io.harness.cvng.core.beans.params.PageParams;
@@ -56,15 +53,8 @@ public class SLODashboardResource {
   @ApiOperation(value = "get widget list", nickname = "getSLODashboardWidgets")
   @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
   public ResponseDTO<PageResponse<SLODashboardWidget>> getSloDashboardWidgets(
-      @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
-      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
-      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ProjectIdentifier String projectIdentifier,
-      @BeanParam SLODashboardApiFilter filter, @BeanParam PageParams pageParams) {
-    ProjectParams projectParams = ProjectParams.builder()
-                                      .accountIdentifier(accountId)
-                                      .orgIdentifier(orgIdentifier)
-                                      .projectIdentifier(projectIdentifier)
-                                      .build();
+      @NotNull @BeanParam ProjectParams projectParams, @BeanParam SLODashboardApiFilter filter,
+      @BeanParam PageParams pageParams) {
     return ResponseDTO.newResponse(sloDashboardService.getSloDashboardWidgets(projectParams, filter, pageParams));
   }
 
@@ -75,8 +65,10 @@ public class SLODashboardResource {
   @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
   public ResponseDTO<SLODashboardDetail> getSloDashboardWidget(
       @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String identifier,
+      @QueryParam("startTime") Long startTime, @QueryParam("endTime") Long endTime,
       @NotNull @Valid @BeanParam ProjectParams projectParams) {
-    return ResponseDTO.newResponse(sloDashboardService.getSloDashboardDetail(projectParams, identifier));
+    return ResponseDTO.newResponse(
+        sloDashboardService.getSloDashboardDetail(projectParams, identifier, startTime, endTime));
   }
 
   @GET
@@ -88,15 +80,7 @@ public class SLODashboardResource {
   @NGAccessControlCheck(resourceType = SLO, permission = VIEW_PERMISSION)
   public ResponseDTO<SLORiskCountResponse>
   getServiceLevelObjectivesRiskCount(
-      @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
-      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
-      @ApiParam(required = true) @NotNull @QueryParam("projectIdentifier") @ProjectIdentifier String projectIdentifier,
-      @BeanParam SLODashboardApiFilter serviceLevelObjectiveFilter) {
-    ProjectParams projectParams = ProjectParams.builder()
-                                      .accountIdentifier(accountId)
-                                      .orgIdentifier(orgIdentifier)
-                                      .projectIdentifier(projectIdentifier)
-                                      .build();
+      @NotNull @BeanParam ProjectParams projectParams, @BeanParam SLODashboardApiFilter serviceLevelObjectiveFilter) {
     return ResponseDTO.newResponse(sloDashboardService.getRiskCount(projectParams, serviceLevelObjectiveFilter));
   }
 }

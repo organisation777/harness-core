@@ -30,7 +30,7 @@ const (
 	dbEndpoint    = "/reports/write?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&report=%s&repo=%s&sha=%s&commitLink=%s"
 	testEndpoint  = "/tests/select?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s"
 	cgEndpoint    = "/tests/uploadcg?accountId=%s&orgId=%s&projectId=%s&pipelineId=%s&buildId=%s&stageId=%s&stepId=%s&repo=%s&sha=%s&source=%s&target=%s&timeMs=%d"
-	agentEndpoint = "/agents/link?language=%s&os=%s&arch=%s&framework=%s"
+	agentEndpoint = "/agents/link?language=%s&os=%s&arch=%s&framework=%s&version=%s&buildenv=%s"
 )
 
 // defaultClient is the default http.Client.
@@ -81,8 +81,8 @@ func (c *HTTPClient) Write(ctx context.Context, org, project, pipeline, build, s
 	return err
 }
 
-func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, framework string) ([]types.DownloadLink, error) {
-	path := fmt.Sprintf(agentEndpoint, language, os, arch, framework)
+func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, framework, version, env string) ([]types.DownloadLink, error) {
+	path := fmt.Sprintf(agentEndpoint, language, os, arch, framework, version, env)
 	var resp []types.DownloadLink
 	ctx = context.WithValue(ctx, "reqId", "")
 	_, err := c.do(ctx, c.Endpoint+path, "GET", nil, &resp)
@@ -90,7 +90,7 @@ func (c *HTTPClient) DownloadLink(ctx context.Context, language, os, arch, frame
 }
 
 // SelectTests returns a list of tests which should be run intelligently
-func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, repo, sha, source, target, body string) (types.SelectTestsResp, error) {
+func (c *HTTPClient) SelectTests(ctx context.Context, org, project, pipeline, build, stage, step, repo, sha, source, target, body string) (types.SelectTestsResp, error) {
 	path := fmt.Sprintf(testEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target)
 	var resp types.SelectTestsResp
 	var e types.SelectTestsReq
@@ -98,15 +98,15 @@ func (c *HTTPClient) SelectTests(org, project, pipeline, build, stage, step, rep
 	if err != nil {
 		return types.SelectTestsResp{}, err
 	}
-	ctx := context.WithValue(context.Background(), "reqId", sha)
+	ctx = context.WithValue(ctx, "reqId", sha)
 	_, err = c.do(ctx, c.Endpoint+path, "POST", &e, &resp)
 	return resp, err
 }
 
 // UploadCg uploads avro encoded callgraph to server
-func (c *HTTPClient) UploadCg(org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
+func (c *HTTPClient) UploadCg(ctx context.Context, org, project, pipeline, build, stage, step, repo, sha, source, target string, timeMs int64, cg []byte) error {
 	path := fmt.Sprintf(cgEndpoint, c.AccountID, org, project, pipeline, build, stage, step, repo, sha, source, target, timeMs)
-	ctx := context.WithValue(context.Background(), "reqId", sha)
+	ctx = context.WithValue(ctx, "reqId", sha)
 	backoff := createBackoff(45 * 60 * time.Second)
 	_, err := c.retry(ctx, c.Endpoint+path, "POST", &cg, nil, false, backoff)
 	return err

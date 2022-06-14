@@ -57,6 +57,7 @@ import io.harness.beans.FeatureName;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HIterator;
@@ -64,7 +65,6 @@ import io.harness.queue.QueuePublisher;
 import io.harness.validation.Create;
 import io.harness.validation.Update;
 
-import software.wings.beans.BaseFile;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.Artifact.ArtifactKeys;
 import software.wings.beans.artifact.Artifact.ContentStatus;
@@ -74,6 +74,7 @@ import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStream.ArtifactStreamKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.ArtifactStreamType;
+import software.wings.beans.artifact.ArtifactView;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.NexusArtifactStream;
 import software.wings.collect.CollectEvent;
@@ -85,6 +86,7 @@ import software.wings.service.intfc.ArtifactStreamServiceBindingService;
 import software.wings.service.intfc.FileService;
 import software.wings.service.intfc.SettingsService;
 import software.wings.utils.ArtifactType;
+import software.wings.utils.DelegateArtifactCollectionUtils;
 import software.wings.utils.RepositoryFormat;
 import software.wings.utils.RepositoryType;
 
@@ -105,7 +107,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.executable.ValidateOnExecution;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
@@ -178,6 +182,34 @@ public class ArtifactServiceImpl implements ArtifactService {
     }
 
     return listArtifactsForService(pageRequest);
+  }
+
+  @Override
+  public PageResponse<Artifact> listArtifactsForServiceWithCollectionEnabled(
+      String appId, String serviceId, PageRequest<Artifact> pageRequest) {
+    if (isEmpty(serviceId)) {
+      throw new InvalidRequestException("ServiceId is required");
+    }
+
+    List<String> projections = new ArrayList<>();
+    projections.add(ArtifactStreamKeys.uuid);
+    projections.add(ArtifactStreamKeys.collectionEnabled);
+    List<ArtifactStream> artifactStreams =
+        artifactStreamService.getArtifactStreamsForService(appId, serviceId, projections);
+
+    List<String> artifactStreamIds = new ArrayList<>();
+    for (ArtifactStream artifactStream : artifactStreams) {
+      if (!Boolean.FALSE.equals(artifactStream.getCollectionEnabled())) {
+        artifactStreamIds.add(artifactStream.getUuid());
+      }
+    }
+
+    if (isNotEmpty(artifactStreamIds)) {
+      pageRequest.addFilter(ArtifactKeys.artifactStreamId, IN, artifactStreamIds.toArray());
+      return listArtifactsForService(pageRequest);
+    } else {
+      return aPageResponse().withResponse(new ArrayList<Artifact>()).build();
+    }
   }
 
   @Override
@@ -270,7 +302,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     if (AMI.name().equals(artifactStreamType)) {
       key = ArtifactKeys.revision;
       value = artifact.getRevision();
-    } else if (ArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+    } else if (DelegateArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
       key = ArtifactKeys.metadata_artifactPath;
       value = artifact.getArtifactPath();
     } else {
@@ -298,7 +330,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     String key;
     if (AMI.name().equals(artifactStreamType)) {
       key = ArtifactKeys.revision;
-    } else if (ArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
+    } else if (DelegateArtifactCollectionUtils.isGenericArtifactStream(artifactStreamType, artifactStreamAttributes)) {
       key = ArtifactKeys.metadata_artifactPath;
     } else {
       key = ArtifactKeys.metadata_buildNo;
@@ -494,11 +526,14 @@ public class ArtifactServiceImpl implements ArtifactService {
         .get();
   }
 
+  @SneakyThrows
   @Override
-  public Artifact getWithServices(String artifactId, String appId) {
+  public ArtifactView getWithServices(String artifactId, String appId) {
     Artifact artifact = wingsPersistence.get(Artifact.class, artifactId);
-    artifact.setServices(artifactStreamServiceBindingService.listServices(appId, artifact.getArtifactStreamId()));
-    return artifact;
+    ArtifactView artifactView = new ArtifactView();
+    BeanUtils.copyProperties(artifactView, artifact);
+    artifactView.setServices(artifactStreamServiceBindingService.listServices(appId, artifact.getArtifactStreamId()));
+    return artifactView;
   }
 
   @Override
@@ -846,7 +881,7 @@ public class ArtifactServiceImpl implements ArtifactService {
     return artifacts.stream()
         .flatMap(artifact -> artifact.getArtifactFiles().stream())
         .filter(artifactFile -> artifactFile.getFileUuid() != null)
-        .map(BaseFile::getFileUuid)
+        .map(ArtifactFile::getFileUuid)
         .collect(Collectors.toList());
   }
 

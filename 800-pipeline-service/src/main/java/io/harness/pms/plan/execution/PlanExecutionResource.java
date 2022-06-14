@@ -7,6 +7,8 @@
 
 package io.harness.pms.plan.execution;
 
+import static io.harness.beans.FeatureName.NG_PIPELINE_TEMPLATE;
+
 import static java.lang.String.format;
 
 import io.harness.NGCommonEntityConstants;
@@ -30,10 +32,13 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.pms.annotations.PipelineServiceAuth;
-import io.harness.pms.ngpipeline.inputset.beans.resource.MergeInputSetRequestDTOPMS;
+import io.harness.pms.helpers.PmsFeatureFlagHelper;
+import io.harness.pms.inputset.MergeInputSetRequestDTOPMS;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineResourceConstants;
 import io.harness.pms.pipeline.service.PMSPipelineService;
+import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
+import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import io.harness.pms.plan.execution.beans.dto.InterruptDTO;
 import io.harness.pms.plan.execution.beans.dto.RunStageRequestDTO;
@@ -80,7 +85,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraints.NotEmpty;
 
-@Tag(name = "Execute", description = "This contains APIs for executing a Pipeline.")
+@Tag(name = "Pipeline Execution", description = "This contains APIs for Executing a Pipeline")
 @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
     content =
     {
@@ -114,6 +119,8 @@ public class PlanExecutionResource {
   @Inject private final PreflightService preflightService;
   @Inject private final PMSPipelineService pmsPipelineService;
   @Inject private final RetryExecutionHelper retryExecutionHelper;
+  @Inject private final PmsFeatureFlagHelper featureFlagService;
+  @Inject private final PMSPipelineTemplateHelper pipelineTemplateHelper;
 
   @POST
   @Path("/{identifier}")
@@ -121,7 +128,8 @@ public class PlanExecutionResource {
       value = "Execute a pipeline with inputSet pipeline YAML", nickname = "postPipelineExecuteWithInputSetYaml")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_EXECUTE)
   @Operation(operationId = "postPipelineExecuteWithInputSetYaml",
-      summary = "Execute a pipeline with inputSet pipeline yaml",
+      description = "Execute a Pipeline with Runtime Input YAML",
+      summary = "Execute a Pipeline with Runtime Input YAML",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -143,7 +151,7 @@ public class PlanExecutionResource {
       @QueryParam("useFQNIfError") @DefaultValue("false") boolean useFQNIfErrorResponse,
       @ApiParam(hidden = true) @Parameter(
           description =
-              "InputSet YAML if the pipeline contains runtime inputs. This will be empty by default if pipeline does not contains runtime inputs")
+              "Enter Runtime Input YAML if the Pipeline contains Runtime Inputs. Please refer to https://ngdocs.harness.io/article/f6yobn7iq0 and https://ngdocs.harness.io/article/1eishcolt3 to see how to generate Runtime Input YAML for a Pipeline.")
       String inputSetPipelineYaml) {
     PlanExecutionResponseDto planExecutionResponseDto = pipelineExecutor.runPipelineWithInputSetPipelineYaml(
         accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, moduleType, inputSetPipelineYaml, false);
@@ -196,6 +204,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "default", description = "Execute given Stages of a Pipeline with Runtime Input Yaml")
       })
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   runStagesWithRuntimeInputYaml(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
                                     description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
@@ -224,6 +233,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Re-run a given Stages Execution of a Pipeline")
       })
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   rerunStagesWithRuntimeInputYaml(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
@@ -257,6 +267,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns pipeline execution details")
       })
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   rerunPipelineWithInputSetPipelineYaml(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
@@ -334,6 +345,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description = "Returns all retry stages from where we can retry the failed pipeline")
       })
+  @Hidden
   public ResponseDTO<io.harness.engine.executions.retry.RetryInfo>
   getRetryStages(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
                      description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) @AccountIdentifier String accountId,
@@ -358,7 +370,8 @@ public class PlanExecutionResource {
 
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_EXECUTE)
   @Operation(operationId = "postPipelineExecuteWithInputSetList",
-      summary = "Execute a pipeline with input set references list",
+      description = "Execute a Pipeline with Input Set References",
+      summary = "Execute a Pipeline with Input Set References",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
@@ -398,6 +411,7 @@ public class PlanExecutionResource {
   @ApiOperation(
       value = "Execute a pipeline with input set references list", nickname = "rePostPipelineExecuteWithInputSetList")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_EXECUTE)
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   rerunPipelineWithInputSetIdentifierList(
       @NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE, required = true) @QueryParam(
@@ -427,7 +441,8 @@ public class PlanExecutionResource {
   @PUT
   @ApiOperation(value = "pause, resume or stop the pipeline executions", nickname = "handleInterrupt")
   @Path("/interrupt/{planExecutionId}")
-  @Operation(operationId = "putHandleInterrupt", summary = "Execute an Interrupt on an execution",
+  @Operation(operationId = "putHandleInterrupt", description = "Executes an Interrupt on a Given Execution",
+      summary = "Execute an Interrupt",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
@@ -468,6 +483,7 @@ public class PlanExecutionResource {
             description = "Takes a possible Interrupt value and applies it onto the given stage in the execution")
       })
   @Path("/interrupt/{planExecutionId}/{nodeExecutionId}")
+  @Hidden
   public ResponseDTO<InterruptDTO>
   handleStageInterrupt(@NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE,
                            required = true) @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
@@ -500,6 +516,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description = "Takes a possible Interrupt value and applies it onto the given stage in the execution")
       })
+  @Hidden
   public ResponseDTO<InterruptDTO>
   handleManualInterventionInterrupt(
       @NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE, required = true) @QueryParam(
@@ -531,6 +548,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description = "Start Preflight Checks for a Pipeline, given a Runtime Input YAML. Returns Preflight Id")
       })
+  @Hidden
   public ResponseDTO<String>
   startPreFlightCheck(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
                           description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
@@ -562,6 +580,7 @@ public class PlanExecutionResource {
             description =
                 "Get Preflight Checks Response for a Preflight Id. May require Multiple Queries if Preflight is In Progress")
       })
+  @Hidden
   public ResponseDTO<PreFlightDTO>
   getPreflightCheckResponse(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
                                 description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
@@ -585,6 +604,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
             description = "Returns list of Stage identifiers with their names and stage dependencies")
       })
+  @Hidden
   public ResponseDTO<List<StageExecutionResponse>>
   getStagesExecutionList(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
                              description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
@@ -602,11 +622,26 @@ public class PlanExecutionResource {
           pipelineIdentifier, projectIdentifier, orgIdentifier));
     }
     PipelineEntity pipelineEntity = optionalPipelineEntity.get();
-    if (!pipelineEntity.shouldAllowStageExecutions()) {
+    String yaml = pipelineEntity.getYaml();
+    if (featureFlagService.isEnabled(accountId, NG_PIPELINE_TEMPLATE)
+        && Boolean.TRUE.equals(optionalPipelineEntity.get().getTemplateReference())) {
+      yaml = pipelineTemplateHelper
+                 .resolveTemplateRefsInPipeline(accountId, orgIdentifier, projectIdentifier, pipelineEntity.getYaml())
+                 .getMergedPipelineYaml();
+    }
+    boolean shouldAllowStageExecutions;
+    try {
+      BasicPipeline basicPipeline = YamlUtils.read(yaml, BasicPipeline.class);
+      shouldAllowStageExecutions = basicPipeline.isAllowStageExecutions();
+    } catch (IOException e) {
+      throw new InvalidRequestException("Cannot create pipeline entity due to " + e.getMessage(), e);
+    }
+
+    if (!shouldAllowStageExecutions) {
       return ResponseDTO.newResponse(Collections.emptyList());
     }
-    List<StageExecutionResponse> stageExecutionResponse =
-        StageExecutionSelectorHelper.getStageExecutionResponse(pipelineEntity.getYaml());
+    List<StageExecutionResponse> stageExecutionResponse = StageExecutionSelectorHelper.getStageExecutionResponse(yaml);
+
     return ResponseDTO.newResponse(stageExecutionResponse);
   }
 
@@ -620,6 +655,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns execution details")
       })
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   retryPipelineWithInputSetPipelineYaml(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
@@ -666,6 +702,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns retry history execution details")
       })
+  @Hidden
   public ResponseDTO<RetryHistoryResponseDto>
   getRetryHistory(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
@@ -697,6 +734,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "default", description = "Returns execution id of the latest execution from all retries")
       })
+  @Hidden
   public ResponseDTO<RetryLatestExecutionResponseDto>
   getRetryLatestExecutionId(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(

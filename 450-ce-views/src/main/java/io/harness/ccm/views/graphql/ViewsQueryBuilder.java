@@ -8,6 +8,8 @@
 package io.harness.ccm.views.graphql;
 
 import static io.harness.annotations.dev.HarnessTeam.CE;
+import static io.harness.ccm.views.entities.ViewFieldIdentifier.BUSINESS_MAPPING;
+import static io.harness.ccm.views.graphql.QLCEViewAggregateOperation.SUM;
 import static io.harness.ccm.views.graphql.QLCEViewTimeGroupType.DAY;
 import static io.harness.ccm.views.graphql.ViewsMetaDataFields.LABEL_KEY;
 import static io.harness.ccm.views.graphql.ViewsMetaDataFields.LABEL_KEY_UN_NESTED;
@@ -45,6 +47,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.views.businessMapping.entities.BusinessMapping;
 import io.harness.ccm.views.businessMapping.entities.CostTarget;
 import io.harness.ccm.views.businessMapping.entities.SharedCost;
+import io.harness.ccm.views.businessMapping.entities.UnallocatedCostStrategy;
 import io.harness.ccm.views.businessMapping.service.intf.BusinessMappingService;
 import io.harness.ccm.views.dao.ViewCustomFieldDao;
 import io.harness.ccm.views.entities.ViewCondition;
@@ -80,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -136,8 +140,7 @@ public class ViewsQueryBuilder {
     List<ViewField> customFields =
         collectFieldListByIdentifier(rules, filters, groupByEntity, ViewFieldIdentifier.CUSTOM);
 
-    List<ViewField> businessMapping =
-        collectFieldListByIdentifier(rules, filters, groupByEntity, ViewFieldIdentifier.BUSINESS_MAPPING);
+    List<ViewField> businessMapping = collectFieldListByIdentifier(rules, filters, groupByEntity, BUSINESS_MAPPING);
     if ((!isApplicationQuery(groupByList) || !isClusterTable) && !isInstanceQuery(groupByList)) {
       modifyQueryWithInstanceTypeFilter(rules, filters, groupByEntity, customFields, businessMapping, selectQuery);
     }
@@ -157,8 +160,7 @@ public class ViewsQueryBuilder {
     if (!groupByEntity.isEmpty()) {
       for (QLCEViewFieldInput groupBy : groupByEntity) {
         Object sqlObjectFromField = getSQLObjectFromField(groupBy);
-        if (groupBy.getIdentifier() != ViewFieldIdentifier.CUSTOM
-            && groupBy.getIdentifier() != ViewFieldIdentifier.BUSINESS_MAPPING
+        if (groupBy.getIdentifier() != ViewFieldIdentifier.CUSTOM && groupBy.getIdentifier() != BUSINESS_MAPPING
             && groupBy.getIdentifier() != ViewFieldIdentifier.LABEL) {
           selectQuery.addCustomColumns(sqlObjectFromField);
           selectQuery.addCustomGroupings(sqlObjectFromField);
@@ -187,6 +189,7 @@ public class ViewsQueryBuilder {
     if (!aggregations.isEmpty()) {
       // TODO: Add Shared Cost Aggregations
       decorateQueryWithAggregations(selectQuery, aggregations);
+      decorateQueryWithSharedCostAggregations(selectQuery, groupByEntity);
     }
 
     if (!sortCriteriaList.isEmpty()) {
@@ -261,8 +264,7 @@ public class ViewsQueryBuilder {
 
     List<ViewField> customFields =
         collectFieldListByIdentifier(rules, filters, groupByEntity, ViewFieldIdentifier.CUSTOM);
-    List<ViewField> businessMapping =
-        collectFieldListByIdentifier(rules, filters, groupByEntity, ViewFieldIdentifier.BUSINESS_MAPPING);
+    List<ViewField> businessMapping = collectFieldListByIdentifier(rules, filters, groupByEntity, BUSINESS_MAPPING);
     if ((!isApplicationQuery(groupByList) || !isClusterTable) && !isInstanceQuery(groupByList)) {
       modifyQueryWithInstanceTypeFilter(rules, filters, groupByEntity, customFields, businessMapping, selectQueryInner);
     }
@@ -508,7 +510,7 @@ public class ViewsQueryBuilder {
     List<ViewField> customFields =
         collectFieldListByIdentifier(rules, filters, Collections.EMPTY_LIST, ViewFieldIdentifier.CUSTOM);
     List<ViewField> businessMappings =
-        collectFieldListByIdentifier(rules, filters, Collections.EMPTY_LIST, ViewFieldIdentifier.BUSINESS_MAPPING);
+        collectFieldListByIdentifier(rules, filters, Collections.EMPTY_LIST, BUSINESS_MAPPING);
     List<String> labelKeysList = new ArrayList<>();
 
     if (!customFields.isEmpty()) {
@@ -893,6 +895,41 @@ public class ViewsQueryBuilder {
     }
   }
 
+  private void decorateQueryWithSharedCostAggregations(
+      SelectQuery selectQuery, List<QLCEViewFieldInput> groupByEntity) {
+    List<QLCEViewFieldInput> groupByBusinessMapping =
+        groupByEntity.stream()
+            .filter(groupBy -> groupBy.getIdentifier() == BUSINESS_MAPPING)
+            .collect(Collectors.toList());
+
+    if (groupByBusinessMapping.size() > 1) {
+      throw new InvalidRequestException("Invalid request: Cannot group by multiple cost categories.");
+    } else if (groupByBusinessMapping.size() == 1) {
+      BusinessMapping businessMapping = businessMappingService.get(groupByBusinessMapping.get(0).getFieldId());
+      List<SharedCost> sharedCosts = businessMapping.getSharedCosts();
+      if (sharedCosts != null) {
+        sharedCosts.forEach(sharedCost -> decorateQueryWithSharedCostAggregation(selectQuery, sharedCost));
+      }
+    }
+  }
+
+  private void decorateQueryWithSharedCostAggregation(SelectQuery selectQuery, SharedCost sharedCost) {
+    FunctionCall functionCall = getFunctionCallType(SUM);
+    selectQuery.addCustomColumns(Converter.toCustomColumnSqlObject(
+        new CoalesceExpression(
+            functionCall.addCustomParams(getSQLCaseStatementBusinessMappingSharedCost(sharedCost.getRules())),
+            Collections.singletonList(0)),
+        modifyStringToComplyRegex(sharedCost.getName())));
+  }
+
+  private CustomSql getSQLCaseStatementBusinessMappingSharedCost(List<ViewRule> sharedCostRules) {
+    CaseStatement caseStatement = new CaseStatement();
+    caseStatement.addWhen(
+        getConsolidatedRuleCondition(sharedCostRules), new CustomSql(ViewsMetaDataFields.COST.getAlias()));
+    caseStatement.addElseNull();
+    return new CustomSql(caseStatement);
+  }
+
   private FunctionCall getFunctionCallType(QLCEViewAggregateOperation operationType) {
     switch (operationType) {
       case SUM:
@@ -998,16 +1035,21 @@ public class ViewsQueryBuilder {
   }
 
   private QLCEViewFilterOperator mapViewIdOperatorToQLCEViewFilterOperator(ViewIdOperator operator) {
+    QLCEViewFilterOperator qlCEViewFilterOperator = null;
     if (operator.equals(ViewIdOperator.IN)) {
-      return QLCEViewFilterOperator.IN;
+      qlCEViewFilterOperator = QLCEViewFilterOperator.IN;
     } else if (operator.equals(ViewIdOperator.NOT_IN)) {
-      return QLCEViewFilterOperator.NOT_IN;
+      qlCEViewFilterOperator = QLCEViewFilterOperator.NOT_IN;
     } else if (operator.equals(ViewIdOperator.NOT_NULL)) {
-      return QLCEViewFilterOperator.NOT_NULL;
+      qlCEViewFilterOperator = QLCEViewFilterOperator.NOT_NULL;
     } else if (operator.equals(ViewIdOperator.NULL)) {
-      return QLCEViewFilterOperator.NULL;
+      qlCEViewFilterOperator = QLCEViewFilterOperator.NULL;
+    } else if (operator.equals(ViewIdOperator.EQUALS)) {
+      qlCEViewFilterOperator = QLCEViewFilterOperator.EQUALS;
+    } else if (operator.equals(ViewIdOperator.LIKE)) {
+      qlCEViewFilterOperator = QLCEViewFilterOperator.LIKE;
     }
-    return null;
+    return qlCEViewFilterOperator;
   }
 
   public QLCEViewTimeGroupType mapViewTimeGranularityToQLCEViewTimeGroupType(ViewTimeGranularity timeGranularity) {
@@ -1191,7 +1233,12 @@ public class ViewsQueryBuilder {
     for (CostTarget costTarget : businessMapping.getCostTargets()) {
       caseStatement.addWhen(getConsolidatedRuleCondition(costTarget.getRules()), costTarget.getName());
     }
-    caseStatement.addElse(ViewFieldUtils.getBusinessMappingUnallocatedCostDefaultName());
+    if (Objects.nonNull(businessMapping.getUnallocatedCost())
+        && businessMapping.getUnallocatedCost().getStrategy() == UnallocatedCostStrategy.DISPLAY_NAME) {
+      caseStatement.addElse(businessMapping.getUnallocatedCost().getLabel());
+    } else {
+      caseStatement.addElse(ViewFieldUtils.getBusinessMappingUnallocatedCostDefaultName());
+    }
     return new CustomSql(caseStatement);
   }
 

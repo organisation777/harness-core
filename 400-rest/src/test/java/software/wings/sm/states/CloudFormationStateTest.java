@@ -56,9 +56,9 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.joor.Reflect.on;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -66,6 +66,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.EmbeddedUser;
 import io.harness.beans.ExecutionStatus;
@@ -79,6 +80,7 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.api.ContainerServiceElement;
+import software.wings.api.ContextElementParamMapperFactory;
 import software.wings.api.DeploymentType;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
@@ -98,12 +100,12 @@ import software.wings.beans.InfraMappingSweepingOutput;
 import software.wings.beans.InfrastructureMappingBlueprint;
 import software.wings.beans.Service;
 import software.wings.beans.ServiceVariable;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TemplateExpression;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.JenkinsArtifactStream;
 import software.wings.beans.command.CommandType;
@@ -143,6 +145,7 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
+import software.wings.sm.WorkflowStandardParamsExtensionService;
 import software.wings.sm.states.provision.CloudFormationCreateStackState;
 import software.wings.sm.states.provision.CloudFormationDeleteStackState;
 import software.wings.sm.states.provision.CloudFormationState.CloudFormationStateKeys;
@@ -251,23 +254,32 @@ public class CloudFormationStateTest extends WingsBaseTest {
                                 .name(SERVICE_NAME)
                                 .artifactStreamIds(singletonList(ARTIFACT_STREAM_ID))
                                 .build();
-  private Artifact artifact = anArtifact()
-                                  .withArtifactSourceName("source")
-                                  .withMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "bn"))
-                                  .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                  .build();
+  private Artifact artifact =
+      anArtifact()
+          .withArtifactSourceName("source")
+          .withMetadata(new ArtifactMetadata(ImmutableMap.of(ArtifactMetadataKeys.buildNo, "bn")))
+          .withArtifactStreamId(ARTIFACT_STREAM_ID)
+          .build();
   private ArtifactStream artifactStream =
       JenkinsArtifactStream.builder().appId(APP_ID).sourceName("").jobname("").artifactPaths(null).build();
 
   private SettingAttribute awsConfig = aSettingAttribute().withValue(AwsConfig.builder().build()).build();
 
-  private List<ServiceVariable> serviceVariableList =
-      asList(ServiceVariable.builder().type(Type.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
-          ServiceVariable.builder().type(Type.ENCRYPTED_TEXT).name("VAR_2").value("value2".toCharArray()).build());
+  private List<ServiceVariable> serviceVariableList = asList(
+      ServiceVariable.builder().type(ServiceVariableType.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
+      ServiceVariable.builder()
+          .type(ServiceVariableType.ENCRYPTED_TEXT)
+          .name("VAR_2")
+          .value("value2".toCharArray())
+          .build());
 
-  private List<ServiceVariable> safeDisplayServiceVariableList =
-      asList(ServiceVariable.builder().type(Type.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
-          ServiceVariable.builder().type(Type.ENCRYPTED_TEXT).name("VAR_2").value("*******".toCharArray()).build());
+  private List<ServiceVariable> safeDisplayServiceVariableList = asList(
+      ServiceVariable.builder().type(ServiceVariableType.TEXT).name("VAR_1").value("value1".toCharArray()).build(),
+      ServiceVariable.builder()
+          .type(ServiceVariableType.ENCRYPTED_TEXT)
+          .name("VAR_2")
+          .value("*******".toCharArray())
+          .build());
 
   private String outputName = InfrastructureConstants.PHASE_INFRA_MAPPING_KEY_NAME + phaseElement.getUuid();
   private SweepingOutputInstance sweepingOutputInstance =
@@ -283,7 +295,7 @@ public class CloudFormationStateTest extends WingsBaseTest {
 
   @Before
   public void setup() throws IllegalAccessException {
-    when(infrastructureProvisionerService.get(anyString(), anyString()))
+    when(infrastructureProvisionerService.get(nullable(String.class), nullable(String.class)))
         .thenReturn(
             CloudFormationInfrastructureProvisioner.builder()
                 .uuid(INFRA_PROV_ID)
@@ -318,16 +330,19 @@ public class CloudFormationStateTest extends WingsBaseTest {
     when(serviceResourceService.getCommandByName(APP_ID, SERVICE_ID, ENV_ID, "Setup Service Cluster"))
         .thenReturn(serviceCommand);
 
-    on(workflowStandardParams).set("appService", appService);
-    on(workflowStandardParams).set("environmentService", environmentService);
-    on(workflowStandardParams).set("artifactService", artifactService);
-    on(workflowStandardParams).set("serviceTemplateService", serviceTemplateService);
-    on(workflowStandardParams).set("configuration", configuration);
-    on(workflowStandardParams).set("artifactStreamService", artifactStreamService);
-    on(workflowStandardParams).set("accountService", accountService);
-    on(workflowStandardParams).set("artifactStreamServiceBindingService", artifactStreamServiceBindingService);
-    on(workflowStandardParams).set("featureFlagService", featureFlagService);
-    on(workflowStandardParams).set("subdomainUrlHelper", subdomainUrlHelper);
+    WorkflowStandardParamsExtensionService workflowStandardParamsExtensionService =
+        new WorkflowStandardParamsExtensionService(
+            appService, accountService, artifactService, environmentService, artifactStreamServiceBindingService, null);
+
+    on(cloudFormationCreateStackState)
+        .set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(cloudFormationDeleteStackState)
+        .set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+
+    ContextElementParamMapperFactory contextElementParamMapperFactory = new ContextElementParamMapperFactory(
+        subdomainUrlHelper, workflowExecutionService, artifactService, artifactStreamService, null,
+
+        featureFlagService, null, workflowStandardParamsExtensionService);
 
     workflowStandardParams.setCurrentUser(EmbeddedUser.builder().name("test").email("test@harness.io").build());
     when(executionContext.getContextElement(ContextElementType.STANDARD)).thenReturn(workflowStandardParams);
@@ -355,7 +370,8 @@ public class CloudFormationStateTest extends WingsBaseTest {
     FieldUtils.writeField(
         cloudFormationDeleteStackState, "templateExpressionProcessor", templateExpressionProcessor, true);
 
-    when(workflowExecutionService.getExecutionDetails(anyString(), anyString(), anyBoolean(), anyBoolean()))
+    when(workflowExecutionService.getExecutionDetails(
+             nullable(String.class), nullable(String.class), anyBoolean(), anyBoolean()))
         .thenReturn(WorkflowExecution.builder().build());
     context = new ExecutionContextImpl(stateExecutionInstance);
     on(context).set("variableProcessor", variableProcessor);
@@ -366,9 +382,12 @@ public class CloudFormationStateTest extends WingsBaseTest {
     on(context).set("sweepingOutputService", sweepingOutputService);
     on(context).set("featureFlagService", featureFlagService);
     on(context).set("settingsService", settingsService);
+    on(context).set("workflowStandardParamsExtensionService", workflowStandardParamsExtensionService);
+    on(context).set("contextElementParamMapperFactory", contextElementParamMapperFactory);
 
     when(variableProcessor.getVariables(any(), any())).thenReturn(emptyMap());
-    //    when(evaluator.substitute(anyString(), anyMap(), anyString())).thenAnswer(i -> i.getArguments()[0]);
+    //    when(evaluator.substitute(nullable(String.class), anyMap(), nullable(String.class))).thenAnswer(i ->
+    //    i.getArguments()[0]);
     PortalConfig portalConfig = new PortalConfig();
     portalConfig.setUrl(BASE_URL);
     when(configuration.getPortal()).thenReturn(portalConfig);
@@ -376,7 +395,7 @@ public class CloudFormationStateTest extends WingsBaseTest {
     when(featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, ACCOUNT_ID)).thenReturn(false);
     when(featureFlagService.isEnabled(FeatureName.SKIP_BASED_ON_STACK_STATUSES, ACCOUNT_ID)).thenReturn(true);
     when(subdomainUrlHelper.getPortalBaseUrl(any())).thenReturn("baseUrl");
-    doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
+    doNothing().when(stateExecutionService).appendDelegateTaskDetails(nullable(String.class), any());
   }
 
   @Test
@@ -410,19 +429,11 @@ public class CloudFormationStateTest extends WingsBaseTest {
                                                         .addStateExecutionData(aCommandStateExecutionData().build())
                                                         .orchestrationWorkflowType(BUILD)
                                                         .build();
+    on(context).set("stateExecutionInstance", stateExecutionInstance);
 
     cloudFormationCreateStackState.setRegion(Regions.US_EAST_1.name());
     cloudFormationCreateStackState.setTimeoutMillis(1000);
 
-    ExecutionContext context = new ExecutionContextImpl(stateExecutionInstance);
-    on(context).set("variableProcessor", variableProcessor);
-    on(context).set("evaluator", evaluator);
-    on(context).set("infrastructureMappingService", infrastructureMappingService);
-    on(context).set("infrastructureDefinitionService", infrastructureDefinitionService);
-    on(context).set("serviceResourceService", serviceResourceService);
-    on(context).set("sweepingOutputService", sweepingOutputService);
-    on(context).set("featureFlagService", featureFlagService);
-    on(context).set("settingsService", settingsService);
     ExecutionResponse executionResponse = cloudFormationCreateStackState.execute(context);
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
   }

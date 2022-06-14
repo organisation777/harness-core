@@ -61,6 +61,11 @@ public class ServiceNowApprovalStepVariableCreator extends GenericStepVariableCr
     });
   }
 
+  @Override
+  public Class<ServiceNowApprovalStepNode> getFieldClass() {
+    return ServiceNowApprovalStepNode.class;
+  }
+
   private void addVariablesForCriteria(YamlField yamlField, Map<String, YamlProperties> yamlPropertiesMap) {
     List<YamlNode> yamlNodes = yamlField.getNode().asArray();
     yamlNodes.forEach(yamlNode -> {

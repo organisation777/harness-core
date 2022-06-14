@@ -14,7 +14,6 @@ import static io.harness.pms.merger.helpers.MergeHelper.mergeInputSetFormatYamlT
 import static io.harness.pms.yaml.validation.RuntimeInputValuesValidator.validateStaticValues;
 import static io.harness.template.beans.NGTemplateConstants.DUMMY_NODE;
 import static io.harness.template.beans.NGTemplateConstants.SPEC;
-import static io.harness.template.beans.NGTemplateConstants.STABLE_VERSION;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_INPUTS;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_REF;
@@ -23,9 +22,7 @@ import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_VERSION_LAB
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
-import io.harness.common.EntityReferenceHelper;
 import io.harness.common.NGExpressionUtils;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.ngexception.NGTemplateException;
 import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErrorDTO;
 import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErrorMetadataDTO;
@@ -58,7 +55,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,6 +68,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TemplateMergeHelper {
   private NGTemplateService templateService;
+  private TemplateMergeServiceHelper templateMergeServiceHelper;
 
   public String getTemplateInputs(String accountId, String orgIdentifier, String projectIdentifier,
       String templateIdentifier, String versionLabel) {
@@ -149,9 +146,11 @@ public class TemplateMergeHelper {
    * @param orgId - organisationId of pipeline
    * @param projectId - projectId of pipeline
    * @param yaml - yaml
+   * @param getMergedYamlWithTemplateField - Returns merged Yaml with templates Fields as well OPA policies If set
    * @return final yaml with all template occurrences replaced with actual template information.
    */
-  public TemplateMergeResponseDTO applyTemplatesToYaml(String accountId, String orgId, String projectId, String yaml) {
+  public TemplateMergeResponseDTO applyTemplatesToYaml(
+      String accountId, String orgId, String projectId, String yaml, boolean getMergedYamlWithTemplateField) {
     if (isEmpty(yaml)) {
       throw new NGTemplateException("Yaml to applyTemplates cannot be empty.");
     }
@@ -169,12 +168,24 @@ public class TemplateMergeHelper {
     if (errorResponse != null) {
       throw new NGTemplateResolveException("Exception in resolving template refs in given yaml.", USER, errorResponse);
     }
-    Map<String, Object> resMap = mergeTemplateInputsInObject(accountId, orgId, projectId, yamlNode, templateCacheMap);
+    Map<String, Object> resMap;
+    MergeTemplateInputsInObject mergeTemplateInputsInObject = null;
+    if (!getMergedYamlWithTemplateField) {
+      resMap = mergeTemplateInputsInObject(accountId, orgId, projectId, yamlNode, templateCacheMap);
+    } else {
+      mergeTemplateInputsInObject =
+          mergeTemplateInputsInObjectAlongWithOpaPolicy(accountId, orgId, projectId, yamlNode, templateCacheMap);
+      resMap = mergeTemplateInputsInObject.getResMap();
+    }
+
     List<TemplateReferenceSummary> templateReferenceSummaries =
         getTemplateReferenceSummaries(accountId, orgId, projectId, yaml);
     return TemplateMergeResponseDTO.builder()
         .mergedPipelineYaml(convertToYaml(resMap))
         .templateReferenceSummaries(templateReferenceSummaries)
+        .mergedPipelineYamlWithTemplateRef(mergeTemplateInputsInObject == null
+                ? null
+                : convertToYaml(mergeTemplateInputsInObject.getResMapWithOpaResponse()))
         .build();
   }
 
@@ -189,7 +200,7 @@ public class TemplateMergeHelper {
         List<FQNNode> fqnList = new ArrayList<>(key.getFqnList());
         FQNNode lastNode = fqnList.get(fqnList.size() - 1);
         FQNNode secondLastNode = fqnList.get(fqnList.size() - 2);
-        if (lastNode.getKey().equals(TEMPLATE_REF) && secondLastNode.getKey().equals(TEMPLATE)) {
+        if (TEMPLATE_REF.equals(lastNode.getKey()) && TEMPLATE.equals(secondLastNode.getKey())) {
           String identifier = ((JsonNode) fqnToValueMap.get(key)).asText();
           IdentifierRef templateIdentifierRef =
               IdentifierRefHelper.getIdentifierRef(identifier, accountId, orgId, projectId);
@@ -241,7 +252,7 @@ public class TemplateMergeHelper {
     for (YamlField childYamlField : yamlNode.fields()) {
       String fieldName = childYamlField.getName();
       JsonNode value = childYamlField.getNode().getCurrJsonNode();
-      boolean isTemplatePresent = isTemplatePresent(fieldName, value);
+      boolean isTemplatePresent = templateMergeServiceHelper.isTemplatePresent(fieldName, value);
       if (isTemplatePresent) {
         value = replaceTemplateOccurrenceWithTemplateSpecYaml(accountId, orgId, projectId, value, templateCacheMap);
       }
@@ -273,12 +284,81 @@ public class TemplateMergeHelper {
       if (yamlNode.getCurrJsonNode().isValueNode()) {
         arrayList.add(arrayElement);
       } else if (arrayElement.isArray()) {
-        arrayList.add(mergeTemplateInputsInArray(accountId, orgId, projectId, yamlNode, templateCacheMap));
+        arrayList.add(mergeTemplateInputsInArray(accountId, orgId, projectId, arrayElement, templateCacheMap));
       } else {
         arrayList.add(mergeTemplateInputsInObject(accountId, orgId, projectId, arrayElement, templateCacheMap));
       }
     }
     return arrayList;
+  }
+
+  /**
+   * This method Provides all the information from mergeTemplateInputsInObject method along with template references.
+   */
+  private MergeTemplateInputsInObject mergeTemplateInputsInObjectAlongWithOpaPolicy(String accountId, String orgId,
+      String projectId, YamlNode yamlNode, Map<String, TemplateEntity> templateCacheMap) {
+    Map<String, Object> resMap = new LinkedHashMap<>();
+    Map<String, Object> resMapWithTemplateRef = new LinkedHashMap<>();
+    for (YamlField childYamlField : yamlNode.fields()) {
+      String fieldName = childYamlField.getName();
+      JsonNode value = childYamlField.getNode().getCurrJsonNode();
+      boolean isTemplatePresent = templateMergeServiceHelper.isTemplatePresent(fieldName, value);
+      if (isTemplatePresent) {
+        Map<String, Object> result = JsonUtils.jsonNodeToMap(value);
+        resMapWithTemplateRef.put(fieldName, result);
+        value = replaceTemplateOccurrenceWithTemplateSpecYaml(accountId, orgId, projectId, value, templateCacheMap);
+      }
+      if (value.isValueNode() || YamlUtils.checkIfNodeIsArrayWithPrimitiveTypes(value)) {
+        resMap.put(fieldName, value);
+        resMapWithTemplateRef.put(fieldName, value);
+      } else if (value.isArray()) {
+        ArrayListForMergedTemplateRef arrayLists = mergeTemplateInputsInArrayWithOpaPolicy(
+            accountId, orgId, projectId, childYamlField.getNode(), templateCacheMap);
+        resMap.put(fieldName, arrayLists.getArrayList());
+        resMapWithTemplateRef.put(fieldName, arrayLists.getArrayListWithTemplateRef());
+      } else {
+        // If it was template key in yaml, we have replace it with the fields in template.spec in template yaml.
+        // Hence, we directly put all the keys returned in map, after iterating over them.
+        if (isTemplatePresent) {
+          MergeTemplateInputsInObject temp = mergeTemplateInputsInObjectAlongWithOpaPolicy(accountId, orgId, projectId,
+              new YamlNode(fieldName, value, childYamlField.getNode().getParentNode()), templateCacheMap);
+          resMap.putAll(temp.getResMap());
+          resMapWithTemplateRef.putAll(temp.getResMapWithOpaResponse());
+        } else {
+          MergeTemplateInputsInObject temp = mergeTemplateInputsInObjectAlongWithOpaPolicy(
+              accountId, orgId, projectId, childYamlField.getNode(), templateCacheMap);
+          resMap.put(fieldName, temp.getResMap());
+          resMapWithTemplateRef.put(fieldName, temp.getResMapWithOpaResponse());
+        }
+      }
+    }
+    return MergeTemplateInputsInObject.builder().resMap(resMap).resMapWithOpaResponse(resMapWithTemplateRef).build();
+  }
+
+  private ArrayListForMergedTemplateRef mergeTemplateInputsInArrayWithOpaPolicy(String accountId, String orgId,
+      String projectId, YamlNode yamlNode, Map<String, TemplateEntity> templateCacheMap) {
+    List<Object> arrayList = new ArrayList<>();
+    List<Object> arrayListWithTemplateRef = new ArrayList<>();
+    for (YamlNode arrayElement : yamlNode.asArray()) {
+      if (yamlNode.getCurrJsonNode().isValueNode()) {
+        arrayList.add(arrayElement);
+        arrayListWithTemplateRef.add(arrayElement);
+      } else if (arrayElement.isArray()) {
+        ArrayListForMergedTemplateRef arrayListForMergedTemplateRef =
+            mergeTemplateInputsInArrayWithOpaPolicy(accountId, orgId, projectId, arrayElement, templateCacheMap);
+        arrayList.add(arrayListForMergedTemplateRef.getArrayList());
+        arrayListWithTemplateRef.add(arrayListForMergedTemplateRef.getArrayListWithTemplateRef());
+      } else {
+        MergeTemplateInputsInObject temp =
+            mergeTemplateInputsInObjectAlongWithOpaPolicy(accountId, orgId, projectId, arrayElement, templateCacheMap);
+        arrayList.add(temp.getResMap());
+        arrayListWithTemplateRef.add(temp.getResMapWithOpaResponse());
+      }
+    }
+    return ArrayListForMergedTemplateRef.builder()
+        .arrayList(arrayList)
+        .arrayListWithTemplateRef(arrayListWithTemplateRef)
+        .build();
   }
 
   /**
@@ -292,7 +372,8 @@ public class TemplateMergeHelper {
       JsonNode template, Map<String, TemplateEntity> templateCacheMap) {
     JsonNode templateInputs = template.get(TEMPLATE_INPUTS);
 
-    TemplateEntity templateEntity = getLinkedTemplateEntity(accountId, orgId, projectId, template, templateCacheMap);
+    TemplateEntity templateEntity =
+        templateMergeServiceHelper.getLinkedTemplateEntity(accountId, orgId, projectId, template, templateCacheMap);
     String templateYaml = templateEntity.getYaml();
 
     JsonNode templateSpec;
@@ -394,7 +475,7 @@ public class TemplateMergeHelper {
     for (YamlField childYamlField : yamlNode.fields()) {
       String fieldName = childYamlField.getName();
       JsonNode value = childYamlField.getNode().getCurrJsonNode();
-      if (isTemplatePresent(fieldName, value)) {
+      if (templateMergeServiceHelper.isTemplatePresent(fieldName, value)) {
         resMap.put(fieldName,
             validateTemplateInputs(accountId, orgId, projectId, value, templateInputsErrorMap, templateCacheMap));
         continue;
@@ -454,8 +535,8 @@ public class TemplateMergeHelper {
   private JsonNode validateTemplateInputs(String accountId, String orgId, String projectId, JsonNode linkedTemplate,
       Map<String, TemplateInputsErrorDTO> errorMap, Map<String, TemplateEntity> templateCacheMap) {
     String identifier = linkedTemplate.get(TEMPLATE_REF).asText();
-    TemplateEntity templateEntity =
-        getLinkedTemplateEntity(accountId, orgId, projectId, linkedTemplate, templateCacheMap);
+    TemplateEntity templateEntity = templateMergeServiceHelper.getLinkedTemplateEntity(
+        accountId, orgId, projectId, linkedTemplate, templateCacheMap);
     JsonNode linkedTemplateInputs = linkedTemplate.get(TEMPLATE_INPUTS);
     if (linkedTemplateInputs == null) {
       return linkedTemplate;
@@ -567,57 +648,5 @@ public class TemplateMergeHelper {
     }
     return new YamlConfig(linkedTemplateInputsConfig.getFqnToValueMap(), linkedTemplateInputsConfig.getYamlMap())
         .getYaml();
-  }
-
-  private TemplateEntity getLinkedTemplateEntity(
-      String accountId, String orgId, String projectId, JsonNode yaml, Map<String, TemplateEntity> templateCacheMap) {
-    String identifier = yaml.get(TEMPLATE_REF).asText();
-    String versionLabel = "";
-    String versionMarker = STABLE_VERSION;
-    if (yaml.get(TEMPLATE_VERSION_LABEL) != null) {
-      versionLabel = yaml.get(TEMPLATE_VERSION_LABEL).asText();
-      versionMarker = versionLabel;
-    }
-
-    IdentifierRef templateIdentifierRef = IdentifierRefHelper.getIdentifierRef(identifier, accountId, orgId, projectId);
-
-    String templateUniqueIdentifier = generateUniqueTemplateIdentifier(templateIdentifierRef.getAccountIdentifier(),
-        templateIdentifierRef.getOrgIdentifier(), templateIdentifierRef.getProjectIdentifier(),
-        templateIdentifierRef.getIdentifier(), versionMarker);
-    if (templateCacheMap.containsKey(templateUniqueIdentifier)) {
-      return templateCacheMap.get(templateUniqueIdentifier);
-    }
-
-    Optional<TemplateEntity> templateEntity = templateService.getOrThrowExceptionIfInvalid(
-        templateIdentifierRef.getAccountIdentifier(), templateIdentifierRef.getOrgIdentifier(),
-        templateIdentifierRef.getProjectIdentifier(), templateIdentifierRef.getIdentifier(), versionLabel, false);
-    if (!templateEntity.isPresent()) {
-      throw new NGTemplateException(String.format(
-          "The template identifier %s and version label %s does not exist. Could not replace this template",
-          templateIdentifierRef.getIdentifier(), versionLabel));
-    }
-    TemplateEntity template = templateEntity.get();
-    templateCacheMap.put(templateUniqueIdentifier, template);
-    return template;
-  }
-
-  private boolean isTemplatePresent(String fieldName, JsonNode templateValue) {
-    return TEMPLATE.equals(fieldName) && templateValue.isObject() && templateValue.get(TEMPLATE_REF) != null;
-  }
-
-  private String generateUniqueTemplateIdentifier(
-      String accountId, String orgId, String projectId, String templateIdentifier, String versionLabel) {
-    List<String> fqnList = new LinkedList<>();
-    fqnList.add(accountId);
-    if (EmptyPredicate.isNotEmpty(orgId)) {
-      fqnList.add(orgId);
-    }
-    if (EmptyPredicate.isNotEmpty(projectId)) {
-      fqnList.add(projectId);
-    }
-    fqnList.add(templateIdentifier);
-    fqnList.add(versionLabel);
-
-    return EntityReferenceHelper.createFQN(fqnList);
   }
 }

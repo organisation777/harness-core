@@ -23,6 +23,7 @@ import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.logging.LogLevel.WARN;
+import static io.harness.provision.TerraformConstants.ACTIVITY_ID_BASED_TF_BASE_DIR;
 import static io.harness.provision.TerraformConstants.TERRAFORM_APPLY_PLAN_FILE_VAR_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_OUTPUT_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_DESTROY_PLAN_FILE_VAR_NAME;
@@ -36,6 +37,8 @@ import static io.harness.provision.TerraformConstants.TF_WORKING_DIR;
 import static io.harness.provision.TerraformConstants.USER_DIR_KEY;
 import static io.harness.provision.TerraformConstants.WORKSPACE_STATE_FILE_PATH_FORMAT;
 
+import static software.wings.beans.LogColor.White;
+import static software.wings.beans.LogColor.Yellow;
 import static software.wings.beans.LogHelper.color;
 
 import static java.lang.String.format;
@@ -61,6 +64,7 @@ import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.TerraformCommandExecutionException;
 import io.harness.exception.WingsException;
 import io.harness.exception.runtime.JGitRuntimeException;
+import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.filesystem.FileIo;
 import io.harness.git.GitClientHelper;
 import io.harness.git.GitClientV2;
@@ -95,6 +99,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -122,6 +127,12 @@ import org.jetbrains.annotations.NotNull;
 public class TerraformBaseHelperImpl implements TerraformBaseHelper {
   private static final String ARTIFACT_PATH_METADATA_KEY = "artifactPath";
   private static final String ARTIFACT_NAME_METADATA_KEY = "artifactName";
+  public static final String SSH_KEY_DIR = ".ssh";
+  public static final String SSH_KEY_FILENAME = "ssh.key";
+  public static final String SSH_COMMAND_PREFIX = "ssh";
+  public static final String GIT_SSH_COMMAND = "GIT_SSH_COMMAND";
+  public static final String TF_SSH_COMMAND_ARG =
+      " -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no -i ";
 
   @Inject DelegateFileManagerBase delegateFileManagerBase;
   @Inject TerraformClient terraformClient;
@@ -427,8 +438,15 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
   }
 
   @NonNull
-  public String resolveBaseDir(String accountId, String provisionerId) {
-    return TF_BASE_DIR.replace("${ACCOUNT_ID}", accountId).replace("${ENTITY_ID}", provisionerId);
+  public String resolveBaseDir(String accountId, String entityId) {
+    return TF_BASE_DIR.replace("${ACCOUNT_ID}", accountId).replace("${ENTITY_ID}", entityId);
+  }
+
+  @Override
+  public String activityIdBasedBaseDir(String accountId, String entityId, String activityId) {
+    return ACTIVITY_ID_BASED_TF_BASE_DIR.replace("${ACCOUNT_ID}", accountId)
+        .replace("${ENTITY_ID}", entityId)
+        .replace("${ACTIVITY_ID}", activityId);
   }
 
   public String resolveScriptDirectory(String workingDir, String scriptPath) {
@@ -447,7 +465,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
           return firstCommit.toString().split(" ")[1];
         }
       } catch (IOException | GitAPIException e) {
-        log.error("Failed to extract the commit id from the cloned repo.", e);
+        log.error(
+            "Failed to extract the commit id from the cloned repo.", ExceptionMessageSanitizer.sanitizeException(e));
       }
     }
     return null;
@@ -456,6 +475,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
   public GitBaseRequest getGitBaseRequestForConfigFile(
       String accountId, GitStoreDelegateConfig confileFileGitStore, GitConfigDTO configFileGitConfigDTO) {
     secretDecryptionService.decrypt(configFileGitConfigDTO.getGitAuth(), confileFileGitStore.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        configFileGitConfigDTO.getGitAuth(), confileFileGitStore.getEncryptedDataDetails());
 
     SshSessionConfig sshSessionConfig = null;
     if (configFileGitConfigDTO.getGitAuthType() == SSH) {
@@ -534,7 +555,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       TerraformHelperUtils.ensureLocalCleanup(scriptDirectory);
       downloadTfStateFile(workspace, accountId, currentStateFileId, scriptDirectory);
     } catch (IOException ioException) {
-      log.warn("Exception Occurred when cleaning Terraform local directory", ioException);
+      log.warn("Exception Occurred when cleaning Terraform local directory",
+          ExceptionMessageSanitizer.sanitizeException(ioException));
     }
     return scriptDirectory;
   }
@@ -549,6 +571,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     ArtifactoryConnectorDTO artifactoryConnectorDTO =
         (ArtifactoryConnectorDTO) artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig();
     secretDecryptionService.decrypt(
+        artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
         artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
     ArtifactoryConfigRequest artifactoryConfigRequest =
         artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
@@ -580,7 +604,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       TerraformHelperUtils.ensureLocalCleanup(scriptDirectory);
       downloadTfStateFile(workspace, accountId, currentStateFileId, scriptDirectory);
     } catch (IOException ioException) {
-      log.warn("Exception Occurred when cleaning Terraform local directory", ioException);
+      log.warn("Exception Occurred when cleaning Terraform local directory",
+          ExceptionMessageSanitizer.sanitizeException(ioException));
     }
     return scriptDirectory;
   }
@@ -597,11 +622,13 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
     try {
       gitClient.ensureRepoLocallyClonedAndUpdated(gitBaseRequestForConfigFile);
     } catch (RuntimeException ex) {
-      String msg = isNotEmpty(ex.getMessage()) ? format("Failed performing git operation. Reason: %s", ex.getMessage())
-                                               : "Failed performing git operation.";
+      RuntimeException sanitizedException = (RuntimeException) ExceptionMessageSanitizer.sanitizeException(ex);
+      String msg = isNotEmpty(sanitizedException.getMessage())
+          ? format("Failed performing git operation. Reason: %s", sanitizedException.getMessage())
+          : "Failed performing git operation.";
       logCallback.saveExecutionLog(msg, ERROR, CommandExecutionStatus.RUNNING);
-      throw new JGitRuntimeException(msg, ex.getCause(), DEFAULT_ERROR_CODE, gitBaseRequestForConfigFile.getCommitId(),
-          gitBaseRequestForConfigFile.getBranch());
+      throw new JGitRuntimeException(msg, sanitizedException.getCause(), DEFAULT_ERROR_CODE,
+          gitBaseRequestForConfigFile.getCommitId(), gitBaseRequestForConfigFile.getBranch());
     }
   }
 
@@ -634,7 +661,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       TerraformHelperUtils.copyFilesToWorkingDirectory(
           gitClientHelper.getRepoDirectory(gitBaseRequestForConfigFile), workingDir);
     } catch (Exception ex) {
-      handleExceptionWhileCopyingConfigFiles(logCallback, baseDir, ex);
+      handleExceptionWhileCopyingConfigFiles(logCallback, baseDir, ExceptionMessageSanitizer.sanitizeException(ex));
     }
   }
 
@@ -648,7 +675,7 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
       unzip(scriptDir, new ZipInputStream(inputStream));
       FileIo.waitForDirectoryToBeAccessibleOutOfProcess(scriptDir.getPath(), 10);
     } catch (Exception ex) {
-      handleExceptionWhileCopyingConfigFiles(logCallback, baseDir, ex);
+      handleExceptionWhileCopyingConfigFiles(logCallback, baseDir, ExceptionMessageSanitizer.sanitizeException(ex));
     }
   }
 
@@ -744,6 +771,8 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
         (ArtifactoryConnectorDTO) artifactoryStoreDelegateConfig.getConnectorDTO().getConnectorConfig();
     secretDecryptionService.decrypt(
         artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        artifactoryConnectorDTO.getAuth().getCredentials(), artifactoryStoreDelegateConfig.getEncryptedDataDetails());
     ArtifactoryConfigRequest artifactoryConfigRequest =
         artifactoryRequestMapper.toArtifactoryRequest(artifactoryConnectorDTO);
 
@@ -775,11 +804,14 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
   }
 
   private void handleGitVarFiles(LogCallback logCallback, String accountId, String tfVarDirectory, Path tfVarDirAbsPath,
-      List<String> varFilePaths, GitStoreDelegateConfig gitStoreDelegateConfig, GitConfigDTO gitConfigDTO) {
+      List<String> varFilePaths, GitStoreDelegateConfig gitStoreDelegateConfig, GitConfigDTO gitConfigDTO)
+      throws IOException {
     logCallback.saveExecutionLog(format("Fetching Var files from Git repository: [%s]", gitConfigDTO.getUrl()), INFO,
         CommandExecutionStatus.RUNNING);
 
     secretDecryptionService.decrypt(gitConfigDTO.getGitAuth(), gitStoreDelegateConfig.getEncryptedDataDetails());
+    ExceptionMessageSanitizer.storeAllSecretsForSanitizing(
+        gitConfigDTO.getGitAuth(), gitStoreDelegateConfig.getEncryptedDataDetails());
 
     SshSessionConfig sshSessionConfig = null;
     if (gitConfigDTO.getGitAuthType() == SSH) {
@@ -815,6 +847,61 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
         gitStoreDelegateConfig.getSshKeySpecDTO(), gitStoreDelegateConfig.getEncryptedDataDetails());
   }
 
+  public void configureCredentialsForModuleSource(TerraformTaskNGParameters taskParameters,
+      GitStoreDelegateConfig conFileFileGitStore, LogCallback logCallback) throws IOException {
+    GitConfigDTO gitConfigDTO = (GitConfigDTO) conFileFileGitStore.getGitConfigDTO();
+    if (gitConfigDTO.getGitAuthType() == SSH) {
+      String sshKeyPath;
+      SshSessionConfig sshSessionConfig = getSshSessionConfig(conFileFileGitStore);
+      if (isNotEmpty(sshSessionConfig.getKeyPassphrase())) {
+        logCallback.saveExecutionLog(
+            color("\nExporting SSH Key with Passphrase for Module Source is not Supported", Yellow), WARN);
+        return;
+      }
+      if (!sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKey())) {
+        String sshKey = String.valueOf(sshSessionConfig.getKey());
+        String workingDir = getBaseDir(taskParameters.getEntityId());
+        Files.createDirectories(Paths.get(workingDir, SSH_KEY_DIR));
+        sshKeyPath = Paths.get(workingDir, SSH_KEY_DIR, SSH_KEY_FILENAME).toAbsolutePath().toString();
+        FileIo.writeUtf8StringToFile(sshKeyPath, sshKey);
+
+      } else if (sshSessionConfig.isKeyLess() && isNotEmpty(sshSessionConfig.getKeyPath())) {
+        sshKeyPath = sshSessionConfig.getKeyPath();
+
+      } else {
+        logCallback.saveExecutionLog(
+            color("\nExporting Username and Password with SSH for Module Source is not Supported", Yellow), WARN);
+        return;
+      }
+      exportSSHKey(taskParameters, sshKeyPath, logCallback);
+    } else {
+      logCallback.saveExecutionLog(
+          color("\nExporting Username and Password for Module Source is not Supported", Yellow), WARN);
+    }
+  }
+
+  public void exportSSHKey(TerraformTaskNGParameters taskParameters, String sshKeyPath, LogCallback logCallback)
+      throws IOException {
+    logCallback.saveExecutionLog(color("\nExporting SSH Key:", White), INFO);
+
+    File file = new File(Paths.get(sshKeyPath).toString());
+
+    // Giving Read Only Permission to ownerOnly for the SSH File, This is needed to avoided security attack
+    file.setWritable(false);
+    file.setReadable(false, false);
+    file.setExecutable(false);
+    file.setReadable(true);
+
+    String newSSHArg = TF_SSH_COMMAND_ARG + sshKeyPath;
+
+    String sshCommand = System.getenv(GIT_SSH_COMMAND) == null ? SSH_COMMAND_PREFIX + newSSHArg
+                                                               : System.getenv(GIT_SSH_COMMAND) + newSSHArg;
+
+    taskParameters.getEnvironmentVariables().put(GIT_SSH_COMMAND, sshCommand);
+
+    logCallback.saveExecutionLog(color("\n   Successfully Exported SSH Key:", White), INFO);
+  }
+
   public void performCleanupOfTfDirs(TerraformTaskNGParameters parameters, LogCallback logCallback) {
     {
       FileUtils.deleteQuietly(new File(getBaseDir(parameters.getEntityId())));
@@ -826,13 +913,14 @@ public class TerraformBaseHelperImpl implements TerraformBaseHelper {
             log.info("Terraform Plan has been safely deleted from vault");
           }
         } catch (Exception ex) {
+          Exception sanitizeException = ExceptionMessageSanitizer.sanitizeException(ex);
           logCallback.saveExecutionLog(
               color(format("Failed to delete secret: [%s] from vault: [%s], please clean it up",
                         parameters.getEncryptedTfPlan().getEncryptionKey(), parameters.getEncryptionConfig().getName()),
                   LogColor.Yellow, LogWeight.Bold),
               WARN, CommandExecutionStatus.RUNNING);
-          logCallback.saveExecutionLog(ex.getMessage(), WARN);
-          log.error("Exception occurred while deleting Terraform Plan from vault", ex);
+          logCallback.saveExecutionLog(sanitizeException.getMessage(), WARN);
+          log.error("Exception occurred while deleting Terraform Plan from vault", sanitizeException);
         }
       }
       logCallback.saveExecutionLog("Done cleaning up directories.", INFO, CommandExecutionStatus.SUCCESS);

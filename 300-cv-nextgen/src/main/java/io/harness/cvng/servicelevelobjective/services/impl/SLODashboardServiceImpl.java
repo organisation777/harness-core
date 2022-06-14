@@ -11,6 +11,7 @@ import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
+import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.core.utils.DateTimeUtils;
 import io.harness.cvng.servicelevelobjective.SLORiskCountResponse;
@@ -29,7 +30,6 @@ import io.harness.cvng.servicelevelobjective.services.api.SLODashboardService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOErrorBudgetResetService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
-import io.harness.data.structure.CollectionUtils;
 import io.harness.ng.beans.PageResponse;
 
 import com.google.common.base.Preconditions;
@@ -38,6 +38,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class SLODashboardServiceImpl implements SLODashboardService {
@@ -58,7 +59,7 @@ public class SLODashboardServiceImpl implements SLODashboardService {
     List<SLODashboardWidget> sloDashboardWidgets =
         sloPageResponse.getContent()
             .stream()
-            .map(sloResponse -> getSloDashboardWidget(projectParams, sloResponse))
+            .map(sloResponse -> getSloDashboardWidget(projectParams, sloResponse, null))
             .collect(Collectors.toList());
     return PageResponse.<SLODashboardWidget>builder()
         .pageSize(sloPageResponse.getPageSize())
@@ -71,11 +72,24 @@ public class SLODashboardServiceImpl implements SLODashboardService {
   }
 
   @Override
-  public SLODashboardDetail getSloDashboardDetail(ProjectParams projectParams, String identifier) {
+  public SLODashboardDetail getSloDashboardDetail(
+      ProjectParams projectParams, String identifier, Long startTime, Long endTime) {
     ServiceLevelObjectiveResponse sloResponse = serviceLevelObjectiveService.get(projectParams, identifier);
-    SLODashboardWidget sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse);
+    SLODashboardWidget sloDashboardWidget;
+    if (Objects.isNull(startTime) || Objects.isNull(endTime)) {
+      sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse, null);
+    } else {
+      sloDashboardWidget = getSloDashboardWidget(projectParams, sloResponse,
+          TimeRangeParams.builder()
+              .startTime(Instant.ofEpochMilli(startTime))
+              .endTime(Instant.ofEpochMilli(endTime))
+              .build());
+    }
     return SLODashboardDetail.builder()
         .description(sloResponse.getServiceLevelObjectiveDTO().getDescription())
+        .createdAt(sloResponse.getCreatedAt())
+        .lastModifiedAt(sloResponse.getLastModifiedAt())
+        .timeRangeFilters(serviceLevelObjectiveService.getEntity(projectParams, identifier).getTimeRangeFilters())
         .sloDashboardWidget(sloDashboardWidget)
         .build();
   }
@@ -87,7 +101,7 @@ public class SLODashboardServiceImpl implements SLODashboardService {
   }
 
   private SLODashboardWidget getSloDashboardWidget(
-      ProjectParams projectParams, ServiceLevelObjectiveResponse sloResponse) {
+      ProjectParams projectParams, ServiceLevelObjectiveResponse sloResponse, TimeRangeParams filter) {
     Preconditions.checkState(sloResponse.getServiceLevelObjectiveDTO().getServiceLevelIndicators().size() == 1,
         "Only one service level indicator is supported");
     ServiceLevelIndicatorDTO serviceLevelIndicatorDTO =
@@ -105,16 +119,11 @@ public class SLODashboardServiceImpl implements SLODashboardService {
     Instant currentTimeMinute = DateTimeUtils.roundDownTo1MinBoundary(clock.instant());
     List<SLOErrorBudgetResetDTO> errorBudgetResetDTOS =
         sloErrorBudgetResetService.getErrorBudgetResets(projectParams, slo.getIdentifier());
-    int totalErrorBudgetMinutes = serviceLevelObjective.getActiveErrorBudgetMinutes(
-        CollectionUtils.emptyIfNull(errorBudgetResetDTOS)
-            .stream()
-            .sorted((dto1, dto2) -> dto1.getCreatedAt().compareTo(dto2.getCreatedAt()))
-            .map(dto -> dto.getErrorBudgetIncrementPercentage())
-            .collect(Collectors.toList()),
-        currentLocalDate);
+    int totalErrorBudgetMinutes =
+        serviceLevelObjective.getActiveErrorBudgetMinutes(errorBudgetResetDTOS, currentLocalDate);
     SLODashboardWidget.SLOGraphData sloGraphData = sliRecordService.getGraphData(serviceLevelIndicator.getUuid(),
         timePeriod.getStartTime(serviceLevelObjective.getZoneOffset()), currentTimeMinute, totalErrorBudgetMinutes,
-        serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion());
+        serviceLevelIndicator.getSliMissingDataType(), serviceLevelIndicator.getVersion(), filter);
     return SLODashboardWidget.withGraphData(sloGraphData)
         .sloIdentifier(slo.getIdentifier())
         .title(slo.getName())

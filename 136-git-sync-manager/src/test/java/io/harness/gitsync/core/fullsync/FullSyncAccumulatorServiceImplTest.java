@@ -49,17 +49,11 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.dao.DuplicateKeyException;
 
 @OwnedBy(PL)
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({FullSyncServiceGrpc.FullSyncServiceBlockingStub.class, FullSyncEventRequest.class,
-    EntityDetailProtoToRestMapper.class})
 public class FullSyncAccumulatorServiceImplTest extends GitSyncTestBase {
   @InjectMocks FullSyncAccumulatorServiceImpl fullSyncAccumulatorService;
   @Mock YamlGitConfigService yamlGitConfigService;
@@ -89,7 +83,6 @@ public class FullSyncAccumulatorServiceImplTest extends GitSyncTestBase {
   @Before
   public void setup() throws Exception {
     fullSyncServiceBlockingStubMap.put(Microservice.CD, fullSyncServiceBlockingStub);
-    fullSyncServiceBlockingStubMap.put(Microservice.POLICYMGMT, fullSyncServiceBlockingStub);
     FieldUtils.writeField(
         fullSyncAccumulatorService, "fullSyncServiceBlockingStubMap", fullSyncServiceBlockingStubMap, true);
   }
@@ -122,7 +115,7 @@ public class FullSyncAccumulatorServiceImplTest extends GitSyncTestBase {
     doNothing().when(gitBranchService).updateBranchSyncStatus(any(), any(), any(), any());
     doThrow(DuplicateKeyException.class).when(fullSyncJobService).save(any());
     fullSyncAccumulatorService.triggerFullSync(fullSyncEventRequest, messageId);
-    verify(fullSyncServiceBlockingStub, times(2)).getEntitiesForFullSync(any());
+    verify(fullSyncServiceBlockingStub).getEntitiesForFullSync(any());
     verify(fullSyncJobService).save(any());
   }
 

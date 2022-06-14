@@ -1,60 +1,68 @@
 /*
- * Copyright 2021 Harness Inc. All rights reserved.
- * Use of this source code is governed by the PolyForm Shield 1.0.0 license
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
  * that can be found in the licenses directory at the root of this repository, also available at
- * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.serializer.kryo;
+package io.harness.migrations.all;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
-import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
-import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
-import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
-import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
-import io.harness.cdng.instance.outcome.DeploymentInfoOutcome;
-import io.harness.cdng.manifest.yaml.HelmChartManifestOutcome;
-import io.harness.cdng.manifest.yaml.HelmCommandFlagType;
-import io.harness.cdng.manifest.yaml.HelmManifestCommandFlag;
-import io.harness.cdng.manifest.yaml.K8sManifestOutcome;
-import io.harness.cdng.manifest.yaml.KustomizeManifestOutcome;
-import io.harness.cdng.manifest.yaml.KustomizePatchesManifestOutcome;
-import io.harness.cdng.manifest.yaml.OpenshiftManifestOutcome;
-import io.harness.cdng.manifest.yaml.OpenshiftParamManifestOutcome;
-import io.harness.cdng.manifest.yaml.ValuesManifestOutcome;
-import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
-import io.harness.cdng.service.beans.ServiceOutcome;
-import io.harness.serializer.KryoRegistrar;
+import io.harness.migrations.Migration;
+import io.harness.outbox.OutboxEvent;
+import io.harness.outbox.OutboxEvent.OutboxEventKeys;
+import io.harness.persistence.HIterator;
+import io.harness.persistence.HPersistence;
 
-import com.esotericsoftware.kryo.Kryo;
+import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
-@OwnedBy(HarnessTeam.CDP)
-public class NGBeanKryoRegistrar implements KryoRegistrar {
+@Slf4j
+@OwnedBy(HarnessTeam.DEL)
+public class DeleteFailedNgDelegateTokenMigration implements Migration {
+  @Inject private HPersistence persistence;
+
+  // we are deleting only those audit events that are logged before 1 March
+  private static final String MARCH_1ST_2022_IN_MS = "1646092800000";
+
+  private static final List<String> EventTypesToDelete =
+      Arrays.asList("DelegateNgTokenCreateEvent", "DelegateNgTokenRevokeEvent");
+
   @Override
-  public void register(Kryo kryo) {
-    kryo.register(K8sDirectInfrastructureOutcome.class, 8105);
-    kryo.register(K8sGcpInfrastructureOutcome.class, 8300);
-    kryo.register(DeploymentInfoOutcome.class, 12547);
-    kryo.register(HelmChartManifestOutcome.class, 12524);
-    kryo.register(HelmCommandFlagType.class, 12526);
-    kryo.register(HelmManifestCommandFlag.class, 12525);
-    kryo.register(K8sManifestOutcome.class, 12502);
-    kryo.register(KustomizeManifestOutcome.class, 12532);
-    kryo.register(OpenshiftManifestOutcome.class, 12535);
-    kryo.register(OpenshiftParamManifestOutcome.class, 12537);
-    kryo.register(ValuesManifestOutcome.class, 12503);
-    kryo.register(ServiceOutcome.class, 8018);
-    kryo.register(ServiceOutcome.ArtifactsOutcome.class, 8019);
-    kryo.register(ServiceOutcome.StageOverridesOutcome.class, 12504);
-    kryo.register(ServiceOutcome.ArtifactsWrapperOutcome.class, 12505);
-    kryo.register(ServiceOutcome.ManifestsWrapperOutcome.class, 12506);
-    kryo.register(ServiceOutcome.VariablesWrapperOutcome.class, 12507);
-    kryo.register(StoreConfig.class, 8022);
-    kryo.register(KustomizePatchesManifestOutcome.class, 12548);
-    kryo.register(DockerArtifactOutcome.class, 8007);
-    kryo.register(GcrArtifactOutcome.class, 390006);
-    kryo.register(EcrArtifactOutcome.class, 390007);
+  public void migrate() {
+    log.info("Starting the migration for deleting failed ng delegate token audit events.");
+    List<String> idsToDelete = new ArrayList<>();
+
+    int deleted = 0;
+    try (HIterator<OutboxEvent> iterator = new HIterator<>(persistence.createQuery(OutboxEvent.class)
+                                                               .field(OutboxEventKeys.eventType)
+                                                               .in(EventTypesToDelete)
+                                                               .field(OutboxEventKeys.createdAt)
+                                                               .lessThan(MARCH_1ST_2022_IN_MS)
+                                                               .fetch())) {
+      while (iterator.hasNext()) {
+        idsToDelete.add(iterator.next().getId());
+
+        deleted++;
+        if (deleted != 0 && idsToDelete.size() % 500 == 0) {
+          persistence.delete(persistence.createQuery(OutboxEvent.class).field(OutboxEventKeys.id).in(idsToDelete));
+          log.info("deleted: {} ng delegate token outbox records", deleted);
+          idsToDelete.clear();
+        }
+      }
+
+      if (!idsToDelete.isEmpty()) {
+        persistence.delete(persistence.createQuery(OutboxEvent.class).field(OutboxEventKeys.id).in(idsToDelete));
+        log.info("deleted: {} ng delegate token outbox records", deleted);
+      }
+    } catch (Exception e) {
+      log.error("Error occurred during migration for deleting all failed ng delegate token audit events.", e);
+    }
+    log.info(
+        "Migration complete for deleting all failed ng delegate token audit events. Deleted " + deleted + " records.");
   }
 }

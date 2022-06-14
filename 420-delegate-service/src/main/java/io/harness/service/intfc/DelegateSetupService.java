@@ -38,7 +38,7 @@ public interface DelegateSetupService {
 
   String getHostNameForGroupedDelegate(String hostname);
 
-  Map<String, SelectorType> retrieveDelegateImplicitSelectors(Delegate delegate);
+  Map<String, SelectorType> retrieveDelegateImplicitSelectors(Delegate delegate, boolean fetchFromCache);
 
   Map<String, SelectorType> retrieveDelegateGroupImplicitSelectors(DelegateGroup delegateGroup);
 
@@ -70,4 +70,6 @@ public interface DelegateSetupService {
 
   Optional<DelegateGroupDTO> updateDelegateGroupTags(String accountIdentifier, String orgIdentifier,
       String projectIdentifier, String groupIdentifier, DelegateGroupTags delegateGroupTags);
+
+  DelegateGroup getDelegateGroup(String accountId, String delegateGroupId);
 }

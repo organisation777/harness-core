@@ -16,6 +16,7 @@ import static org.mockito.Mockito.mock;
 import io.harness.CIExecutionServiceModule;
 import io.harness.CIExecutionTestModule;
 import io.harness.ModuleType;
+import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.CacheConfig;
@@ -25,9 +26,12 @@ import io.harness.callback.DelegateCallbackToken;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.config.CIStepConfig;
 import io.harness.ci.config.StepImageConfig;
+import io.harness.ci.config.VmImageConfig;
 import io.harness.delegate.DelegateServiceGrpc;
 import io.harness.engine.pms.tasks.NgDelegate2TaskExecutor;
 import io.harness.entitysetupusageclient.EntitySetupUsageClientModule;
+import io.harness.exception.exceptionmanager.exceptionhandler.CILiteEngineExceptionHandler;
+import io.harness.exception.exceptionmanager.exceptionhandler.ExceptionHandler;
 import io.harness.factory.ClosingFactory;
 import io.harness.factory.ClosingFactoryModule;
 import io.harness.ff.CIFeatureFlagNoopServiceImpl;
@@ -63,6 +67,7 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -141,6 +146,20 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
 
     modules.add(TestMongoModule.getInstance());
     modules.add(new SpringPersistenceTestModule());
+
+    VmImageConfig vmImageConfig = VmImageConfig.builder()
+                                      .gitClone("vm-gitClone")
+                                      .artifactoryUpload("vm-artifactoryUpload")
+                                      .s3Upload("vm-s3Upload")
+                                      .gcsUpload("vm-gcsUpload")
+                                      .buildAndPushDockerRegistry("vm-buildAndPushDockerRegistry")
+                                      .buildAndPushECR("vm-buildAndPushECR")
+                                      .buildAndPushGCR("vm-buildAndPushGCR")
+                                      .cacheGCS("vm-cacheGCS")
+                                      .cacheS3("vm-cacheS3")
+                                      .security("vm-security")
+                                      .build();
+
     CIStepConfig ciStepConfig =
         CIStepConfig.builder()
             .gitCloneConfig(StepImageConfig.builder().image("gc:1.2.3").build())
@@ -154,6 +173,7 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
             .cacheGCSConfig(StepImageConfig.builder().image("cachegcs:1.2.3").build())
             .cacheS3Config(StepImageConfig.builder().image("caches3:1.2.3").build())
             .gcsUploadConfig(StepImageConfig.builder().image("gcsUpload:1.2.3").build())
+            .vmImageConfig(vmImageConfig)
             .build();
 
     modules.add(new CIExecutionServiceModule(CIExecutionServiceConfig.builder()
@@ -169,6 +189,16 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
                                                  .stepConfig(ciStepConfig)
                                                  .build(),
         false));
+
+    modules.add(new ProviderModule() {
+      @Provides
+      @Named("PRIVILEGED")
+      @Singleton
+      AccessControlClient accessControlClient() {
+        return mock(AccessControlClient.class);
+      }
+    });
+
     modules.add(TimeModule.getInstance());
     modules.add(new ProviderModule() {
       @Provides
@@ -189,6 +219,11 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
+        MapBinder<Class<? extends Exception>, ExceptionHandler> exceptionHandlerMapBinder = MapBinder.newMapBinder(
+            binder(), new TypeLiteral<Class<? extends Exception>>() {}, new TypeLiteral<ExceptionHandler>() {});
+        CILiteEngineExceptionHandler.exceptions().forEach(
+            exception -> exceptionHandlerMapBinder.addBinding(exception).to(CILiteEngineExceptionHandler.class));
+
         bind(new TypeLiteral<Supplier<DelegateCallbackToken>>() {
         }).toInstance(Suppliers.ofInstance(DelegateCallbackToken.newBuilder().build()));
 

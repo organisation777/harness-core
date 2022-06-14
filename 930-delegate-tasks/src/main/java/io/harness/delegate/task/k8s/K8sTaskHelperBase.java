@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.GIT;
 import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.HTTP_HELM;
+import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.OCI_HELM;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.getFilesUnderPath;
 import static io.harness.filesystem.FileIo.getFilesUnderPathMatchesFirstLine;
@@ -109,6 +110,7 @@ import io.harness.exception.KubernetesYamlException;
 import io.harness.exception.NestedExceptionUtils;
 import io.harness.exception.WingsException;
 import io.harness.exception.YamlException;
+import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.filesystem.FileIo;
 import io.harness.helm.HelmCliCommandType;
 import io.harness.helm.HelmCommandFlagsUtils;
@@ -158,17 +160,28 @@ import io.harness.serializer.YamlUtils;
 import io.harness.shell.SshSessionConfig;
 import io.harness.yaml.BooleanPatchedRepresenter;
 
-import software.wings.delegatetasks.ExceptionMessageSanitizer;
+import software.wings.beans.command.ExecutionLogCallback;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.fabric8.istio.api.networking.v1alpha3.Destination;
+import io.fabric8.istio.api.networking.v1alpha3.DestinationRule;
+import io.fabric8.istio.api.networking.v1alpha3.DestinationRuleList;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRoute;
+import io.fabric8.istio.api.networking.v1alpha3.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1alpha3.PortSelector;
+import io.fabric8.istio.api.networking.v1alpha3.Subset;
+import io.fabric8.istio.api.networking.v1alpha3.TCPRoute;
+import io.fabric8.istio.api.networking.v1alpha3.TLSRoute;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
+import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceList;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.github.resilience4j.retry.Retry;
 import io.kubernetes.client.openapi.ApiException;
@@ -215,19 +228,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import me.snowdrop.istio.api.networking.v1alpha3.Destination;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationRule;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationRuleBuilder;
-import me.snowdrop.istio.api.networking.v1alpha3.DestinationWeight;
-import me.snowdrop.istio.api.networking.v1alpha3.DoneableDestinationRule;
-import me.snowdrop.istio.api.networking.v1alpha3.DoneableVirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.HTTPRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.PortSelector;
-import me.snowdrop.istio.api.networking.v1alpha3.Subset;
-import me.snowdrop.istio.api.networking.v1alpha3.TCPRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.TLSRoute;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
-import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -643,16 +643,16 @@ public class K8sTaskHelperBase {
     }
   }
 
-  private List<DestinationWeight> generateDestinationWeights(
+  private List<HTTPRouteDestination> generateDestinationWeights(
       List<IstioDestinationWeight> istioDestinationWeights, String host, PortSelector portSelector) throws IOException {
-    List<DestinationWeight> destinationWeights = new ArrayList<>();
+    List<HTTPRouteDestination> destinationWeights = new ArrayList<>();
 
     for (IstioDestinationWeight istioDestinationWeight : istioDestinationWeights) {
       String destinationYaml = getDestinationYaml(istioDestinationWeight.getDestination(), host);
       Destination destination = new YamlUtils().read(destinationYaml, Destination.class);
       destination.setPort(portSelector);
 
-      DestinationWeight destinationWeight = new DestinationWeight();
+      HTTPRouteDestination destinationWeight = new HTTPRouteDestination();
       destinationWeight.setWeight(Integer.parseInt(istioDestinationWeight.getWeight()));
       destinationWeight.setDestination(destination);
 
@@ -662,7 +662,7 @@ public class K8sTaskHelperBase {
     return destinationWeights;
   }
 
-  private String getHostFromRoute(List<DestinationWeight> routes) {
+  private String getHostFromRoute(List<HTTPRouteDestination> routes) {
     if (isEmpty(routes)) {
       throw new InvalidRequestException("No routes exist in VirtualService", USER);
     }
@@ -678,7 +678,7 @@ public class K8sTaskHelperBase {
     return routes.get(0).getDestination().getHost();
   }
 
-  private PortSelector getPortSelectorFromRoute(List<DestinationWeight> routes) {
+  private PortSelector getPortSelectorFromRoute(List<HTTPRouteDestination> routes) {
     return routes.get(0).getDestination().getPort();
   }
 
@@ -737,10 +737,7 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    kubernetesClient.customResources(
-        kubernetesContainerService.getCustomResourceDefinition(kubernetesClient, new VirtualServiceBuilder().build()),
-        VirtualService.class, KubernetesResourceList.class, DoneableVirtualService.class);
-
+    kubernetesClient.resources(VirtualService.class, VirtualServiceList.class);
     KubernetesResource kubernetesResource = virtualServiceResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);
     VirtualService virtualService = (VirtualService) kubernetesClient.load(inputStream).get().get(0);
@@ -784,9 +781,7 @@ public class K8sTaskHelperBase {
     }
 
     KubernetesClient kubernetesClient = kubernetesHelperService.getKubernetesClient(kubernetesConfig);
-    kubernetesClient.customResources(
-        kubernetesContainerService.getCustomResourceDefinition(kubernetesClient, new DestinationRuleBuilder().build()),
-        DestinationRule.class, KubernetesResourceList.class, DoneableDestinationRule.class);
+    kubernetesClient.resources(DestinationRule.class, DestinationRuleList.class);
 
     KubernetesResource kubernetesResource = destinationRuleResources.get(0);
     InputStream inputStream = IOUtils.toInputStream(kubernetesResource.getSpec(), UTF_8);
@@ -913,8 +908,8 @@ public class K8sTaskHelperBase {
 
   @VisibleForTesting
   public ProcessResult executeCommandUsingUtils(String workingDirectory, LogOutputStream statusInfoStream,
-      LogOutputStream statusErrorStream, String command) throws Exception {
-    return Utils.executeScript(workingDirectory, command, statusInfoStream, statusErrorStream);
+      LogOutputStream statusErrorStream, String command, Map<String, String> environment) throws Exception {
+    return Utils.executeScript(workingDirectory, command, statusInfoStream, statusErrorStream, environment);
   }
 
   public boolean scale(Kubectl client, K8sDelegateTaskParams k8sDelegateTaskParams, KubernetesResourceId resourceId,
@@ -1038,9 +1033,10 @@ public class K8sTaskHelperBase {
 
   @VisibleForTesting
   public ProcessResult executeCommandUsingUtils(K8sDelegateTaskParams k8sDelegateTaskParams,
-      LogOutputStream statusInfoStream, LogOutputStream statusErrorStream, String command) throws Exception {
+      LogOutputStream statusInfoStream, LogOutputStream statusErrorStream, String command,
+      Map<String, String> environment) throws Exception {
     return executeCommandUsingUtils(
-        k8sDelegateTaskParams.getWorkingDirectory(), statusInfoStream, statusErrorStream, command);
+        k8sDelegateTaskParams.getWorkingDirectory(), statusInfoStream, statusErrorStream, command, environment);
   }
 
   public String getRolloutStatusCommandForDeploymentConfig(
@@ -1068,8 +1064,8 @@ public class K8sTaskHelperBase {
       String rolloutHistoryCommand = getRolloutHistoryCommandForDeploymentConfig(k8sDelegateTaskParams, resourceId);
 
       try (LogOutputStream emptyLogOutputStream = getEmptyLogOutputStream()) {
-        ProcessResult result = executeCommandUsingUtils(
-            k8sDelegateTaskParams, emptyLogOutputStream, emptyLogOutputStream, rolloutHistoryCommand);
+        ProcessResult result = executeCommandUsingUtils(k8sDelegateTaskParams, emptyLogOutputStream,
+            emptyLogOutputStream, rolloutHistoryCommand, Maps.newHashMap());
 
         if (result.getExitValue() == 0) {
           String[] lines = result.outputUTF8().split("\\r?\\n");
@@ -1230,7 +1226,8 @@ public class K8sTaskHelperBase {
 
         executionLogCallback.saveExecutionLog(printableExecutedCommand + "\n");
 
-        result = executeCommandUsingUtils(workingDirectory, statusInfoStream, statusErrorStream, rolloutStatusCommand);
+        result = executeCommandUsingUtils(
+            workingDirectory, statusInfoStream, statusErrorStream, rolloutStatusCommand, Maps.newHashMap());
       } else {
         RolloutStatusCommand rolloutStatusCommand = client.rollout()
                                                         .status()
@@ -1452,8 +1449,8 @@ public class K8sTaskHelperBase {
         printableExecutedCommand = rolloutStatusCommand.substring(rolloutStatusCommand.indexOf("oc --kubeconfig"));
         executionLogCallback.saveExecutionLog(printableExecutedCommand + "\n");
 
-        result =
-            executeCommandUsingUtils(k8sDelegateTaskParams, statusInfoStream, statusErrorStream, rolloutStatusCommand);
+        result = executeCommandUsingUtils(
+            k8sDelegateTaskParams, statusInfoStream, statusErrorStream, rolloutStatusCommand, Maps.newHashMap());
       } else {
         RolloutStatusCommand rolloutStatusCommand = client.rollout()
                                                         .status()
@@ -2413,6 +2410,7 @@ public class K8sTaskHelperBase {
       case HTTP_HELM:
       case S3_HELM:
       case GCS_HELM:
+      case OCI_HELM:
         return downloadFilesFromChartRepo(
             manifestDelegateConfig, manifestFilesDirectory, executionLogCallback, timeoutInMillis);
 
@@ -2530,6 +2528,9 @@ public class K8sTaskHelperBase {
 
       if (HTTP_HELM == manifestDelegateConfig.getStoreDelegateConfig().getType()) {
         helmTaskHelperBase.downloadChartFilesFromHttpRepo(
+            helmChartManifestConfig, destinationDirectory, timeoutInMillis);
+      } else if (OCI_HELM == manifestDelegateConfig.getStoreDelegateConfig().getType()) {
+        helmTaskHelperBase.downloadChartFilesFromOciRepo(
             helmChartManifestConfig, destinationDirectory, timeoutInMillis);
       } else {
         helmTaskHelperBase.downloadChartFilesUsingChartMuseum(
@@ -2889,5 +2890,17 @@ public class K8sTaskHelperBase {
       throw NestedExceptionUtils.hintWithExplanationException(
           INVALID_RESOURCE_SPEC_HINT, INVALID_RESOURCE_SPEC_EXPLANATION, exception);
     }
+  }
+
+  public boolean doStatusCheckAllResourcesForHelm(Kubectl client, List<KubernetesResourceId> resourceIds, String ocPath,
+      String workingDir, String namespace, String kubeconfigPath, ExecutionLogCallback executionLogCallback)
+      throws Exception {
+    return doStatusCheckForAllResources(client, resourceIds,
+        K8sDelegateTaskParams.builder()
+            .ocPath(ocPath)
+            .workingDirectory(workingDir)
+            .kubeconfigPath(kubeconfigPath)
+            .build(),
+        namespace, executionLogCallback, false);
   }
 }

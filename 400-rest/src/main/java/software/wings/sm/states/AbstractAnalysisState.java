@@ -77,6 +77,7 @@ import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.service.intfc.verification.CVActivityLogService;
+import software.wings.service.intfc.verification.CVActivityLogger;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
@@ -372,10 +373,11 @@ public abstract class AbstractAnalysisState extends State implements SweepingOut
 
   public abstract void setAnalysisServerConfigId(String analysisServerConfigId);
 
-  protected void generateDemoActivityLogs(CVActivityLogService.Logger activityLogger, boolean failedState) {
-    logDataCollectionTriggeredMessage(activityLogger);
+  protected void generateDemoActivityLogs(
+      ExecutionContext executionContext, CVActivityLogger activityLogger, boolean failedState) {
+    logDataCollectionTriggeredMessage(executionContext, activityLogger);
     long startTime = dataCollectionStartTimestampMillis();
-    int duration = Integer.parseInt(getTimeDuration());
+    int duration = Integer.parseInt(getTimeDuration(executionContext));
     for (int minute = 0; minute < duration; minute++) {
       long startTimeMSForCurrentMinute = startTime + Duration.ofMinutes(minute).toMillis();
       long endTimeMSForCurrentMinute = startTimeMSForCurrentMinute + Duration.ofMinutes(1).toMillis();
@@ -406,11 +408,11 @@ public abstract class AbstractAnalysisState extends State implements SweepingOut
             || getSettingAttribute(getAnalysisServerConfigId()).getName().toLowerCase().endsWith("prod"));
   }
 
-  protected void generateDemoThirdPartyApiCallLogs(
-      String accountId, String stateExecutionId, boolean failedState, String demoRequestBody, String demoResponseBody) {
+  protected void generateDemoThirdPartyApiCallLogs(ExecutionContext executionContext, String accountId,
+      String stateExecutionId, boolean failedState, String demoRequestBody, String demoResponseBody) {
     List<ThirdPartyApiCallLog> thirdPartyApiCallLogs = new ArrayList<>();
     long startTime = dataCollectionStartTimestampMillis();
-    int duration = Integer.parseInt(getTimeDuration());
+    int duration = Integer.parseInt(getTimeDuration(executionContext));
     for (int minute = 0; minute < duration; minute++) {
       long startTimeMSForCurrentMinute = startTime + Duration.ofMinutes(minute).toMillis();
       ThirdPartyApiCallLog apiCallLog = ThirdPartyApiCallLog.createApiCallLog(accountId, stateExecutionId);
@@ -514,19 +516,19 @@ public abstract class AbstractAnalysisState extends State implements SweepingOut
     return Timestamp.currentMinuteBoundary();
   }
 
-  private long dataCollectionEndTimestampMillis(long dataCollectionStartTime) {
+  private long dataCollectionEndTimestampMillis(ExecutionContext executionContext, long dataCollectionStartTime) {
     return Instant.ofEpochMilli(dataCollectionStartTime)
-        .plusMillis(TimeUnit.MINUTES.toMillis(Integer.parseInt(getTimeDuration())))
+        .plusMillis(TimeUnit.MINUTES.toMillis(Integer.parseInt(getTimeDuration(executionContext))))
         .toEpochMilli();
   }
 
-  protected void logDataCollectionTriggeredMessage(CVActivityLogService.Logger activityLogger) {
+  protected void logDataCollectionTriggeredMessage(ExecutionContext executionContext, CVActivityLogger activityLogger) {
     long dataCollectionStartTime = dataCollectionStartTimestampMillis();
     long initDelayMins = TimeUnit.SECONDS.toMinutes(getDelaySeconds(initialAnalysisDelay));
-    activityLogger.info("Triggered data collection for " + getTimeDuration()
+    activityLogger.info("Triggered data collection for " + getTimeDuration(executionContext)
             + " minutes, Data will be collected for time range %t to %t. Waiting for " + initDelayMins
             + " minutes before starting data collection.",
-        dataCollectionStartTime, dataCollectionEndTimestampMillis(dataCollectionStartTime));
+        dataCollectionStartTime, dataCollectionEndTimestampMillis(executionContext, dataCollectionStartTime));
   }
 
   protected boolean isCVTaskEnqueuingEnabled(String accountId) {

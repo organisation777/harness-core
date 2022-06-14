@@ -108,6 +108,7 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.perpetualtask.PerpetualTaskId;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
+import io.harness.utils.IdentifierRefHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -167,6 +168,15 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   }
 
   @Override
+  public Optional<ConnectorResponseDTO> getByRef(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String connectorRef) {
+    IdentifierRef identifierRef =
+        IdentifierRefHelper.getIdentifierRef(connectorRef, accountIdentifier, orgIdentifier, projectIdentifier);
+    return get(identifierRef.getAccountIdentifier(), identifierRef.getOrgIdentifier(),
+        identifierRef.getProjectIdentifier(), identifierRef.getIdentifier());
+  }
+
+  @Override
   public Optional<ConnectorResponseDTO> getByName(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, String name, boolean isDeletedAllowed) {
     /***
@@ -214,6 +224,9 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
     if (Boolean.TRUE.equals(getDistinctFromBranches)
         && gitSyncSdkService.isGitSyncEnabled(accountIdentifier, orgIdentifier, projectIdentifier)) {
       connectors = connectorRepository.findAll(criteria, pageable, true);
+    } else if (Boolean.FALSE.equals(getDistinctFromBranches)
+        && gitSyncSdkService.isGitSyncEnabled(accountIdentifier, orgIdentifier, projectIdentifier)) {
+      connectors = connectorRepository.findAll(criteria, pageable, false);
     } else {
       connectors = connectorRepository.findAll(criteria, pageable, projectIdentifier, orgIdentifier, accountIdentifier);
     }
@@ -951,7 +964,13 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
                 SortOrder.Builder.aSortOrder().withField(ConnectorKeys.createdAt, OrderType.DESC).build()))
             .build());
     Page<Connector> connectors = connectorRepository.findAll(
-        Criteria.where(ConnectorKeys.fullyQualifiedIdentifier).in(connectorFQN), pageable, false);
+        new Criteria().andOperator(Criteria.where(ConnectorKeys.fullyQualifiedIdentifier).in(connectorFQN),
+            new Criteria().orOperator(Criteria.where(ConnectorKeys.yamlGitConfigRef)
+                                          .exists(true)
+                                          .and(ConnectorKeys.isFromDefaultBranch)
+                                          .is(true),
+                Criteria.where(ConnectorKeys.yamlGitConfigRef).exists(false))),
+        pageable, false);
     return connectors.getContent().stream().map(connectorMapper::writeDTO).collect(toList());
   }
 

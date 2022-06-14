@@ -9,20 +9,19 @@ package io.harness.template.helpers;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.remote.client.NGRestUtils.getResponseWithRetry;
+import static io.harness.template.beans.NGTemplateConstants.STABLE_VERSION;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_INPUTS;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_REF;
 import static io.harness.template.beans.NGTemplateConstants.TEMPLATE_VERSION_LABEL;
 
 import io.harness.EntityType;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.beans.IdentifierRef;
-import io.harness.beans.NGTemplateReference;
 import io.harness.common.NGExpressionUtils;
-import io.harness.encryption.Scope;
-import io.harness.entitysetupusageclient.remote.EntitySetupUsageClient;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
@@ -36,6 +35,7 @@ import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
 import io.harness.pms.merger.fqn.FQNNode;
 import io.harness.preflight.PreFlightCheckMetadata;
+import io.harness.remote.client.RestClientUtils;
 import io.harness.template.TemplateReferenceProtoUtils;
 import io.harness.template.entity.TemplateEntity;
 import io.harness.template.services.NGTemplateServiceHelper;
@@ -65,12 +65,32 @@ public class TemplateReferenceHelper {
   EntityReferenceServiceBlockingStub entityReferenceServiceBlockingStub;
   TemplateYamlConversionHelper templateYamlConversionHelper;
   PmsGitSyncHelper pmsGitSyncHelper;
-  EntitySetupUsageClient entitySetupUsageClient;
   NGTemplateServiceHelper templateServiceHelper;
+  TemplateSetupUsageHelper templateSetupUsageHelper;
+  AccountClient accountClient;
 
-  public List<EntityDetailProtoDTO> populateTemplateReferences(TemplateEntity templateEntity) {
-    String pmsUnderstandableYaml =
-        templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(templateEntity);
+  private boolean isFeatureFlagEnabled(String accountId) {
+    return RestClientUtils.getResponse(
+        accountClient.isFeatureFlagEnabled(FeatureName.NG_TEMPLATE_REFERENCES_SUPPORT.name(), accountId));
+  }
+
+  private boolean skipTemplateReference(TemplateEntity templateEntity) {
+    return !isFeatureFlagEnabled(templateEntity.getAccountId())
+        || TemplateEntityType.MONITORED_SERVICE_TEMPLATE.equals(templateEntity.getTemplateEntityType());
+  }
+
+  public void deleteTemplateReferences(TemplateEntity templateEntity) {
+    if (skipTemplateReference(templateEntity)) {
+      return;
+    }
+    templateSetupUsageHelper.deleteExistingSetupUsages(templateEntity);
+  }
+
+  public void populateTemplateReferences(TemplateEntity templateEntity) {
+    if (skipTemplateReference(templateEntity)) {
+      return;
+    }
+    String pmsUnderstandableYaml = templateYamlConversionHelper.convertTemplateYamlToEntityYaml(templateEntity);
     EntityReferenceRequest.Builder entityReferenceRequestBuilder =
         EntityReferenceRequest.newBuilder()
             .setYaml(pmsUnderstandableYaml)
@@ -89,7 +109,7 @@ public class TemplateReferenceHelper {
         getNestedTemplateReferences(templateEntity.getAccountId(), templateEntity.getOrgIdentifier(),
             templateEntity.getProjectIdentifier(), pmsUnderstandableYaml, true);
     referredEntities.addAll(referredEntitiesInLinkedTemplates);
-    return referredEntities;
+    templateSetupUsageHelper.publishSetupUsageEvent(templateEntity, referredEntities);
   }
 
   @VisibleForTesting
@@ -100,7 +120,7 @@ public class TemplateReferenceHelper {
       if (referredEntity.getIdentifierRef() != null && referredEntity.getIdentifierRef().getMetadataMap() != null) {
         String fqn = referredEntity.getIdentifierRef().getMetadataMap().get(PreFlightCheckMetadata.FQN);
         if (isEmpty(fqn)) {
-          referredEntitiesWithModifiedFqn.add(referredEntity);
+          // FQN should never be empty. Let's skip this referred entity.
           return;
         }
         Map<String, String> metadata = new HashMap<>(referredEntity.getIdentifierRef().getMetadataMap());
@@ -121,6 +141,16 @@ public class TemplateReferenceHelper {
     return referredEntitiesWithModifiedFqn;
   }
 
+  /**
+   * This method gets template references and other references linked through template inputs.
+   * @param accountId
+   * @param orgId
+   * @param projectId
+   * @param yaml yaml for which we want to get references.
+   * @param shouldModifyFqn We don't want to modify FQN in case we are getting references for pipeline. For pipeline
+   *     this will be false and true for templates.
+   * @return
+   */
   public List<EntityDetailProtoDTO> getNestedTemplateReferences(
       String accountId, String orgId, String projectId, String yaml, boolean shouldModifyFqn) {
     List<EntityDetailProtoDTO> referredEntities = new ArrayList<>();
@@ -134,7 +164,7 @@ public class TemplateReferenceHelper {
         List<FQNNode> fqnList = new ArrayList<>(key.getFqnList());
         FQNNode lastNode = fqnList.get(fqnList.size() - 1);
         FQNNode secondLastNode = fqnList.get(fqnList.size() - 2);
-        if (lastNode.getKey().equals(TEMPLATE_REF) && secondLastNode.getKey().equals(TEMPLATE)) {
+        if (TEMPLATE_REF.equals(lastNode.getKey()) && TEMPLATE.equals(secondLastNode.getKey())) {
           String identifier = ((JsonNode) fqnToValueMap.get(key)).asText();
           IdentifierRef templateIdentifierRef =
               IdentifierRefHelper.getIdentifierRef(identifier, accountId, orgId, projectId);
@@ -159,7 +189,8 @@ public class TemplateReferenceHelper {
           // remove versionLabel from FQN.
           fqnList.remove(fqnList.size() - 1);
           // add linked template as reference
-          referredEntities.add(getTemplateReference(templateIdentifierRef, versionLabel));
+          referredEntities.add(
+              getTemplateReference(templateIdentifierRef, versionLabelNode == null ? STABLE_VERSION : versionLabel));
           // add runtime entities referred by linked template as references
           referredEntities.addAll(
               getEntitiesReferredByTemplate(accountId, orgId, projectId, templateIdentifierRef, versionLabel,
@@ -174,18 +205,9 @@ public class TemplateReferenceHelper {
       IdentifierRef templateIdentifierRef, String versionLabel, Map<String, Object> fqnStringToValueMap,
       String linkedTemplateFqnExpression, boolean shouldModifyFqn) {
     List<EntityDetailProtoDTO> referredEntitiesInTemplate = new ArrayList<>();
-    NGTemplateReference ngTemplateReference = NGTemplateReference.builder()
-                                                  .accountIdentifier(templateIdentifierRef.getAccountIdentifier())
-                                                  .orgIdentifier(templateIdentifierRef.getOrgIdentifier())
-                                                  .projectIdentifier(templateIdentifierRef.getProjectIdentifier())
-                                                  .identifier(templateIdentifierRef.getIdentifier())
-                                                  .versionLabel(versionLabel)
-                                                  .build();
-
-    String templateReferenceFqn = ngTemplateReference.getFullyQualifiedName();
-    List<EntitySetupUsageDTO> referredUsagesInTemplate =
-        getResponseWithRetry(entitySetupUsageClient.listAllReferredUsages(
-            0, 100, templateIdentifierRef.getAccountIdentifier(), templateReferenceFqn, null, null));
+    List<EntitySetupUsageDTO> referredUsagesInTemplate = templateSetupUsageHelper.getReferencesOfTemplate(
+        templateIdentifierRef.getAccountIdentifier(), templateIdentifierRef.getOrgIdentifier(),
+        templateIdentifierRef.getProjectIdentifier(), templateIdentifierRef.getIdentifier(), versionLabel);
 
     if (isEmpty(referredUsagesInTemplate)) {
       return referredEntitiesInTemplate;
@@ -196,10 +218,8 @@ public class TemplateReferenceHelper {
           && referredEntity.getReferredEntity().getEntityRef() instanceof IdentifierRef) {
         IdentifierRef identifierRefOfReferredEntity = (IdentifierRef) referredEntity.getReferredEntity().getEntityRef();
 
-        // need to check only runtime references of linked template
-        if (identifierRefOfReferredEntity.getScope().equals(Scope.UNKNOWN)
-            && identifierRefOfReferredEntity.getMetadata() != null
-            && isNotEmpty(identifierRefOfReferredEntity.getMetadata().get(PreFlightCheckMetadata.FQN))) {
+        // we only want referred entity which were runtime input in linked template.
+        if (isReferredEntityForRuntimeInput(identifierRefOfReferredEntity)) {
           String fqn = identifierRefOfReferredEntity.getMetadata().get(PreFlightCheckMetadata.FQN);
           String completeFqnForReferredEntity = linkedTemplateFqnExpression + FQN_SEPARATOR + fqn;
           JsonNode value = (JsonNode) fqnStringToValueMap.get(completeFqnForReferredEntity);
@@ -215,6 +235,13 @@ public class TemplateReferenceHelper {
     return referredEntitiesInTemplate;
   }
 
+  private boolean isReferredEntityForRuntimeInput(IdentifierRef identifierRefOfReferredEntity) {
+    return identifierRefOfReferredEntity.getMetadata() != null
+        && isNotEmpty(identifierRefOfReferredEntity.getMetadata().get(PreFlightCheckMetadata.FQN))
+        && isNotEmpty(identifierRefOfReferredEntity.getMetadata().get(PreFlightCheckMetadata.EXPRESSION))
+        && NGExpressionUtils.matchesInputSetPattern(identifierRefOfReferredEntity.getIdentifier());
+  }
+
   private EntityDetailProtoDTO convertToEntityDetailProtoDTO(String accountId, String orgId, String projectId,
       String fullQualifiedDomainName, String entityRefValue, EntityType entityType, boolean shouldModifyFqn) {
     Map<String, String> metadata = new HashMap<>();
@@ -223,7 +250,7 @@ public class TemplateReferenceHelper {
     }
     metadata.put(PreFlightCheckMetadata.FQN, fullQualifiedDomainName);
 
-    if (NGExpressionUtils.matchesInputSetPattern(entityRefValue)) {
+    if (NGExpressionUtils.isRuntimeOrExpressionField(entityRefValue)) {
       metadata.put(PreFlightCheckMetadata.EXPRESSION, entityRefValue);
       IdentifierRef identifierRef = IdentifierRefHelper.createIdentifierRefWithUnknownScope(
           accountId, orgId, projectId, entityRefValue, metadata);

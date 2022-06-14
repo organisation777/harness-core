@@ -98,7 +98,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
   @Before
   public void setup() throws IllegalAccessException {
     builderFactory = BuilderFactory.getDefault();
-    AppDynamicsCVConfig appDConfig = dataGenerator.getAppDynamicsCVConfig();
+    AppDynamicsCVConfig appDConfig = builderFactory.appDynamicsCVConfigBuilder().build();
     CVConfig cvConfig = cvConfigService.save(appDConfig);
     accountId = builderFactory.getContext().getAccountId();
     cvConfigId = cvConfig.getUuid();
@@ -530,6 +530,8 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     stateMachineService.retryStateMachineAfterFailure(stateMachine);
 
     AnalysisStateMachine savedStateMachine = hPersistence.createQuery(AnalysisStateMachine.class).get();
+    stateMachine.setAnalysisStartTime(stateMachine.getAnalysisStartTime().truncatedTo(ChronoUnit.MILLIS));
+    stateMachine.setAnalysisEndTime(stateMachine.getAnalysisEndTime().truncatedTo(ChronoUnit.MILLIS));
     assertThat(savedStateMachine).isEqualTo(stateMachine);
   }
 

@@ -205,7 +205,8 @@ import software.wings.beans.appmanifest.LastDeployedHelmChartInformation;
 import software.wings.beans.appmanifest.LastDeployedHelmChartInformation.LastDeployedHelmChartInformationBuilder;
 import software.wings.beans.appmanifest.ManifestSummary;
 import software.wings.beans.artifact.Artifact;
-import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
+import software.wings.beans.artifact.ArtifactInput;
+import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.artifact.ArtifactStreamSummary.ArtifactStreamSummaryBuilder;
@@ -215,6 +216,7 @@ import software.wings.beans.command.ServiceCommand;
 import software.wings.beans.concurrency.ConcurrencyStrategy;
 import software.wings.beans.concurrency.ConcurrencyStrategy.UnitType;
 import software.wings.beans.container.KubernetesContainerTask;
+import software.wings.beans.container.KubernetesContainerTaskUtils;
 import software.wings.beans.deployment.DeploymentMetadata;
 import software.wings.beans.deployment.DeploymentMetadata.DeploymentMetadataBuilder;
 import software.wings.beans.deployment.DeploymentMetadata.Include;
@@ -281,7 +283,6 @@ import software.wings.sm.states.ApprovalState.ApprovalStateKeys;
 import software.wings.sm.states.ApprovalState.ApprovalStateType;
 import software.wings.sm.states.EnvState.EnvStateKeys;
 import software.wings.sm.states.k8s.K8sStateHelper;
-import software.wings.stencils.DataProvider;
 import software.wings.stencils.Stencil;
 import software.wings.stencils.StencilCategory;
 import software.wings.stencils.StencilPostProcessor;
@@ -335,7 +336,7 @@ import ru.vyarus.guice.validator.group.annotation.ValidationGroups;
 @ValidateOnExecution
 @Slf4j
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
-public class WorkflowServiceImpl implements WorkflowService, DataProvider {
+public class WorkflowServiceImpl implements WorkflowService {
   private static final String VERIFY = "Verify";
   private static final String ROLLBACK_PROVISION_INFRASTRUCTURE = "Rollback Provision Infrastructure";
 
@@ -1048,14 +1049,14 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     KubernetesContainerTask containerTask =
         (KubernetesContainerTask) serviceResourceService.getContainerTaskByDeploymentType(
             appId, serviceId, KUBERNETES.name());
-    return containerTask != null && containerTask.checkDaemonSet();
+    return containerTask != null && KubernetesContainerTaskUtils.checkDaemonSet(containerTask.getAdvancedConfig());
   }
 
   private boolean isStatefulSet(String appId, String serviceId) {
     KubernetesContainerTask containerTask =
         (KubernetesContainerTask) serviceResourceService.getContainerTaskByDeploymentType(
             appId, serviceId, KUBERNETES.name());
-    return containerTask != null && containerTask.checkStatefulSet();
+    return containerTask != null && KubernetesContainerTaskUtils.checkStatefulSet(containerTask.getAdvancedConfig());
   }
 
   private void updateKeywordsAndLinkedTemplateUuids(Workflow workflow, List<String> linkedTemplateUuids) {
@@ -1599,12 +1600,6 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     this.staticConfiguration = staticConfiguration;
   }
 
-  @Override
-  public Map<String, String> getData(String appId, Map<String, String> params) {
-    List<Workflow> workflows = wingsPersistence.createQuery(Workflow.class).filter(WorkflowKeys.appId, appId).asList();
-    return workflows.stream().collect(toMap(Workflow::getUuid, Workflow::getName));
-  }
-
   StateType getCorrespondingRollbackState(GraphNode step) {
     if (step.getType().equals(CLOUD_FORMATION_CREATE_STACK.name())) {
       return StateType.CLOUD_FORMATION_ROLLBACK_STACK;
@@ -1676,6 +1671,9 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
         propertiesMap.put("workspace",
             isTerraformInheritState(step) ? provisionerIdWorkspaceMap.get(step.getProperties().get("provisionerId"))
                                           : step.getProperties().get("workspace"));
+        if (step.getProperties().get("templateExpressions") != null) {
+          propertiesMap.put("templateExpressions", step.getProperties().get("templateExpressions"));
+        }
         rollbackProvisionerNodes.add(GraphNode.builder()
                                          .type(stateType.name())
                                          .rollback(true)
@@ -2611,6 +2609,10 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
         deploymentMetadataBuilder.artifactVariables(artifactVariables);
         updateArtifactVariables(appId, workflow, artifactVariables, withDefaultArtifact, workflowExecution);
         resolveArtifactStreamMetadata(appId, artifactVariables, workflowExecution);
+        if (featureFlagService.isEnabled(FeatureName.ARTIFACT_COLLECTION_CONFIGURABLE, accountId)
+            && withDefaultArtifact) {
+          addArtifactInputToArtifactVariables(artifactVariables, workflowExecution);
+        }
       }
 
       deploymentMetadataBuilder.artifactRequiredServiceIds(artifactRequiredServiceIds);
@@ -2635,6 +2637,36 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     }
 
     return deploymentMetadataBuilder.build();
+  }
+
+  @VisibleForTesting
+  void addArtifactInputToArtifactVariables(
+      List<ArtifactVariable> artifactVariables, WorkflowExecution workflowExecution) {
+    for (ArtifactVariable artifactVariable : artifactVariables) {
+      if (isNotEmpty(artifactVariable.getArtifactStreamSummaries())
+          && artifactVariable.getArtifactStreamSummaries().get(0).getDefaultArtifact() != null) {
+        ArtifactSummary defaultArtifact = artifactVariable.getArtifactStreamSummaries().get(0).getDefaultArtifact();
+        artifactVariable.setArtifactInput(ArtifactInput.builder()
+                                              .artifactStreamId(defaultArtifact.getArtifactStreamId())
+                                              .buildNo(defaultArtifact.getBuildNo())
+                                              .build());
+      } else if (workflowExecution != null) {
+        List<ArtifactVariable> previousArtifactVariables = workflowExecution.getExecutionArgs().getArtifactVariables();
+        if (isNotEmpty(previousArtifactVariables)) {
+          ArtifactVariable foundArtifactVariable =
+              previousArtifactVariables.stream()
+                  .filter(previousArtifactVariable
+                      -> artifactVariable.getName().equals(previousArtifactVariable.getName())
+                          && artifactVariable.getEntityType() == previousArtifactVariable.getEntityType()
+                          && artifactVariable.getEntityId().equals(previousArtifactVariable.getEntityId()))
+                  .findFirst()
+                  .orElse(null);
+          if (foundArtifactVariable != null && foundArtifactVariable.getArtifactInput() != null) {
+            artifactVariable.setArtifactInput(foundArtifactVariable.getArtifactInput());
+          }
+        }
+      }
+    }
   }
 
   private String getServiceNameFromCache(Map<String, Service> serviceCache, String serviceId, String appId) {
@@ -4568,6 +4600,17 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
           }
         }
       });
+    }
+
+    // Add userGroups from Notification Rules
+    if (isNotEmpty(canaryOrchestrationWorkflow.getNotificationRules())) {
+      for (NotificationRule notificationRule : canaryOrchestrationWorkflow.getNotificationRules()) {
+        if (!notificationRule.isUserGroupAsExpression()) {
+          if (isNotEmpty(notificationRule.getUserGroupIds())) {
+            userGroupIds.addAll(notificationRule.getUserGroupIds());
+          }
+        }
+      }
     }
     return userGroupIds;
   }

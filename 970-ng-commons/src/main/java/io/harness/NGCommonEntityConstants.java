@@ -39,6 +39,7 @@ public class NGCommonEntityConstants {
   public static final String MONGODB_ID = "_id";
   public static final String CONNECTOR_IDENTIFIER_KEY = "connectorIdentifier";
   public static final String REPO_URL = "repoURL";
+  public static final String REPO_NAME = "repoName";
   public static final String PLAN_KEY = "planExecutionId";
   public static final String TYPE_KEY = "type";
   public static final String TOKEN_KEY = "tokenId";
@@ -56,7 +57,9 @@ public class NGCommonEntityConstants {
   public static final String PERPETUAL_TASK_ID = "perpetualTaskId";
   public static final String RETRY_STAGES = "retryStages";
   public static final String RUN_ALL_STAGES = "runAllStages";
+  public static final String FILE_IDENTIFIER_KEY = "fileIdentifier";
   public static final Integer MAX_PAGE_SIZE = 10000;
+  public static final String EXPIRY_TIME = "expiryTime";
 
   // TODO(UTSAV): Move to 340-ce-nextgen
   public static final String IS_EVENTS_ENABLED = "eventsEnabled";
@@ -76,11 +79,17 @@ public class NGCommonEntityConstants {
   public static final String COLOR_PARAM_MESSAGE = "Color Code for the Entity";
   public static final String DELETED_PARAM_MESSAGE = "Deletion status for Entity";
   public static final String VERSION_PARAM_MESSAGE = "Version of Entity";
+  public static final String FILE_PARAM_MESSAGE = "The file identifier";
+  public static final String FILE_LIST_IDENTIFIERS_PARAM_MESSAGE =
+      "This is the list of File IDs. Details specific to these IDs would be fetched.";
+  public static final String FILE_SEARCH_TERM_PARAM_MESSAGE =
+      "This would be used to filter Files. Any Files having the specified string in its Name, ID and Tag would be filtered.";
 
   public static final String GCP_CONNECTOR_IDENTIFIER = "GCP Connector Identifier";
 
-  public static final String PAGE_PARAM_MESSAGE = "Number of pages.";
-  public static final String SIZE_PARAM_MESSAGE = "Number of Elements to fetch.";
+  public static final String PAGE_PARAM_MESSAGE = "Page Index of the results to fetch."
+      + "Default Value: 0";
+  public static final String SIZE_PARAM_MESSAGE = "Results per page";
   public static final String SORT_PARAM_MESSAGE = "Sort criteria for the elements.";
   public static final String BAD_REQUEST_PARAM_MESSAGE = "Bad Request";
   public static final String INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -91,4 +100,16 @@ public class NGCommonEntityConstants {
 
   // Environment Group
   public static final String ENVIRONMENT_GROUP_KEY = "envGroupIdentifier";
+  public static final String ENV_PARAM_MESSAGE = "Environment Identifier for the Entity.";
+  // Service Overrides
+  public static final String SERVICE_IDENTIFIER_KEY = "serviceIdentifier";
+  public static final String SERVICE_PARAM_MESSAGE = "Service Identifier for the Entity.";
+  public static final String VARIABLE_OVERRIDE_PARAM_MESSAGE = "Variable Overrides for an Environment";
+
+  // Infrastructures
+  public static final String DEPLOY_TO_ALL = "deployToAll";
+  public static final String INFRA_IDENTIFIERS = "infraIdentifiers";
+
+  public static final String INFRA = "infra";
+  public static final String OVERRIDES_ONLY = "overridesOnly";
 }

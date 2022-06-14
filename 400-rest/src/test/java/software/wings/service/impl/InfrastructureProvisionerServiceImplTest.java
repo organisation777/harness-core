@@ -12,6 +12,7 @@ import static io.harness.beans.FeatureName.VALIDATE_PROVISIONER_EXPRESSION;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.BOJANA;
+import static io.harness.rule.OwnerRule.NAVNEET;
 import static io.harness.rule.OwnerRule.RIHAZ;
 import static io.harness.rule.OwnerRule.SAINATH;
 import static io.harness.rule.OwnerRule.SATYAM;
@@ -91,7 +92,7 @@ import software.wings.beans.KmsConfig;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.Service;
 import software.wings.beans.Service.ServiceKeys;
-import software.wings.beans.ServiceVariable.Type;
+import software.wings.beans.ServiceVariableType;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SettingAttribute.SettingAttributeKeys;
 import software.wings.beans.TerraformInfrastructureProvisioner;
@@ -433,14 +434,14 @@ public class InfrastructureProvisionerServiceImplTest extends WingsBaseTest {
   private void shouldBackendConfigValidation(TerraformInfrastructureProvisioner terraformProvisioner,
       InfrastructureProvisionerServiceImpl provisionerService) {
     terraformProvisioner.setBackendConfigs(
-        asList(NameValuePair.builder().name("access.key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.TEXT.toString()).build()));
+        asList(NameValuePair.builder().name("access.key").valueType(ServiceVariableType.TEXT.toString()).build(),
+            NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.TEXT.toString()).build()));
     assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> provisionerService.validateProvisioner(terraformProvisioner));
 
     terraformProvisioner.setBackendConfigs(
-        asList(NameValuePair.builder().name("$access_key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.TEXT.toString()).build()));
+        asList(NameValuePair.builder().name("$access_key").valueType(ServiceVariableType.TEXT.toString()).build(),
+            NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.TEXT.toString()).build()));
     assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> provisionerService.validateProvisioner(terraformProvisioner));
 
@@ -451,22 +452,22 @@ public class InfrastructureProvisionerServiceImplTest extends WingsBaseTest {
     provisionerService.validateProvisioner(terraformProvisioner);
 
     terraformProvisioner.setBackendConfigs(
-        asList(NameValuePair.builder().name("access_key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.TEXT.toString()).build()));
+        asList(NameValuePair.builder().name("access_key").valueType(ServiceVariableType.TEXT.toString()).build(),
+            NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.TEXT.toString()).build()));
     provisionerService.validateProvisioner(terraformProvisioner);
   }
 
   private void shouldVariablesValidation(TerraformInfrastructureProvisioner terraformProvisioner,
       InfrastructureProvisionerServiceImpl provisionerService) {
     terraformProvisioner.setVariables(
-        asList(NameValuePair.builder().name("access.key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.TEXT.toString()).build()));
+        asList(NameValuePair.builder().name("access.key").valueType(ServiceVariableType.TEXT.toString()).build(),
+            NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.TEXT.toString()).build()));
     assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> provisionerService.validateProvisioner(terraformProvisioner));
 
     terraformProvisioner.setVariables(
-        asList(NameValuePair.builder().name("$access_key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.TEXT.toString()).build()));
+        asList(NameValuePair.builder().name("$access_key").valueType(ServiceVariableType.TEXT.toString()).build(),
+            NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.TEXT.toString()).build()));
     assertThatExceptionOfType(InvalidRequestException.class)
         .isThrownBy(() -> provisionerService.validateProvisioner(terraformProvisioner));
 
@@ -477,8 +478,8 @@ public class InfrastructureProvisionerServiceImplTest extends WingsBaseTest {
     provisionerService.validateProvisioner(terraformProvisioner);
 
     terraformProvisioner.setVariables(
-        asList(NameValuePair.builder().name("access_key").valueType(Type.TEXT.toString()).build(),
-            NameValuePair.builder().name("secret_key").valueType(Type.TEXT.toString()).build()));
+        asList(NameValuePair.builder().name("access_key").valueType(ServiceVariableType.TEXT.toString()).build(),
+            NameValuePair.builder().name("secret_key").valueType(ServiceVariableType.TEXT.toString()).build()));
     provisionerService.validateProvisioner(terraformProvisioner);
   }
 
@@ -1154,5 +1155,41 @@ public class InfrastructureProvisionerServiceImplTest extends WingsBaseTest {
     assertThat(infrastructureProvisionerServiceImpl.areExpressionsValid(provisioner, expressions)).isFalse();
     doReturn(false).when(featureFlagService).isEnabled(eq(VALIDATE_PROVISIONER_EXPRESSION), any());
     assertThat(infrastructureProvisionerServiceImpl.areExpressionsValid(provisioner, expressions)).isTrue();
+  }
+
+  @Test
+  @Owner(developers = NAVNEET)
+  @Category(UnitTests.class)
+  public void testExtractTextVariablesWithDuplicateKey() {
+    List<NameValuePair> nameValuePairList =
+        asList(NameValuePair.builder().name("someKey").value("someValue").valueType("TEXT").build(),
+            NameValuePair.builder().name("someKey").value("someOtherValue").valueType("TEXT").build());
+
+    when(executionContext.renderExpression(eq("someValue"))).thenReturn("someValue");
+    when(executionContext.renderExpression(eq("someOtherValue"))).thenReturn("someOtherValue");
+
+    assertThatThrownBy(() -> infrastructureProvisionerService.extractTextVariables(nameValuePairList, executionContext))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Duplicate key: someKey");
+  }
+
+  @Test
+  @Owner(developers = NAVNEET)
+  @Category(UnitTests.class)
+  public void testExtractEncryptedTextVariablesWithDuplicateKey() {
+    List<NameValuePair> nameValuePairList =
+        asList(NameValuePair.builder().name("someKey").value("someValue").valueType("ENCRYPTED_TEXT").build(),
+            NameValuePair.builder().name("someKey").value("someOtherValue").valueType("ENCRYPTED_TEXT").build());
+    Optional<EncryptedDataDetail> encryptedDataDetailOptional =
+        Optional.of(EncryptedDataDetail.builder().fieldName("fieldName").build());
+
+    when(secretManager.encryptedDataDetails(any(), any(), any(), any())).thenReturn(encryptedDataDetailOptional);
+    when(appService.getAccountIdByAppId(any())).thenReturn(ACCOUNT_ID);
+
+    assertThatThrownBy(()
+                           -> infrastructureProvisionerService.extractEncryptedTextVariables(
+                               nameValuePairList, APP_ID, WORKFLOW_EXECUTION_ID))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Duplicate encrypted key: someKey");
   }
 }

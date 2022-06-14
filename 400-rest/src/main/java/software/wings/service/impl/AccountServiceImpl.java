@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessModule._955_ACCOUNT_MGMT;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.beans.FeatureName.AUTO_ACCEPT_SAML_ACCOUNT_INVITES;
 import static io.harness.beans.FeatureName.CG_LICENSE_USAGE;
+import static io.harness.beans.FeatureName.DELEGATE_VERSION_FROM_RING;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.SearchFilter.Operator.EQ;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -71,6 +72,7 @@ import io.harness.datahandler.models.AccountDetails;
 import io.harness.dataretention.AccountDataRetentionEntity;
 import io.harness.dataretention.AccountDataRetentionService;
 import io.harness.delegate.beans.DelegateConfiguration;
+import io.harness.delegate.service.DelegateVersionService;
 import io.harness.delegate.utils.DelegateRingConstants;
 import io.harness.eraro.Level;
 import io.harness.event.handler.impl.EventPublishHelper;
@@ -301,6 +303,7 @@ public class AccountServiceImpl implements AccountService {
   @Inject private RemoteObserverInformer remoteObserverInformer;
   @Inject private HPersistence persistence;
   @Inject private CgCdLicenseUsageService cgCdLicenseUsageService;
+  @Inject private DelegateVersionService delegateVersionService;
 
   @Inject @Named("BackgroundJobScheduler") private PersistentScheduler jobScheduler;
   @Inject private GovernanceFeature governanceFeature;
@@ -503,6 +506,7 @@ public class AccountServiceImpl implements AccountService {
     } else if (account.isCreatedFromNG()) {
       updateNextGenEnabled(account.getUuid(), true);
     }
+    featureFlagService.enableAccount(FeatureName.USE_IMMUTABLE_DELEGATE, account.getUuid());
   }
 
   List<Role> createDefaultRoles(Account account) {
@@ -975,13 +979,28 @@ public class AccountServiceImpl implements AccountService {
     if (licenseService.isAccountDeleted(accountId)) {
       throw new InvalidRequestException("Deleted AccountId: " + accountId);
     }
+    if (featureFlagService.isEnabled(DELEGATE_VERSION_FROM_RING, accountId)) {
+      log.info("Getting delegate configuration from Delegate ring");
 
+      // Prefer using delegateConfiguration from DelegateRing.
+      List<String> delegateVersionFromRing = delegateVersionService.getDelegateJarVersions(accountId);
+      if (isNotEmpty(delegateVersionFromRing)) {
+        return DelegateConfiguration.builder().delegateVersions(new ArrayList<>(delegateVersionFromRing)).build();
+      }
+      log.warn("Unable to get Delegate version from ring, falling back to regular flow");
+    }
+
+    // Try to pickup delegateConfiguration from Account collection.
     Account account = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
                           .filter(AccountKeys.uuid, accountId)
                           .project("delegateConfiguration", true)
                           .get();
 
     if (account.getDelegateConfiguration() != null) {
+      if (account.getDelegateConfiguration().isValidTillNextRelease()) {
+        return account.getDelegateConfiguration();
+      }
+
       if (account.getDelegateConfiguration().getValidUntil() == null) {
         log.warn("The delegate configuration for account [{}] doesn't have valid until field.", accountId);
       }
@@ -993,6 +1012,9 @@ public class AccountServiceImpl implements AccountService {
         return account.getDelegateConfiguration();
       }
     }
+
+    // If we are here, means we didn't find any delegateConfiguration in Account collection.
+    // Pickup delegateConfiguration from GLOBAL_ACCOUNT_ID.
     account = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
                   .filter(AccountKeys.uuid, GLOBAL_ACCOUNT_ID)
                   .project("delegateConfiguration", true)
@@ -1001,22 +1023,21 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
+  public List<String> getWatcherVersion(String accountId) {
+    return delegateVersionService.getWatcherJarVersions(accountId);
+  }
+
+  @Override
   public String getAccountPrimaryDelegateVersion(String accountId) {
     if (licenseService.isAccountDeleted(accountId)) {
       throw new InvalidRequestException("Deleted AccountId: " + accountId);
     }
-    Account account = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
-                          .filter(AccountKeys.uuid, accountId)
-                          .project("delegateConfiguration", true)
-                          .get();
-    if (account.getDelegateConfiguration() == null) {
+
+    DelegateConfiguration delegateConfig = getDelegateConfiguration(accountId);
+    if (delegateConfig == null) {
       return null;
     }
-    return account.getDelegateConfiguration()
-        .getDelegateVersions()
-        .stream()
-        .reduce((first, last) -> last)
-        .orElse(EMPTY);
+    return delegateConfig.getDelegateVersions().stream().reduce((first, last) -> last).orElse(EMPTY);
   }
 
   @Override
@@ -1981,7 +2002,7 @@ public class AccountServiceImpl implements AccountService {
 
   @Override
   public AuthenticationInfo getAuthenticationInfo(String accountId) {
-    Account account = getFromCacheWithFallback(accountId);
+    Account account = get(accountId);
     if (account == null) {
       throw new InvalidRequestException("Account not found");
     }

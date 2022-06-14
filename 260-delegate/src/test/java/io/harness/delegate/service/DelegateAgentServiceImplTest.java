@@ -7,15 +7,15 @@
 
 package io.harness.delegate.service;
 
-import static io.harness.rule.OwnerRule.GEORGE;
-import static io.harness.rule.OwnerRule.MARKOM;
+import static io.harness.rule.OwnerRule.MARKO;
 import static io.harness.rule.OwnerRule.SRINIVAS;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +27,7 @@ import io.harness.data.structure.UUIDGenerator;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.clienttools.InstallUtils;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.managerclient.DelegateAgentManagerClient;
 import io.harness.rule.Owner;
@@ -120,21 +121,11 @@ public class DelegateAgentServiceImplTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
   public void whenClientToolsDisabledThenTrue() {
     final DelegateConfiguration delegateConfig = mock(DelegateConfiguration.class);
     final DelegateAgentServiceImpl underTest = mock(DelegateAgentServiceImpl.class);
-
-    when(underTest.isKubectlInstalled()).thenReturn(true);
-    when(underTest.isGoTemplateInstalled()).thenReturn(true);
-    when(underTest.isHelmInstalled()).thenReturn(true);
-    when(underTest.isChartMuseumInstalled()).thenReturn(true);
-    when(underTest.isTfConfigInspectInstalled()).thenReturn(true);
-    when(underTest.isOcInstalled()).thenReturn(true);
-    when(underTest.isKustomizeInstalled()).thenReturn(true);
-    when(underTest.isHarnessPywinrmInstalled()).thenReturn(true);
-    when(underTest.isScmInstalled()).thenReturn(true);
 
     when(underTest.getDelegateConfiguration()).thenReturn(delegateConfig);
     when(delegateConfig.isClientToolsDownloadDisabled()).thenReturn(true);
@@ -146,21 +137,14 @@ public class DelegateAgentServiceImplTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
-  public void whenClientToolsEnabledAndInstalledThenTrue() {
+  public void whenClientToolsEnabledAndInstalledThenTrue() throws Exception {
+    mockStatic(InstallUtils.class, CALLS_REAL_METHODS);
+    when(InstallUtils.areClientToolsInstalled()).thenAnswer(invocationOnMock -> true);
+
     final DelegateConfiguration delegateConfig = mock(DelegateConfiguration.class);
     final DelegateAgentServiceImpl underTest = mock(DelegateAgentServiceImpl.class);
-
-    when(underTest.isKubectlInstalled()).thenReturn(true);
-    when(underTest.isGoTemplateInstalled()).thenReturn(true);
-    when(underTest.isHelmInstalled()).thenReturn(true);
-    when(underTest.isChartMuseumInstalled()).thenReturn(true);
-    when(underTest.isTfConfigInspectInstalled()).thenReturn(true);
-    when(underTest.isOcInstalled()).thenReturn(true);
-    when(underTest.isKustomizeInstalled()).thenReturn(true);
-    when(underTest.isHarnessPywinrmInstalled()).thenReturn(true);
-    when(underTest.isScmInstalled()).thenReturn(true);
 
     when(underTest.getDelegateConfiguration()).thenReturn(delegateConfig);
     when(delegateConfig.isClientToolsDownloadDisabled()).thenReturn(false);
@@ -172,21 +156,14 @@ public class DelegateAgentServiceImplTest extends CategoryTest {
   }
 
   @Test
-  @Owner(developers = MARKOM)
+  @Owner(developers = MARKO)
   @Category(UnitTests.class)
-  public void whenClientToolsEnabledAndNotInstalledThenFalse() {
+  public void whenClientToolsEnabledAndNotInstalledThenFalse() throws Exception {
+    mockStatic(InstallUtils.class, CALLS_REAL_METHODS);
+    when(InstallUtils.areClientToolsInstalled()).thenAnswer(invocationOnMock -> false);
+
     final DelegateConfiguration delegateConfig = mock(DelegateConfiguration.class);
     final DelegateAgentServiceImpl underTest = mock(DelegateAgentServiceImpl.class);
-
-    when(underTest.isKubectlInstalled()).thenReturn(false);
-    when(underTest.isGoTemplateInstalled()).thenReturn(true);
-    when(underTest.isHelmInstalled()).thenReturn(true);
-    when(underTest.isChartMuseumInstalled()).thenReturn(true);
-    when(underTest.isTfConfigInspectInstalled()).thenReturn(true);
-    when(underTest.isOcInstalled()).thenReturn(true);
-    when(underTest.isKustomizeInstalled()).thenReturn(true);
-    when(underTest.isHarnessPywinrmInstalled()).thenReturn(true);
-    when(underTest.isScmInstalled()).thenReturn(true);
 
     when(underTest.getDelegateConfiguration()).thenReturn(delegateConfig);
     when(delegateConfig.isClientToolsDownloadDisabled()).thenReturn(false);
@@ -195,12 +172,5 @@ public class DelegateAgentServiceImplTest extends CategoryTest {
 
     final boolean actual = underTest.isClientToolsInstallationFinished();
     assertThat(actual).isFalse();
-  }
-
-  @Test
-  @Owner(developers = GEORGE)
-  @Category(UnitTests.class)
-  public void testPerformanceLog() {
-    assertThatCode(delegateService::obtainPerformance).doesNotThrowAnyException();
   }
 }

@@ -40,12 +40,13 @@ import io.harness.logserviceclient.CILogServiceClientModule;
 import io.harness.manage.ManagedScheduledExecutorService;
 import io.harness.mongo.MongoPersistence;
 import io.harness.opaclient.OpaClientModule;
-import io.harness.packages.HarnessPackages;
 import io.harness.persistence.HPersistence;
 import io.harness.redis.RedisConfig;
+import io.harness.reflection.HarnessReflections;
 import io.harness.remote.client.ClientMode;
 import io.harness.secrets.SecretNGManagerClientModule;
 import io.harness.service.DelegateServiceDriverModule;
+import io.harness.stoserviceclient.STOServiceClientModule;
 import io.harness.telemetry.AbstractTelemetryModule;
 import io.harness.telemetry.TelemetryConfiguration;
 import io.harness.threading.ThreadPool;
@@ -77,7 +78,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
-import org.reflections.Reflections;
 
 @Slf4j
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -135,9 +135,8 @@ public class CIManagerServiceModule extends AbstractModule {
   @Named("yaml-schema-subtypes")
   @Singleton
   public Map<Class<?>, Set<Class<?>>> yamlSchemaSubtypes() {
-    Reflections reflections = new Reflections(HarnessPackages.IO_HARNESS);
-
-    Set<Class<? extends StepSpecType>> subTypesOfStepSpecType = reflections.getSubTypesOf(StepSpecType.class);
+    Set<Class<? extends StepSpecType>> subTypesOfStepSpecType =
+        HarnessReflections.get().getSubTypesOf(StepSpecType.class);
     Set<Class<?>> set = new HashSet<>(subTypesOfStepSpecType);
 
     return ImmutableMap.of(StepSpecType.class, set);
@@ -251,6 +250,7 @@ public class CIManagerServiceModule extends AbstractModule {
     install(UserClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),
         ciManagerConfiguration.getManagerServiceSecret(), CI_MANAGER.getServiceId()));
     install(new TIServiceClientModule(ciManagerConfiguration.getTiServiceConfig()));
+    install(new STOServiceClientModule(ciManagerConfiguration.getStoServiceConfig()));
     install(new AccountClientModule(ciManagerConfiguration.getManagerClientConfig(),
         ciManagerConfiguration.getNgManagerServiceSecret(), CI_MANAGER.toString()));
     install(EnforcementClientModule.getInstance(ciManagerConfiguration.getManagerClientConfig(),

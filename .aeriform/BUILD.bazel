@@ -24,7 +24,7 @@ aeriform("//126-instance:module")
 
 aeriform("//126-instance:tests")
 
-aeriform("//127-cd-nextgen-beans:module")
+aeriform("//127-cd-nextgen-entities:module")
 
 aeriform("//136-git-sync-manager:module")
 
@@ -84,9 +84,21 @@ aeriform("//310-ci-manager:module")
 
 aeriform("//310-ci-manager:tests")
 
+aeriform("//315-sto-manager:module")
+
+aeriform("//315-sto-manager:tests")
+
 aeriform("//320-ci-execution:module")
 
 aeriform("//320-ci-execution:tests")
+
+aeriform("//323-sto-utilities:module")
+
+aeriform("//323-sto-utilities:tests")
+
+aeriform("//325-sto-beans:module")
+
+aeriform("//325-sto-beans:tests")
 
 aeriform("//330-ci-beans:module")
 
@@ -232,12 +244,6 @@ aeriform("//884-pms-commons:tests")
 
 aeriform("//888-pms-client:module")
 
-aeriform("//889-yaml-commons:module")
-
-aeriform("//889-yaml-commons:tests")
-
-aeriform("//890-pms-contracts:module")
-
 aeriform("//890-sm-core:module")
 
 aeriform("//890-sm-core:tests")
@@ -268,6 +274,8 @@ aeriform("//925-enforcement-service:module")
 
 aeriform("//925-enforcement-service:tests")
 
+aeriform("//925-subscription-service:module")
+
 aeriform("//930-delegate-tasks:module")
 
 aeriform("//930-delegate-tasks:tests")
@@ -296,8 +304,6 @@ aeriform("//940-feature-flag:module")
 
 aeriform("//940-feature-flag:tests")
 
-aeriform("//940-notification-client:module")
-
 aeriform("//940-primary-version-manager:module")
 
 aeriform("//940-primary-version-manager:tests")
@@ -312,10 +318,6 @@ aeriform("//945-account-mgmt:module")
 
 aeriform("//945-license-usage-sdk:module")
 
-aeriform("//945-ng-audit-client:module")
-
-aeriform("//945-ng-audit-client:tests")
-
 aeriform("//947-scim-core:module")
 
 aeriform("//clients/access-control/admin-client:module")
@@ -323,6 +325,8 @@ aeriform("//clients/access-control/admin-client:module")
 aeriform("//clients/access-control/sdk:module")
 
 aeriform("//clients/access-control/sdk:tests")
+
+aeriform("//948-cv-nextgen-beans:module")
 
 aeriform("//950-command-library-common:module")
 
@@ -356,6 +360,8 @@ aeriform("//950-opa-client:module")
 
 aeriform("//950-opa-client:tests")
 
+aeriform("//950-subscription-beans:module")
+
 aeriform("//950-telemetry:module")
 
 aeriform("//950-telemetry:tests")
@@ -365,10 +371,6 @@ aeriform("//950-wait-engine:module")
 aeriform("//950-wait-engine:supporter-test")
 
 aeriform("//950-wait-engine:tests")
-
-aeriform("//950-walktree-visitor:module")
-
-aeriform("//950-walktree-visitor:tests")
 
 aeriform("//951-cg-git-sync:module")
 
@@ -386,11 +388,17 @@ aeriform("//953-events-api:tests")
 
 aeriform("//953-git-sync-commons:module")
 
+aeriform("//953-yaml-commons:module")
+
+aeriform("//953-yaml-commons:tests")
+
 aeriform("//954-connector-beans:module")
 
 aeriform("//954-connector-beans:tests")
 
 aeriform("//954-feature-flag-sdk:module")
+
+aeriform("//954-pms-contracts:module")
 
 aeriform("//955-alert-beans:module")
 
@@ -467,6 +475,10 @@ aeriform("//960-yaml-sdk:tests")
 aeriform("//965-api-key-filter:module")
 
 aeriform("//965-api-key-filter:tests")
+
+aeriform("//967-walktree-visitor:module")
+
+aeriform("//967-walktree-visitor:tests")
 
 aeriform("//970-api-services-beans:module")
 

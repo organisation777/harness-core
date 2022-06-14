@@ -120,6 +120,8 @@ cgEventConfig {"name": "createdAt_1", "background": true} {"createdAt": 1}
 cgEventConfig {"name": "yaml", "unique": true} {"appId": 1, "name": 1}
 cloudFormationRollbackConfig {"name": "accountId_1", "background": true} {"accountId": 1}
 cloudFormationRollbackConfig {"name": "appId_1", "background": true} {"appId": 1}
+cloudFormationRollbackConfig {"name": "awsConfigId_1", "background": true} {"awsConfigId": 1}
+cloudFormationRollbackConfig {"name": "byAppAndEntityAndAwsConfig", "background": true} {"appId": 1, "entityId": 1, "awsConfigId": 1, "createdAt": 1}
 cloudFormationRollbackConfig {"name": "createdAt_1", "background": true} {"createdAt": 1}
 cloudFormationRollbackConfig {"name": "entityId_1", "background": true} {"entityId": 1}
 clusterRecords {"name": "accountId_1", "background": true} {"accountId": 1}
@@ -277,7 +279,6 @@ environments {"name": "accountId_name", "background": true} {"accountId": 1, "na
 environments {"name": "appId_1", "background": true} {"appId": 1}
 environments {"name": "createdAt_1", "background": true} {"createdAt": 1}
 environments {"name": "yaml", "unique": true} {"appId": 1, "name": 1}
-environmentsNG {"name": "unique_accountId_organizationIdentifier_projectIdentifier_envIdentifier_repo_branch", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1, "yamlGitConfigRef": 1, "branch": 1}
 events {"name": "accountId_1", "background": true} {"accountId": 1}
 events {"name": "appId_1", "background": true} {"appId": 1}
 events {"name": "createdAt_1", "background": true} {"createdAt": 1}
@@ -834,6 +835,7 @@ verificationServiceTask {"name": "timeSeriesAnalysisIteration_1", "background": 
 verificationServiceTask {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 verificationServiceTask {"name": "workflowDataCollectionIdx", "background": true} {"stateType": 1, "perMinCollectionFinished": 1}
 verificationServiceTask {"name": "workflowDataCollectionIteration_1", "background": true} {"workflowDataCollectionIteration": 1}
+versionOverride {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 versionedTemplate {"name": "appId_1", "background": true} {"appId": 1}
 versionedTemplate {"name": "createdAt_1", "background": true} {"createdAt": 1}
 versionedTemplate {"name": "referencedTemplates", "background": true} {"templateObject.referencedTemplateList.templateReference.templateUuid": 1}
@@ -854,6 +856,7 @@ workflowExecutions {"name": "accountId_appId_cdPageCandidate_pipelineSummary.pip
 workflowExecutions {"name": "accountId_appId_tags_createdAt", "background": true} {"accountId": 1, "appId": 1, "tags.name": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_cdPageCandidate_appId", "background": true} {"accountId": 1, "cdPageCandidate": 1, "appId": 1}
 workflowExecutions {"name": "accountId_cdPageCandidate_appId_createdAtDesc", "background": true} {"accountId": 1, "cdPageCandidate": 1, "appId": 1, "createdAt": -1}
+workflowExecutions {"name": "accountId_cdPageCandidate_createdAt", "background": true} {"accountId": 1, "cdPageCandidate": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_cdPageCandidate_keywords_createdAt", "background": true} {"accountId": 1, "cdPageCandidate": 1, "keywords": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_createdAt2", "background": true} {"accountId": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_endTs", "background": true} {"accountId": 1, "endTs": -1}

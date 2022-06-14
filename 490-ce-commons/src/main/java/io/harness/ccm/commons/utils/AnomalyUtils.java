@@ -7,19 +7,27 @@
 
 package io.harness.ccm.commons.utils;
 
+import static io.harness.ccm.commons.entities.CCMField.ANOMALOUS_SPEND;
+
 import io.harness.ccm.commons.constants.AnomalyFieldConstants;
 import io.harness.ccm.commons.constants.ViewFieldConstants;
+import io.harness.ccm.commons.entities.CCMSort;
 import io.harness.ccm.commons.entities.anomaly.AnomalyData;
 import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.EntityInfo;
 import io.harness.timescaledb.tables.pojos.Anomalies;
 
+import com.google.common.base.Strings;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AnomalyUtils {
   private static final String SEPARATOR = "/";
-  private static final String ANOMALY_RELATIVE_TIME_TEMPLATE = "since %s %s";
-  private static final String STATUS_RELATIVE_TIME_TEMPLATE = "%s %s ago";
+  private static final String RELATIVE_TIME_TEMPLATE = "%s %s ago";
   public static final Integer DEFAULT_LIMIT = 1000;
   public static final Integer DEFAULT_OFFSET = 0;
 
@@ -78,6 +86,16 @@ public class AnomalyUtils {
         builder.append(SEPARATOR);
         builder.append(anomaly.getAwsusagetype());
       }
+    } else if (anomaly.getAzuresubscriptionguid() != null) {
+      builder.append(anomaly.getAzuresubscriptionguid());
+      if (anomaly.getAzureresourcegroup() != null) {
+        builder.append(SEPARATOR);
+        builder.append(anomaly.getAzureresourcegroup());
+      }
+      if (anomaly.getAzuremetercategory() != null) {
+        builder.append(SEPARATOR);
+        builder.append(anomaly.getAzuremetercategory());
+      }
     }
     return builder.toString();
   }
@@ -117,6 +135,17 @@ public class AnomalyUtils {
         builder.append(ViewFieldConstants.AWS_USAGE_TYPE_ID);
       }
       return builder.toString();
+    } else if (anomaly.getAzuresubscriptionguid() != null) {
+      builder.append(ViewFieldConstants.AZURE_SUBSCRIPTION_GUID);
+      if (anomaly.getAzureresourcegroup() != null) {
+        builder.append(SEPARATOR);
+        builder.append(ViewFieldConstants.AZURE_RESOURCE_GROUP);
+      }
+      if (anomaly.getAzuremetercategory() != null) {
+        builder.append(SEPARATOR);
+        builder.append(ViewFieldConstants.AZURE_METER_CATEGORY);
+      }
+      return builder.toString();
     }
 
     return "";
@@ -147,6 +176,14 @@ public class AnomalyUtils {
         return ViewFieldConstants.AWS_SERVICE_FIELD_ID;
       }
       return ViewFieldConstants.AWS_ACCOUNT_FIELD_ID;
+    } else if (anomaly.getAzuresubscriptionguid() != null) {
+      if (anomaly.getAzuremetercategory() != null) {
+        return ViewFieldConstants.AZURE_METER_CATEGORY;
+      }
+      if (anomaly.getAzureresourcegroup() != null) {
+        return ViewFieldConstants.AZURE_RESOURCE_GROUP;
+      }
+      return ViewFieldConstants.AZURE_SUBSCRIPTION_GUID;
     }
     return null;
   }
@@ -158,31 +195,37 @@ public class AnomalyUtils {
       return AnomalyFieldConstants.AWS;
     } else if (anomaly.getGcpproject() != null) {
       return AnomalyFieldConstants.GCP;
+    } else if (anomaly.getAzuresubscriptionguid() != null) {
+      return AnomalyFieldConstants.AZURE;
     }
     return "";
   }
 
   public static AnomalyData buildAnomalyData(Anomalies anomaly) {
+    return buildAnomalyData(anomaly, Collections.emptyMap());
+  }
+
+  public static AnomalyData buildAnomalyData(Anomalies anomaly, Map<String, String> entityIdToNameMapping) {
     long anomalyTime = anomaly.getAnomalytime().toEpochSecond() * 1000;
     return AnomalyData.builder()
         .id(anomaly.getId())
         .time(anomalyTime)
-        .anomalyRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, ANOMALY_RELATIVE_TIME_TEMPLATE))
+        .anomalyRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, RELATIVE_TIME_TEMPLATE))
         .actualAmount(AnomalyUtils.getRoundedOffCost(anomaly.getActualcost()))
         .expectedAmount(AnomalyUtils.getRoundedOffCost(anomaly.getExpectedcost()))
         .anomalousSpend(AnomalyUtils.getRoundedOffCost(anomaly.getActualcost() - anomaly.getExpectedcost()))
         .anomalousSpendPercentage(AnomalyUtils.getAnomalyTrend(anomaly.getActualcost(), anomaly.getExpectedcost()))
-        .entity(getEntityInfo(anomaly))
+        .entity(getEntityInfo(anomaly, entityIdToNameMapping))
         .resourceName(AnomalyUtils.getResourceName(anomaly))
         .resourceInfo(AnomalyUtils.getResourceInfo(anomaly))
         // Todo : Remove default assignment when status column is added to anomaly table
         .status("Open")
-        .statusRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, STATUS_RELATIVE_TIME_TEMPLATE))
+        .statusRelativeTime(AnomalyUtils.getRelativeTime(anomalyTime, RELATIVE_TIME_TEMPLATE))
         .cloudProvider(AnomalyUtils.getCloudProvider(anomaly))
         .build();
   }
 
-  private static EntityInfo getEntityInfo(Anomalies anomaly) {
+  private static EntityInfo getEntityInfo(Anomalies anomaly, Map<String, String> entityIdToNameMapping) {
     return EntityInfo.builder()
         .field(AnomalyUtils.getGroupByField(anomaly))
         .clusterId(anomaly.getClusterid())
@@ -194,10 +237,14 @@ public class AnomalyUtils {
         .gcpSKUId(anomaly.getGcpskuid())
         .gcpSKUDescription(anomaly.getGcpskudescription())
         .gcpProduct(anomaly.getGcpproduct())
-        .awsUsageAccountId(anomaly.getAwsaccount())
+        .awsUsageAccountId(
+            mergeAwsAccountIdAndName(anomaly.getAwsaccount(), entityIdToNameMapping.get(anomaly.getAwsaccount())))
         .awsServiceCode(anomaly.getAwsservice())
         .awsUsageType(anomaly.getAwsusagetype())
         .awsInstancetype(anomaly.getAwsinstancetype())
+        .azureSubscriptionGuid(anomaly.getAzuresubscriptionguid())
+        .azureResourceGroup(anomaly.getAzureresourcegroup())
+        .azureMeterCategory(anomaly.getAzuremetercategory())
         .build();
   }
 
@@ -209,5 +256,34 @@ public class AnomalyUtils {
         .limit(DEFAULT_LIMIT)
         .offset(DEFAULT_OFFSET)
         .build();
+  }
+
+  public static List<AnomalyData> sortDataByNonTableFields(List<AnomalyData> anomalyData, List<CCMSort> sortByList) {
+    for (CCMSort sortBy : sortByList) {
+      if (sortBy.getField() == ANOMALOUS_SPEND) {
+        switch (sortBy.getOrder()) {
+          case ASCENDING:
+            anomalyData.sort(Comparator.comparing(AnomalyData::getAnomalousSpend));
+            break;
+          case DESCENDING:
+            anomalyData.sort(Comparator.comparing(AnomalyData::getAnomalousSpend).reversed());
+            break;
+          default:
+        }
+      }
+    }
+    return anomalyData;
+  }
+
+  public static List<String> collectAwsAccountIds(List<Anomalies> anomalies) {
+    return anomalies.stream().map(Anomalies::getAwsaccount).collect(Collectors.toList());
+  }
+
+  private static String mergeAwsAccountIdAndName(final String accountId, final String accountName) {
+    String accountDetails = accountId;
+    if (!Strings.isNullOrEmpty(accountName)) {
+      accountDetails = accountName + " (" + accountId + ")";
+    }
+    return accountDetails;
   }
 }

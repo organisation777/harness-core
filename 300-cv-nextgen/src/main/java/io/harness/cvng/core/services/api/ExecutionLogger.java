@@ -16,9 +16,9 @@ public interface ExecutionLogger {
   default void warn(String message) {
     this.log(LogLevel.INFO, message);
   }
-  default void error(String message) {
-    this.log(LogLevel.INFO, message);
+  default void error(String message, String... messages) {
+    this.log(LogLevel.ERROR, message, messages);
   }
 
-  void log(LogLevel logLevel, String message);
+  void log(LogLevel logLevel, String message, String... messages);
 }

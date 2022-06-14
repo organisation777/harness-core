@@ -17,13 +17,14 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.ngmigration.beans.DiscoveryInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.MigrationInputResult;
+import io.harness.ngmigration.beans.NGYamlFile;
 import io.harness.ngmigration.service.DiscoveryService;
 import io.harness.ngmigration.utils.NGMigrationConstants;
 import io.harness.rest.RestResponse;
 
 import software.wings.ngmigration.DiscoveryResult;
 import software.wings.ngmigration.NGMigrationEntityType;
-import software.wings.ngmigration.NGYamlFile;
+import software.wings.ngmigration.NGMigrationStatus;
 import software.wings.security.PermissionAttribute.ResourceType;
 import software.wings.security.annotations.Scope;
 
@@ -87,20 +88,31 @@ public class NgMigrationResource {
         .build();
   }
 
+  @GET
+  @Path("/discover/validate")
+  @Timed
+  @ExceptionMetered
+  public RestResponse<NGMigrationStatus> findDiscoveryErrors(@QueryParam("entityId") String entityId,
+      @QueryParam("appId") String appId, @QueryParam("accountId") String accountId,
+      @QueryParam("entityType") NGMigrationEntityType entityType) {
+    DiscoveryResult discoveryResult = discoveryService.discover(accountId, appId, entityId, entityType, null);
+    return new RestResponse<>(discoveryService.getMigrationStatus(discoveryResult));
+  }
+
   @POST
-  @Path("/files")
+  @Path("/save")
   @Timed
   @ExceptionMetered
   public RestResponse<List<NGYamlFile>> getMigratedFiles(@HeaderParam("Authorization") String auth,
       @QueryParam("entityId") String entityId, @QueryParam("appId") String appId,
       @QueryParam("accountId") String accountId, @QueryParam("entityType") NGMigrationEntityType entityType,
-      @QueryParam("dryRun") boolean dryRun, MigrationInputDTO inputDTO) {
+      MigrationInputDTO inputDTO) {
     DiscoveryResult result = discoveryService.discover(accountId, appId, entityId, entityType, null);
-    return new RestResponse<>(discoveryService.migrateEntity(auth, inputDTO, result, dryRun));
+    return new RestResponse<>(discoveryService.migrateEntity(auth, inputDTO, result, false));
   }
 
   @POST
-  @Path("/export")
+  @Path("/export-yaml")
   @Timed
   @ExceptionMetered
   public Response exportZippedYamlFiles(@HeaderParam("Authorization") String auth,

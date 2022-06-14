@@ -13,7 +13,6 @@ import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.PIP
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.PROJECT_IDENTIFIER;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.retry.RetryExecutionParameters;
 import io.harness.exception.InvalidRequestException;
@@ -25,6 +24,7 @@ import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 import io.harness.pms.instrumentaion.PipelineTelemetryHelper;
 import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity;
+import io.harness.pms.pipeline.mappers.PMSPipelineDtoMapper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.plan.execution.beans.ExecArgs;
 import io.harness.pms.plan.execution.beans.dto.RunStageRequestDTO;
@@ -109,10 +109,6 @@ public class PipelineExecutor {
     sendExecutionStartTelemetryEvent(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
     PipelineEntity pipelineEntity =
         executionHelper.fetchPipelineEntity(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
-    if (EmptyPredicate.isNotEmpty(stagesToRun) && !pipelineEntity.shouldAllowStageExecutions()) {
-      throw new InvalidRequestException(
-          String.format("Stage executions are not allowed for pipeline [%s]", pipelineIdentifier));
-    }
     ExecutionTriggerInfo triggerInfo = executionHelper.buildTriggerInfo(originalExecutionId);
 
     // RetryExecutionParameters
@@ -130,7 +126,7 @@ public class PipelineExecutor {
     }
     return PlanExecutionResponseDto.builder()
         .planExecution(planExecution)
-        .gitDetails(EntityGitDetailsMapper.mapEntityGitDetails(pipelineEntity))
+        .gitDetails(PMSPipelineDtoMapper.getEntityGitDetails(pipelineEntity))
         .build();
   }
 

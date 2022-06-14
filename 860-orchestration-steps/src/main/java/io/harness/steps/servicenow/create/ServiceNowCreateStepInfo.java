@@ -22,11 +22,13 @@ import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlNode;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.servicenow.ServiceNowStepUtils;
 import io.harness.steps.servicenow.beans.ServiceNowField;
 import io.harness.yaml.YamlSchemaTypes;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
@@ -36,6 +38,7 @@ import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.TypeAlias;
 
@@ -47,10 +50,17 @@ import org.springframework.data.annotation.TypeAlias;
 @TypeAlias("serviceNowCreateStepInfo")
 @RecasterAlias("io.harness.steps.servicenow.create.ServiceNowCreateStepInfo")
 public class ServiceNowCreateStepInfo implements PMSStepInfo, WithConnectorRef, WithDelegateSelector {
+  @JsonProperty(YamlNode.UUID_FIELD_NAME)
+  @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
+  @ApiModelProperty(hidden = true)
+  private String uuid;
+
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
   @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> ticketType;
 
-  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH) ParameterField<Boolean> useServiceNowTemplate;
+  @NotNull
+  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)
+  ParameterField<Boolean> useServiceNowTemplate;
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> templateName;
   List<ServiceNowField> fields;
 
@@ -74,6 +84,8 @@ public class ServiceNowCreateStepInfo implements PMSStepInfo, WithConnectorRef, 
         .connectorRef(connectorRef)
         .ticketType(ticketType)
         .fields(ServiceNowStepUtils.processServiceNowFieldsList(fields))
+        .templateName(templateName)
+        .useServiceNowTemplate(useServiceNowTemplate)
         .delegateSelectors(delegateSelectors)
         .build();
   }
@@ -83,5 +95,10 @@ public class ServiceNowCreateStepInfo implements PMSStepInfo, WithConnectorRef, 
     Map<String, ParameterField<String>> connectorRefMap = new HashMap<>();
     connectorRefMap.put(YAMLFieldNameConstants.CONNECTOR_REF, connectorRef);
     return connectorRefMap;
+  }
+
+  @Override
+  public ParameterField<List<TaskSelectorYaml>> fetchDelegateSelectors() {
+    return getDelegateSelectors();
   }
 }

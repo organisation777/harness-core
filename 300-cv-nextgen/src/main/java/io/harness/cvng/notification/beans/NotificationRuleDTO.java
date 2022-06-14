@@ -7,12 +7,14 @@
 
 package io.harness.cvng.notification.beans;
 
+import io.harness.cvng.notification.channelDetails.CVNGNotificationChannel;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.NGEntityName;
 import io.harness.gitsync.beans.YamlDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -30,7 +32,7 @@ public class NotificationRuleDTO implements YamlDTO {
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String identifier;
   @ApiModelProperty(required = true) @NotNull @NGEntityName String name;
 
-  boolean enabled;
   @NotNull NotificationRuleType type;
-  @Valid @NotNull NotificationRuleSpec spec;
+  @Valid @NotNull List<NotificationRuleCondition> conditions;
+  @Valid @NotNull CVNGNotificationChannel notificationMethod;
 }

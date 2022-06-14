@@ -34,6 +34,8 @@ import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.rule.Owner;
+import io.harness.sto.beans.entities.STOServiceConfig;
+import io.harness.stoserviceclient.STOServiceUtils;
 import io.harness.tiserviceclient.TIServiceUtils;
 
 import com.google.inject.Inject;
@@ -55,6 +57,7 @@ public class BuildSetupUtilsTest extends CIExecutionTestBase {
   @Mock private ExecutionSweepingOutputService executionSweepingOutputResolver;
   @Mock CILogServiceUtils logServiceUtils;
   @Mock TIServiceUtils tiServiceUtils;
+  @Mock STOServiceUtils stoServiceUtils;
 
   private static final String CLUSTER_NAME = "K8";
 
@@ -66,6 +69,7 @@ public class BuildSetupUtilsTest extends CIExecutionTestBase {
     on(k8BuildSetupUtils).set("executionSweepingOutputResolver", executionSweepingOutputResolver);
     on(k8BuildSetupUtils).set("logServiceUtils", logServiceUtils);
     on(k8BuildSetupUtils).set("tiServiceUtils", tiServiceUtils);
+    on(k8BuildSetupUtils).set("stoServiceUtils", stoServiceUtils);
   }
 
   @Test
@@ -100,18 +104,22 @@ public class BuildSetupUtilsTest extends CIExecutionTestBase {
     TIServiceConfig tiServiceConfig = TIServiceConfig.builder().baseUrl("endpoint").globalToken("token").build();
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(tiServiceConfig);
     when(tiServiceUtils.getTIServiceToken(any())).thenReturn("token");
+    STOServiceConfig stoServiceConfig = STOServiceConfig.builder().baseUrl("endpoint").globalToken("token").build();
+    when(stoServiceUtils.getStoServiceConfig()).thenReturn(stoServiceConfig);
+    when(stoServiceUtils.getSTOServiceToken(any())).thenReturn("token");
     when(pmsEngineExpressionService.renderExpression(any(), any())).thenReturn(CLUSTER_NAME);
     when(executionSweepingOutputResolver.resolve(any(), any()))
         .thenReturn(K8PodDetails.builder().stageID("stage").build());
 
     CIInitializeTaskParams buildSetupTaskParams = buildSetupUtils.getBuildSetupTaskParams(
-        ciExecutionPlanTestHelper.getExpectedLiteEngineTaskInfoOnFirstPodWithSetCallbackId(), ambiance, taskIds, "test",
-        logKeys);
+        ciExecutionPlanTestHelper.getExpectedLiteEngineTaskInfoOnFirstPodWithSetCallbackId(), ambiance, "test");
     assertThat(buildSetupTaskParams).isNotNull();
     verify(logServiceUtils, times(1)).getLogServiceConfig();
     verify(logServiceUtils, times(1)).getLogServiceToken(any());
     verify(tiServiceUtils, times(1)).getTiServiceConfig();
     verify(tiServiceUtils, times(1)).getTIServiceToken(any());
+    verify(stoServiceUtils, times(1)).getStoServiceConfig();
+    verify(stoServiceUtils, times(1)).getSTOServiceToken(any());
   }
 
   @Test
@@ -146,17 +154,22 @@ public class BuildSetupUtilsTest extends CIExecutionTestBase {
     TIServiceConfig tiServiceConfig = TIServiceConfig.builder().baseUrl("endpoint").globalToken("token").build();
     when(tiServiceUtils.getTiServiceConfig()).thenReturn(tiServiceConfig);
     when(tiServiceUtils.getTIServiceToken(any())).thenReturn("token");
+    STOServiceConfig stoServiceConfig = STOServiceConfig.builder().baseUrl("endpoint").globalToken("token").build();
+    when(stoServiceUtils.getStoServiceConfig()).thenReturn(stoServiceConfig);
+    when(stoServiceUtils.getSTOServiceToken(any())).thenReturn("token");
     when(pmsEngineExpressionService.renderExpression(any(), any())).thenReturn(CLUSTER_NAME);
     when(executionSweepingOutputResolver.resolve(any(), any()))
         .thenReturn(K8PodDetails.builder().stageID("stage").build());
 
     CIInitializeTaskParams buildSetupTaskParams = buildSetupUtils.getBuildSetupTaskParams(
         ciExecutionPlanTestHelper.getExpectedLiteEngineTaskInfoOnFirstPodWithSetCallbackIdReponameSet(), ambiance,
-        taskIds, "test", logKeys);
+        "test");
     assertThat(buildSetupTaskParams).isNotNull();
     verify(logServiceUtils, times(1)).getLogServiceConfig();
     verify(logServiceUtils, times(1)).getLogServiceToken(any());
     verify(tiServiceUtils, times(1)).getTiServiceConfig();
     verify(tiServiceUtils, times(1)).getTIServiceToken(any());
+    verify(stoServiceUtils, times(1)).getStoServiceConfig();
+    verify(stoServiceUtils, times(1)).getSTOServiceToken(any());
   }
 }

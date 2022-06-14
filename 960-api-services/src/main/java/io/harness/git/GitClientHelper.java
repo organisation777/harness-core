@@ -15,6 +15,7 @@ import static io.harness.exception.WingsException.NOBODY;
 import static io.harness.exception.WingsException.SRE;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.exception.WingsException.USER_ADMIN;
+import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
 import static io.harness.git.Constants.GIT_DEFAULT_LOG_PREFIX;
 import static io.harness.git.Constants.GIT_HELM_LOG_PREFIX;
 import static io.harness.git.Constants.GIT_REPO_BASE_DIR;
@@ -28,6 +29,8 @@ import static io.harness.git.Constants.REPOSITORY_GIT_FILE_DOWNLOADS_ACCOUNT;
 import static io.harness.git.Constants.REPOSITORY_GIT_FILE_DOWNLOADS_BASE;
 import static io.harness.git.Constants.REPOSITORY_GIT_FILE_DOWNLOADS_REPO_BASE_DIR;
 import static io.harness.git.Constants.REPOSITORY_GIT_FILE_DOWNLOADS_REPO_DIR;
+import static io.harness.git.Constants.REPOSITORY_GIT_LOCK_DIR;
+import static io.harness.git.Constants.REPOSITORY_GIT_LOCK_FIlE;
 import static io.harness.git.model.ChangeType.ADD;
 import static io.harness.git.model.ChangeType.DELETE;
 import static io.harness.git.model.ChangeType.MODIFY;
@@ -40,6 +43,7 @@ import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.GitClientException;
 import io.harness.exception.GitConnectionDelegateException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NonPersistentLockException;
 import io.harness.exception.YamlException;
 import io.harness.filesystem.FileIo;
@@ -72,6 +76,7 @@ import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.TransportException;
+import org.jetbrains.annotations.NotNull;
 
 @OwnedBy(CDP)
 @Singleton
@@ -85,16 +90,28 @@ public class GitClientHelper {
   private static final Integer OWNER_GROUP = 5;
   private static final Integer REPO_GROUP = 6;
   private static final Integer SCM_GROUP = 3;
+  private static final Integer PROTOCOL_GROUP = 1;
 
-  private static final LoadingCache<String, Object> cache = CacheBuilder.newBuilder()
-                                                                .maximumSize(2000)
-                                                                .expireAfterAccess(1, TimeUnit.HOURS)
-                                                                .build(new CacheLoader<String, Object>() {
-                                                                  @Override
-                                                                  public Object load(String key) throws Exception {
-                                                                    return new Object();
-                                                                  }
-                                                                });
+  static {
+    try {
+      createDirectoryIfDoesNotExist(REPOSITORY_GIT_LOCK_DIR);
+    } catch (IOException e) {
+      log.error("Error occurred while creating the lock directory", e);
+    }
+  }
+
+  private static final LoadingCache<String, File> cache = CacheBuilder.newBuilder()
+                                                              .maximumSize(2000)
+                                                              .expireAfterAccess(1, TimeUnit.HOURS)
+                                                              .build(new CacheLoader<String, File>() {
+                                                                @Override
+                                                                public File load(String key) throws IOException {
+                                                                  File file =
+                                                                      new File(format(REPOSITORY_GIT_LOCK_FIlE, key));
+                                                                  file.createNewFile();
+                                                                  return file;
+                                                                }
+                                                              });
 
   public static String getGitRepo(String url) {
     Matcher m = GIT_URL.matcher(url);
@@ -110,6 +127,19 @@ public class GitClientHelper {
 
     } catch (Exception e) {
       throw new GitClientException(format("Failed to parse repo from git url  %s", url), SRE, e);
+    }
+  }
+
+  public static String getGitProtocol(String url) {
+    Matcher m = GIT_URL.matcher(url);
+    try {
+      if (m.find()) {
+        return m.toMatchResult().group(PROTOCOL_GROUP);
+      } else {
+        throw new GitClientException(format("Invalid git repo url  %s", url), SRE);
+      }
+    } catch (Exception e) {
+      throw new GitClientException(format("Failed to parse protocol from git url  %s", url), SRE, e);
     }
   }
 
@@ -134,6 +164,16 @@ public class GitClientHelper {
     }
   }
 
+  public static boolean isHTTPProtocol(String url) {
+    String protocol = getGitProtocol(url);
+    return protocol.equals("http") || protocol.equals("https");
+  }
+
+  public static boolean isSSHProtocol(String url) {
+    String protocol = getGitProtocol(url);
+    return protocol.equals("git") || protocol.equals("ssh");
+  }
+
   public static boolean isGithubSAAS(String url) {
     String host = getGitSCM(url);
     return host.equals("github.com") || host.equals("www.github.com");
@@ -147,6 +187,11 @@ public class GitClientHelper {
   public static boolean isBitBucketSAAS(String url) {
     String host = getGitSCM(url);
     return host.equals("bitbucket.org") || host.equals("www.bitbucket.org");
+  }
+
+  public static boolean isAzureRepoSAAS(String url) {
+    String host = getGitSCM(url);
+    return host.equals("dev.azure.com") || host.equals("www.dev.azure.com");
   }
 
   public static String getGithubApiURL(String url) {
@@ -173,6 +218,33 @@ public class GitClientHelper {
       String domain = GitClientHelper.getGitSCM(url);
       return "https://" + domain + "/";
     }
+  }
+
+  public static String getAzureRepoApiURL(String url) {
+    if (isAzureRepoSAAS(url)) {
+      return "https://dev.azure.com/";
+    } else {
+      String domain = GitClientHelper.getGitSCM(url);
+      return "https://" + domain + "/";
+    }
+  }
+
+  public static String getAzureRepoOrgAndProjectHTTP(String url) {
+    String temp = StringUtils.substringBeforeLast(url, "/_git/");
+    return StringUtils.substringAfter(temp, "dev.azure.com/");
+  }
+
+  public static String getAzureRepoOrg(String orgAndProject) {
+    return StringUtils.substringBefore(orgAndProject, "/");
+  }
+
+  public static String getAzureRepoProject(String orgAndProject) {
+    return StringUtils.substringAfter(orgAndProject, "/");
+  }
+
+  public static String getAzureRepoOrgAndProjectSSH(String url) {
+    String temp = StringUtils.substringBeforeLast(url, "/");
+    return StringUtils.substringAfter(temp, "/");
   }
 
   private static String getGitSCMHost(String url) {
@@ -238,7 +310,7 @@ public class GitClientHelper {
     }
   }
 
-  Object getLockObject(String id) {
+  File getLockObject(String id) {
     try {
       return cache.get(id);
     } catch (Exception e) {
@@ -262,22 +334,21 @@ public class GitClientHelper {
 
   void createDirStructureForFileDownload(GitBaseRequest request) {
     try {
-      FileIo.createDirectoryIfDoesNotExist(REPOSITORY);
-      FileIo.createDirectoryIfDoesNotExist(REPOSITORY_GIT_FILE_DOWNLOADS);
+      createDirectoryIfDoesNotExist(REPOSITORY);
+      createDirectoryIfDoesNotExist(REPOSITORY_GIT_FILE_DOWNLOADS);
 
-      FileIo.createDirectoryIfDoesNotExist(
+      createDirectoryIfDoesNotExist(
           REPOSITORY_GIT_FILE_DOWNLOADS_ACCOUNT.replace("{ACCOUNT_ID}", request.getAccountId()));
 
-      FileIo.createDirectoryIfDoesNotExist(
-          REPOSITORY_GIT_FILE_DOWNLOADS_BASE.replace("{ACCOUNT_ID}", request.getAccountId())
-              .replace("{CONNECTOR_ID}", request.getConnectorId()));
+      createDirectoryIfDoesNotExist(REPOSITORY_GIT_FILE_DOWNLOADS_BASE.replace("{ACCOUNT_ID}", request.getAccountId())
+                                        .replace("{CONNECTOR_ID}", request.getConnectorId()));
 
-      FileIo.createDirectoryIfDoesNotExist(
+      createDirectoryIfDoesNotExist(
           REPOSITORY_GIT_FILE_DOWNLOADS_REPO_BASE_DIR.replace("{ACCOUNT_ID}", request.getAccountId())
               .replace("{CONNECTOR_ID}", request.getConnectorId())
               .replace("{REPO_NAME}", getRepoName(request.getRepoUrl())));
 
-      FileIo.createDirectoryIfDoesNotExist(
+      createDirectoryIfDoesNotExist(
           REPOSITORY_GIT_FILE_DOWNLOADS_REPO_DIR.replace("{ACCOUNT_ID}", request.getAccountId())
               .replace("{CONNECTOR_ID}", request.getConnectorId())
               .replace("{REPO_NAME}", getRepoName(request.getRepoUrl()))
@@ -406,5 +477,14 @@ public class GitClientHelper {
         unhandled(gitDiffChangeType);
     }
     return null;
+  }
+
+  public static void validateURL(@NotNull String url) {
+    Matcher m = GIT_URL_NO_OWNER.matcher(url);
+    log.info("url==" + url);
+    if (!(m.find())) {
+      throw new InvalidRequestException(
+          format("Invalid repo url  %s,should start with either http:// , https:// , ssh:// or git@", url));
+    }
   }
 }

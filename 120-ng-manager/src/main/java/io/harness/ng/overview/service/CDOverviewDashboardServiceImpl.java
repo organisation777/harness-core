@@ -20,6 +20,7 @@ import static io.harness.ng.core.activityhistory.dto.TimeGroupType.HOUR;
 import io.harness.NGDateUtils;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cd.CDDashboardServiceHelper;
 import io.harness.cd.NGPipelineSummaryCDConstants;
 import io.harness.cd.NGServiceConstants;
 import io.harness.event.timeseries.processor.utils.DateUtils;
@@ -53,6 +54,8 @@ import io.harness.ng.overview.dto.EntityStatusDetails;
 import io.harness.ng.overview.dto.EnvBuildIdAndInstanceCountInfo;
 import io.harness.ng.overview.dto.EnvBuildIdAndInstanceCountInfoList;
 import io.harness.ng.overview.dto.EnvIdCountPair;
+import io.harness.ng.overview.dto.EnvironmentDeploymentInfo;
+import io.harness.ng.overview.dto.EnvironmentInfoByServiceId;
 import io.harness.ng.overview.dto.ExecutionDeployment;
 import io.harness.ng.overview.dto.ExecutionDeploymentInfo;
 import io.harness.ng.overview.dto.HealthDeploymentDashboard;
@@ -422,18 +425,18 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     long production = Collections.frequency(envType, EnvironmentType.Production.name());
     long nonProduction = Collections.frequency(envType, EnvironmentType.PreProduction.name());
 
-    List<io.harness.ng.overview.dto.DeploymentDateAndCount> totalDateAndCount = new ArrayList<>();
-    List<io.harness.ng.overview.dto.DeploymentDateAndCount> successDateAndCount = new ArrayList<>();
-    List<io.harness.ng.overview.dto.DeploymentDateAndCount> failedDateAndCount = new ArrayList<>();
+    List<DeploymentDateAndCount> totalDateAndCount = new ArrayList<>();
+    List<DeploymentDateAndCount> successDateAndCount = new ArrayList<>();
+    List<DeploymentDateAndCount> failedDateAndCount = new ArrayList<>();
     startDateCopy = startInterval;
     endDateCopy = endInterval;
 
     while (startDateCopy < endDateCopy) {
-      totalDateAndCount.add(io.harness.ng.overview.dto.DeploymentDateAndCount.builder()
+      totalDateAndCount.add(DeploymentDateAndCount.builder()
                                 .time(startDateCopy)
                                 .deployments(Deployment.builder().count(totalCountMap.get(startDateCopy)).build())
                                 .build());
-      successDateAndCount.add(io.harness.ng.overview.dto.DeploymentDateAndCount.builder()
+      successDateAndCount.add(DeploymentDateAndCount.builder()
                                   .time(startDateCopy)
                                   .deployments(Deployment.builder().count(successCountMap.get(startDateCopy)).build())
                                   .build());
@@ -811,13 +814,26 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
   }
 
   /**
-   * Sample Query for queryBuilderServiceDeployments():
-   * select status, time_entity, count(*) as records from (select service_status as status, service_startts as
-   * execution_time, time_bucket_gapfill(86400000, service_startts, 1620000000000, 1620864000000)as time_entity,
-   * pipeline_execution_summary_cd_id  from service_infra_info where pipeline_execution_summary_cd_id in (select id from
-   * pipeline_execution_summary_cd where accountid='accountId' and orgidentifier='orgId' and
-   * projectidentifier='projectId') and service_startts >= 1620000000000 and service_startts < 1620950400000) as
-   * innertable group by status, time_entity;
+   * select status, time_entity, count(*) as records from (
+   *    select service_status as status, service_startts as
+   *    execution_time, time_bucket_gapfill(86400000, service_startts, 1638403200000, 1654128000000) as time_entity,
+   *    pipeline_execution_summary_cd_id  from
+   *    service_infra_info as sii,
+   *    pipeline_execution_summary_cd as pesi
+   *    where pesi.accountid='ZVJHx0NyT9SciszZ0JQtFQ' and pesi.orgidentifier='PX' and
+   *    pesi.projectidentifier='horizonttdmetricscollector' and service_id='horzondeploymentmetrics'
+   *    and pesi.id=sii.pipeline_execution_summary_cd_id
+   *    and sii. service_startts >= 1652054400000 and sii.service_startts < 1654646400000
+   *    ) as service where status != ''
+   *    group by status, time_entity;
+   * @param accountIdentifier
+   * @param orgIdentifier
+   * @param projectIdentifier
+   * @param startTime
+   * @param endTime
+   * @param bucketSizeInDays
+   * @param serviceIdentifier
+   * @return
    */
   public String queryBuilderServiceDeployments(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       long startTime, long endTime, long bucketSizeInDays, String serviceIdentifier) {
@@ -827,20 +843,18 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
         "select status, time_entity, COUNT(*) as numberOfRecords from (select service_status as status, service_startts as execution_time, ";
     totalBuildSqlBuilder.append(selectQuery)
         .append(String.format(
-            "time_bucket_gapfill(%s, service_startts, %s, %s) as time_entity, pipeline_execution_summary_cd_id  from service_infra_info where pipeline_execution_summary_cd_id in ",
+            "time_bucket_gapfill(%s, service_startts, %s, %s) as time_entity, pipeline_execution_summary_cd_id  from service_infra_info as sii, pipeline_execution_summary_cd as pesi where ",
             bucketSizeInMS, startTime, endTime));
-    String selectPipelineIdQuery = "(select id from " + tableNameCD + " where ";
-    totalBuildSqlBuilder.append(selectPipelineIdQuery);
     if (accountIdentifier != null) {
-      totalBuildSqlBuilder.append(String.format("accountid='%s'", accountIdentifier));
+      totalBuildSqlBuilder.append(String.format("pesi.accountid='%s'", accountIdentifier));
     }
 
     if (orgIdentifier != null) {
-      totalBuildSqlBuilder.append(String.format(" and orgidentifier='%s'", orgIdentifier));
+      totalBuildSqlBuilder.append(String.format(" and pesi.orgidentifier='%s'", orgIdentifier));
     }
 
     if (projectIdentifier != null) {
-      totalBuildSqlBuilder.append(String.format(" and projectidentifier='%s'", projectIdentifier));
+      totalBuildSqlBuilder.append(String.format(" and pesi.projectidentifier='%s'", projectIdentifier));
     }
 
     if (serviceIdentifier != null) {
@@ -848,8 +862,9 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
     }
 
     totalBuildSqlBuilder.append(String.format(
-        ") and accountid='%s' and orgidentifier='%s' and projectidentifier='%s' and service_startts>=%s and service_startts<%s) as innertable group by status, time_entity;",
-        accountIdentifier, orgIdentifier, projectIdentifier, startTime, endTime));
+        " and pesi.id=sii.pipeline_execution_summary_cd_id and sii.service_startts>=%s and sii.service_startts<%s) as "
+            + "service where status != '' group by status, time_entity;",
+        startTime, endTime));
 
     return totalBuildSqlBuilder.toString();
   }
@@ -1633,5 +1648,57 @@ public class CDOverviewDashboardServiceImpl implements CDOverviewDashboardServic
         .createdAt(serviceEntity.getCreatedAt())
         .lastModifiedAt(serviceEntity.getLastModifiedAt())
         .build();
+  }
+
+  /*
+  Returns a list of last successfully buildId deployed to environments for given account+org+project+service
+*/
+  @Override
+  public io.harness.ng.overview.dto.EnvironmentDeploymentInfo getEnvironmentDeploymentDetailsByServiceId(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, String serviceId) {
+    String query =
+        queryBuilderDeploymentsWithArtifactsDetails(accountIdentifier, orgIdentifier, projectIdentifier, serviceId);
+    List<EnvironmentInfoByServiceId> environmentInfoByServiceIds = getEnvironmentWithArtifactDetails(query);
+    return EnvironmentDeploymentInfo.builder().environmentInfoByServiceId(environmentInfoByServiceIds).build();
+  }
+
+  public String queryBuilderDeploymentsWithArtifactsDetails(
+      String accountId, String orgId, String projectId, String serviceId) {
+    return "SELECT DISTINCT ON (env_id) env_name, env_id, artifact_image, tag, service_startts, "
+        + "service_endts, service_name, service_id from " + tableNameServiceAndInfra + " where "
+        + String.format("accountid='%s' and ", accountId) + String.format("orgidentifier='%s' and ", orgId)
+        + String.format("projectidentifier='%s' and ", projectId) + String.format("service_id='%s'", serviceId)
+        + " and service_status = 'SUCCESS' AND tag is not null order by env_id , service_endts DESC;";
+  }
+
+  public List<EnvironmentInfoByServiceId> getEnvironmentWithArtifactDetails(String queryStatus) {
+    int totalTries = 0;
+    List<EnvironmentInfoByServiceId> environmentInfoList = new ArrayList<>();
+    boolean successfulOperation = false;
+    while (!successfulOperation && totalTries <= MAX_RETRY_COUNT) {
+      ResultSet resultSet = null;
+      try (Connection connection = timeScaleDBService.getDBConnection();
+           PreparedStatement statement = connection.prepareStatement(queryStatus)) {
+        resultSet = statement.executeQuery();
+        while (resultSet != null && resultSet.next()) {
+          environmentInfoList.add(EnvironmentInfoByServiceId.builder()
+                                      .environmentId(resultSet.getString("env_id"))
+                                      .environmentName(resultSet.getString("env_name"))
+                                      .artifactImage(resultSet.getString("artifact_image"))
+                                      .tag(resultSet.getString("tag"))
+                                      .serviceId(resultSet.getString("service_id"))
+                                      .serviceName(resultSet.getString("service_name"))
+                                      .service_startTs(resultSet.getLong("service_startts"))
+                                      .service_endTs(resultSet.getLong("service_endts"))
+                                      .build());
+        }
+        successfulOperation = true;
+      } catch (SQLException ex) {
+        totalTries++;
+      } finally {
+        DBUtils.close(resultSet);
+      }
+    }
+    return environmentInfoList;
   }
 }

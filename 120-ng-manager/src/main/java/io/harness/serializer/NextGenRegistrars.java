@@ -11,9 +11,11 @@ import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.envGroup.beans.EnvironmentGroupWrapperConfig;
+import io.harness.cdng.infra.yaml.InfrastructureConfig;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
+import io.harness.ng.core.filestore.dto.FileStoreRequest;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.serializer.morphia.FeedbackMorphiaRegistrars;
 import io.harness.serializer.morphia.InvitesMorphiaRegistrar;
@@ -42,10 +44,10 @@ public class NextGenRegistrars {
           .addAll(CDNGRegistrars.kryoRegistrars)
           .addAll(OutboxEventRegistrars.kryoRegistrars)
           .addAll(NGFileServiceRegistrars.kryoRegistrars)
-          .addAll(NGAuditCommonsRegistrars.kryoRegistrars)
           .addAll(NGCommonsRegistrars.kryoRegistrars)
           .addAll(LicenseManagerRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
+          .addAll(CvNextGenBeansRegistrars.kryoRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -73,6 +75,7 @@ public class NextGenRegistrars {
           .add(FeedbackMorphiaRegistrars.class)
           .addAll(InstanceRegistrars.morphiaRegistrars)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
+          .addAll(SubscriptionRegistrars.morphiaRegistrars)
           .build();
 
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
@@ -107,6 +110,20 @@ public class NextGenRegistrars {
                    .availableAtAccountLevel(true)
                    .availableAtOrgLevel(true)
                    .clazz(EnvironmentGroupWrapperConfig.class)
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.FILES)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(true)
+                   .availableAtAccountLevel(true)
+                   .clazz(FileStoreRequest.class)
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.INFRASTRUCTURE)
+                   .availableAtProjectLevel(true)
+                   .availableAtAccountLevel(true)
+                   .availableAtOrgLevel(true)
+                   .clazz(InfrastructureConfig.class)
                    .build())
           .build();
 

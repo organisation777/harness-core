@@ -41,7 +41,9 @@ public interface TerraformBaseHelper {
   CliResponse executeTerraformDestroyStep(TerraformExecuteStepRequest terraformExecuteStepRequest)
       throws InterruptedException, IOException, TimeoutException;
 
-  String resolveBaseDir(String accountId, String provisionerId);
+  String resolveBaseDir(String accountId, String entityId);
+
+  String activityIdBasedBaseDir(String accountId, String entityId, String activityId);
 
   String resolveScriptDirectory(String workingDir, String scriptPath);
 
@@ -81,6 +83,9 @@ public interface TerraformBaseHelper {
   void performCleanupOfTfDirs(TerraformTaskNGParameters parameters, LogCallback logCallback);
 
   String getBaseDir(String entityId);
+
+  void configureCredentialsForModuleSource(TerraformTaskNGParameters taskParameters,
+      GitStoreDelegateConfig conFileFileGitStore, LogCallback logCallback) throws IOException;
 
   String uploadTfPlanJson(String accountId, String delegateId, String taskId, String entityId, String planName,
       String localFilePath) throws IOException;

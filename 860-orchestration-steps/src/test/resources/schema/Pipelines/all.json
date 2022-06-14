@@ -462,7 +462,9 @@
               "$ref": "#/definitions/Build"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
             }
           ]
         },
@@ -497,6 +499,9 @@
               "minLength": 1
             }
           ]
+        },
+        "projectName": {
+          "type": "string"
         },
         "repoName": {
           "type": "string"
@@ -632,6 +637,25 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "CustomStageConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StageInfoConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "execution"
+          ],
+          "properties": {
+            "execution": {
+              "$ref": "#/definitions/ExecutionElementConfig"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "Distribution": {
       "type": "object",
       "required": [
@@ -670,6 +694,18 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/VariationYamlSpec"
+          }
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ExcludeConfig": {
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           }
         }
       },
@@ -833,13 +869,13 @@
         {
           "type": "object",
           "required": [
-            "approvalMessage",
             "approvers",
             "includePipelineExecutionHistory"
           ],
           "properties": {
             "approvalMessage": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "approverInputs": {
               "type": "array",
@@ -865,18 +901,16 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
-    "HoldingScope": {
+    "HarnessForConfig": {
       "type": "object",
-      "required": [
-        "nodeSetupId",
-        "scope"
-      ],
       "properties": {
-        "nodeSetupId": {
-          "type": "string"
+        "iteration": {
+          "type": "integer",
+          "format": "int32"
         },
-        "scope": {
-          "type": "string"
+        "maxConcurrency": {
+          "type": "integer",
+          "format": "int32"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1158,82 +1192,6 @@
     },
     "JsonNode": {
       "type": "object",
-      "properties": {
-        "array": {
-          "type": "boolean"
-        },
-        "bigDecimal": {
-          "type": "boolean"
-        },
-        "bigInteger": {
-          "type": "boolean"
-        },
-        "binary": {
-          "type": "boolean"
-        },
-        "boolean": {
-          "type": "boolean"
-        },
-        "containerNode": {
-          "type": "boolean"
-        },
-        "double": {
-          "type": "boolean"
-        },
-        "float": {
-          "type": "boolean"
-        },
-        "floatingPointNumber": {
-          "type": "boolean"
-        },
-        "int": {
-          "type": "boolean"
-        },
-        "integralNumber": {
-          "type": "boolean"
-        },
-        "long": {
-          "type": "boolean"
-        },
-        "missingNode": {
-          "type": "boolean"
-        },
-        "nodeType": {
-          "type": "string",
-          "enum": [
-            "ARRAY",
-            "BINARY",
-            "BOOLEAN",
-            "MISSING",
-            "NULL",
-            "NUMBER",
-            "OBJECT",
-            "POJO",
-            "STRING"
-          ]
-        },
-        "null": {
-          "type": "boolean"
-        },
-        "number": {
-          "type": "boolean"
-        },
-        "object": {
-          "type": "boolean"
-        },
-        "pojo": {
-          "type": "boolean"
-        },
-        "short": {
-          "type": "boolean"
-        },
-        "textual": {
-          "type": "boolean"
-        },
-        "valueNode": {
-          "type": "boolean"
-        }
-      },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "KeyValuesCriteriaSpec": {
@@ -1282,8 +1240,7 @@
           ]
         },
         "memory": {
-          "type": "string",
-          "pattern": "^(([0-9]*[.])?[0-9]+)([GM]i?)|<\\+input>$"
+          "type": "string"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1351,6 +1308,34 @@
           }
         }
       ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "MatrixConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/MatrixConfigInterface"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "exclude": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ExcludeConfig"
+              }
+            },
+            "maxConcurrency": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "MatrixConfigInterface": {
+      "type": "object",
+      "discriminator": "type",
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "NGProperties": {
@@ -1752,8 +1737,7 @@
       "type": "object",
       "required": [
         "identifier",
-        "name",
-        "stages"
+        "name"
       ],
       "properties": {
         "allowStageExecutions": {
@@ -1816,6 +1800,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "template": {
+          "$ref": "#/definitions/TemplateLinkConfig"
         },
         "timeout": {
           "type": "string",
@@ -2123,7 +2110,13 @@
               ]
             },
             "holdingScope": {
-              "$ref": "#/definitions/HoldingScope"
+              "type": "string",
+              "enum": [
+                "PLAN",
+                "PIPELINE",
+                "STAGE",
+                "STEP_GROUP"
+              ]
             },
             "name": {
               "type": "string"
@@ -2295,7 +2288,8 @@
           "type": "object",
           "required": [
             "connectorRef",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -2362,7 +2356,8 @@
           "required": [
             "connectorRef",
             "ticketNumber",
-            "ticketType"
+            "ticketType",
+            "useServiceNowTemplate"
           ],
           "properties": {
             "connectorRef": {
@@ -2748,6 +2743,9 @@
               "type": "string",
               "pattern": "^[a-zA-Z_][-0-9a-zA-Z_\\s]{0,63}$"
             },
+            "strategy": {
+              "$ref": "#/definitions/StrategyConfig"
+            },
             "template": {
               "$ref": "#/definitions/TemplateLinkConfig"
             }
@@ -2762,6 +2760,21 @@
             "type"
           ],
           "properties": {
+            "delegateSelectors": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
             "description": {
               "type": "string"
             },
@@ -2780,6 +2793,9 @@
               "pattern": "^[a-zA-Z_][-0-9a-zA-Z_\\s]{0,63}$"
             },
             "spec": { },
+            "strategy": {
+              "$ref": "#/definitions/StrategyConfig"
+            },
             "tags": {
               "type": "object",
               "additionalProperties": {
@@ -2823,6 +2839,22 @@
                 "properties": {
                   "spec": {
                     "$ref": "#/definitions/ApprovalStageConfig"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "Custom"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/definitions/CustomStageConfig"
                   }
                 }
               }
@@ -3239,6 +3271,37 @@
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "StrategyConfig": {
+      "type": "object",
+      "properties": {
+        "for": {
+          "$ref": "#/definitions/HarnessForConfig"
+        },
+        "matrix": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/MatrixConfig"
+            }
+          ]
+        },
+        "parallelism": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "required": [
+                "parallelism"
+              ]
+            }
+          ]
+        }
+      ]
     },
     "StringNGVariable": {
       "allOf": [

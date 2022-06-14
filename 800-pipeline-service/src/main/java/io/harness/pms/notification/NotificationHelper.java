@@ -29,11 +29,9 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
-import io.harness.pms.pipeline.PipelineEntity;
-import io.harness.pms.pipeline.PipelineEntityUtils;
+import io.harness.pms.helpers.PipelineExpressionHelper;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
-import io.harness.pms.plan.execution.service.PMSExecutionService;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.pms.yaml.YamlUtils;
 
@@ -49,13 +47,13 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Slf4j
 public class NotificationHelper {
-  @Inject private PMSExecutionService pmsExecutionService;
   @Inject NotificationClient notificationClient;
   @Inject PlanExecutionService planExecutionService;
   @Inject PipelineServiceConfiguration pipelineServiceConfiguration;
   @Inject PlanExecutionMetadataService planExecutionMetadataService;
   @Inject PmsEngineExpressionService pmsEngineExpressionService;
   @Inject PMSPipelineService pmsPipelineService;
+  @Inject PipelineExpressionHelper pipelineExpressionHelper;
 
   public Optional<PipelineEventType> getEventTypeForStage(NodeExecution nodeExecution) {
     if (!OrchestrationUtils.isStageNode(nodeExecution)) {
@@ -99,7 +97,7 @@ public class NotificationHelper {
       sendNotificationInternal(notificationRules, pipelineEventType, identifier, accountId,
           constructTemplateData(
               ambiance, pipelineEventType, nodeExecution, identifier, updatedAt, orgIdentifier, projectIdentifier),
-          orgIdentifier, projectIdentifier);
+          orgIdentifier, projectIdentifier, ambiance);
     } catch (Exception ex) {
       log.error("Exception occurred in sendNotificationInternal", ex);
     }
@@ -107,7 +105,7 @@ public class NotificationHelper {
 
   private void sendNotificationInternal(List<NotificationRules> notificationRulesList,
       PipelineEventType pipelineEventType, String identifier, String accountIdentifier,
-      Map<String, String> notificationContent, String orgIdentifier, String projectIdentifier) {
+      Map<String, String> notificationContent, String orgIdentifier, String projectIdentifier, Ambiance ambiance) {
     for (NotificationRules notificationRules : notificationRulesList) {
       if (!notificationRules.isEnabled()) {
         continue;
@@ -118,7 +116,7 @@ public class NotificationHelper {
         NotificationChannelWrapper wrapper = notificationRules.getNotificationChannelWrapper().getValue();
         String templateId = getNotificationTemplate(pipelineEventType.getLevel(), wrapper.getType());
         NotificationChannel channel = wrapper.getNotificationChannel().toNotificationChannel(
-            accountIdentifier, orgIdentifier, projectIdentifier, templateId, notificationContent);
+            accountIdentifier, orgIdentifier, projectIdentifier, templateId, notificationContent, ambiance);
         log.info("Sending notification via notification-client");
         try {
           notificationClient.sendNotificationAsync(channel);
@@ -161,21 +159,7 @@ public class NotificationHelper {
   }
 
   public String generateUrl(Ambiance ambiance) {
-    String accountId = AmbianceUtils.getAccountId(ambiance);
-    String orgId = AmbianceUtils.getOrgIdentifier(ambiance);
-    String projectId = AmbianceUtils.getProjectIdentifier(ambiance);
-    String moduleName = "cd";
-    Optional<PipelineEntity> pipelineEntity =
-        pmsPipelineService.get(accountId, orgId, projectId, ambiance.getMetadata().getPipelineIdentifier(), false);
-
-    if (!EmptyPredicate.isEmpty(ambiance.getMetadata().getModuleType())) {
-      moduleName = ambiance.getMetadata().getModuleType();
-    } else if (pipelineEntity.isPresent()) {
-      moduleName = PipelineEntityUtils.getModuleNameFromPipelineEntity(pipelineEntity.get(), "cd");
-    }
-    return String.format("%s/account/%s/%s/orgs/%s/projects/%s/pipelines/%s/executions/%s/pipeline",
-        pipelineServiceConfiguration.getPipelineServiceBaseUrl(), accountId, moduleName, orgId, projectId,
-        ambiance.getMetadata().getPipelineIdentifier(), ambiance.getPlanExecutionId());
+    return pipelineExpressionHelper.generateUrl(ambiance);
   }
 
   String obtainYaml(String planExecutionId) {

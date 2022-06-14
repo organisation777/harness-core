@@ -10,6 +10,7 @@ package io.harness.gitsync.interceptor;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.gitsync.sdk.GitSyncApiConstants;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,4 +53,15 @@ public class GitEntityCreateInfoDTO {
   @Parameter(description = GitSyncApiConstants.DEFAULT_BRANCH_PARAM_MESSAGE)
   @QueryParam(GitSyncApiConstants.BASE_BRANCH)
   String baseBranch;
+
+  // query parameters for simplified git experience
+  @Parameter(description = GitSyncApiConstants.GIT_CONNECTOR_REF_PARAM_MESSAGE)
+  @QueryParam(GitSyncApiConstants.CONNECTOR_REF)
+  String connectorRef;
+  @Parameter(description = GitSyncApiConstants.STORE_TYPE_PARAM_MESSAGE)
+  @QueryParam(GitSyncApiConstants.STORE_TYPE)
+  StoreType storeType;
+  @Parameter(description = GitSyncApiConstants.REPO_NAME_PARAM_MESSAGE)
+  @QueryParam(GitSyncApiConstants.REPO_NAME)
+  String repoName;
 }

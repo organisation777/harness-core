@@ -237,6 +237,7 @@ import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ARTIFACT_ID;
 import static software.wings.utils.WingsTestConstants.ARTIFACT_STREAM_ID;
 import static software.wings.utils.WingsTestConstants.ARTIFACT_STREAM_ID_ARTIFACTORY;
+import static software.wings.utils.WingsTestConstants.BUILD_NO;
 import static software.wings.utils.WingsTestConstants.COMPUTE_PROVIDER_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID_CHANGED;
@@ -276,7 +277,6 @@ import static org.assertj.core.groups.Tuple.tuple;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -288,6 +288,7 @@ import static org.mockito.Mockito.when;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.ArtifactMetadata;
 import io.harness.beans.ExecutionStatus;
 import io.harness.beans.FeatureName;
 import io.harness.beans.OrchestrationWorkflowType;
@@ -352,8 +353,11 @@ import software.wings.beans.WorkflowCategoryStepsMeta;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.WorkflowPhase;
 import software.wings.beans.artifact.Artifact;
+import software.wings.beans.artifact.ArtifactInput;
 import software.wings.beans.artifact.ArtifactStream;
+import software.wings.beans.artifact.ArtifactStreamSummary;
 import software.wings.beans.artifact.ArtifactStreamType;
+import software.wings.beans.artifact.ArtifactSummary;
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.DockerArtifactStream;
 import software.wings.beans.artifact.NexusArtifactStream;
@@ -425,7 +429,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscaler;
+import io.fabric8.kubernetes.api.model.autoscaling.v1.HorizontalPodAutoscaler;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -519,10 +523,10 @@ public class WorkflowServiceTest extends WingsBaseTest {
     when(limitCheckerFactory.getInstance(Mockito.any(io.harness.limits.Action.class)))
         .thenReturn(new MockChecker(true, ActionType.CREATE_WORKFLOW));
 
-    Mockito.doNothing().when(yamlPushService).pushYamlChangeSet(anyString(), any(), any(), any(), anyBoolean());
+    Mockito.doNothing().when(yamlPushService).pushYamlChangeSet(any(), any(), any(), any(), anyBoolean());
 
     when(appService.get(APP_ID)).thenReturn(application);
-    when(accountService.get(anyString())).thenReturn(account);
+    when(accountService.get(any())).thenReturn(account);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(workflowExecutionService.workflowExecutionsRunning(WorkflowType.ORCHESTRATION, APP_ID, WORKFLOW_ID))
         .thenReturn(false);
@@ -557,7 +561,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
                         .infrastructure(PhysicalInfra.builder().build())
                         .cloudProviderType(CloudProviderType.PHYSICAL_DATA_CENTER)
                         .build());
-    when(userGroupService.getDefaultUserGroup(Mockito.anyString()))
+    when(userGroupService.getDefaultUserGroup(Mockito.any()))
         .thenReturn(UserGroup.builder().uuid("some-user-group-id").build());
     when(featureFlagService.isEnabled(eq(FeatureName.DEFAULT_ARTIFACT), any())).thenReturn(true);
     Role role = aRole()
@@ -573,7 +577,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
     when(notificationSetupService.listNotificationGroups(
              application.getAccountId(), RoleType.ACCOUNT_ADMIN.getDisplayName()))
         .thenReturn(notificationGroups);
-    when(personalizationService.fetch(anyString(), anyString(), any())).thenReturn(null);
+    when(personalizationService.fetch(any(), any(), any())).thenReturn(null);
   }
 
   @Test
@@ -1813,7 +1817,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
     Workflow workflow3 = workflowService.readWorkflow(workflow1.getAppId(), workflow1.getUuid());
     assertThat(workflow3).isNotNull().hasFieldOrPropertyWithValue("envId", ENV_ID_CHANGED);
     OrchestrationWorkflow orchestrationWorkflow = workflow3.getOrchestrationWorkflow();
-    assertThat(orchestrationWorkflow.isValid()).isTrue();
+    assertThat(orchestrationWorkflow.isValid()).isFalse();
 
     List<WorkflowPhase> workflowPhases =
         ((CanaryOrchestrationWorkflow) workflow3.getOrchestrationWorkflow()).getWorkflowPhases();
@@ -1821,7 +1825,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
 
     WorkflowPhase workflowPhase = workflowPhases.get(0);
     assertThat(workflowPhase).isNotNull().hasFieldOrPropertyWithValue("name", PHASE_NAME_PREFIX + 1);
-    assertThat(workflowPhase.getInfraDefinitionId()).isEqualTo(INFRA_DEFINITION_ID);
+    assertThat(workflowPhase.getInfraDefinitionId()).isNull();
   }
 
   @Test
@@ -3877,7 +3881,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
   public void shouldGetDeploymentMetadataWithDeploymentFFTurnOn() {
     Workflow workflow = createLinkedWorkflow(TemplateType.SSH);
     when(appService.get(APP_ID)).thenReturn(application);
-    when(accountService.get(anyString())).thenReturn(account);
+    when(accountService.get(any())).thenReturn(account);
     assertThat(workflowService.fetchDeploymentMetadata(APP_ID, workflow, null, null, null).getArtifactVariables())
         .isNotNull();
   }
@@ -4486,7 +4490,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
             ServiceCommand.Builder.aServiceCommand()
                 .withCommand(Command.Builder.aCommand().withName("MyCommand").build())
                 .build()));
-    when(serviceResourceService.exist(anyString(), anyString())).thenReturn(true);
+    when(serviceResourceService.exist(any(), any())).thenReturn(true);
     WorkflowCategorySteps workflowCategorySteps =
         workflowService.calculateCategorySteps(workflow, user.getUuid(), phaseId, DEPLOY_SERVICE.name(), 0, false);
     assertThat(workflowCategorySteps.getCategories()).isNotEmpty();
@@ -4561,12 +4565,12 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Owner(developers = AADITI)
   @Category(UnitTests.class)
   public void categoriesForK8SWorkflow() throws IllegalArgumentException {
-    when(serviceResourceService.getDeploymentType(any(), any(), anyString())).thenReturn(KUBERNETES);
+    when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(KUBERNETES);
     Workflow workflow = workflowService.createWorkflow(constructK8SWorkflow());
     String phaseId =
         ((CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow()).getWorkflowPhases().get(0).getUuid();
     assertThat(workflow).isNotNull().hasFieldOrProperty("uuid").hasFieldOrPropertyWithValue("appId", APP_ID);
-    when(serviceResourceService.exist(anyString(), anyString())).thenReturn(true);
+    when(serviceResourceService.exist(any(), any())).thenReturn(true);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(featureFlagService.isNotEnabled(FeatureName.RANCHER_SUPPORT, ACCOUNT_ID)).thenReturn(true);
     WorkflowCategorySteps workflowCategorySteps =
@@ -4590,12 +4594,12 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Owner(developers = SHUBHAM_MAHESHWARI)
   @Category(UnitTests.class)
   public void categoriesForRancherK8SWorkflow() throws IllegalArgumentException {
-    when(serviceResourceService.getDeploymentType(any(), any(), anyString())).thenReturn(KUBERNETES);
+    when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(KUBERNETES);
     Workflow workflow = workflowService.createWorkflow(constructK8SWorkflow());
     String phaseId =
         ((CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow()).getWorkflowPhases().get(0).getUuid();
     assertThat(workflow).isNotNull().hasFieldOrProperty("uuid").hasFieldOrPropertyWithValue("appId", APP_ID);
-    when(serviceResourceService.exist(anyString(), anyString())).thenReturn(true);
+    when(serviceResourceService.exist(any(), any())).thenReturn(true);
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(featureFlagService.isNotEnabled(FeatureName.RANCHER_SUPPORT, ACCOUNT_ID)).thenReturn(false);
     WorkflowCategorySteps workflowCategorySteps =
@@ -4681,7 +4685,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
     String phaseId =
         ((CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow()).getWorkflowPhases().get(0).getUuid();
     assertThat(workflow).isNotNull().hasFieldOrProperty("uuid").hasFieldOrPropertyWithValue("appId", APP_ID);
-    when(serviceResourceService.exist(anyString(), anyString())).thenReturn(true);
+    when(serviceResourceService.exist(any(), any())).thenReturn(true);
     WorkflowCategorySteps workflowCategorySteps =
         workflowService.calculateCategorySteps(workflow, user.getUuid(), phaseId, K8S_PHASE_STEP.name(), 0, false);
     assertThat(workflowCategorySteps.getCategories()).isNotEmpty();
@@ -4857,7 +4861,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
     favorites.add(StepType.AWS_NODE_SELECT.getType());
     LinkedList<String> recents = new LinkedList<>();
     recents.add(StepType.EMAIL.getType());
-    when(personalizationService.fetch(anyString(), anyString(), any()))
+    when(personalizationService.fetch(any(), any(), any()))
         .thenReturn(Personalization.builder()
                         .steps(PersonalizationSteps.builder().favorites(favorites).recent(recents).build())
                         .build());
@@ -4930,7 +4934,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
   public void testK8sV2BGWorkflowHasRouteUpdateStepInRollbackPhase() {
     Workflow workflow = constructBlueGreenWorkflow();
     when(infrastructureDefinitionService.get(APP_ID, INFRA_DEFINITION_ID)).thenReturn(constructGKInfraDef());
-    when(infrastructureDefinitionService.getInfraDefById(anyString(), anyString())).thenReturn(constructGKInfraDef());
+    when(infrastructureDefinitionService.getInfraDefById(any(), any())).thenReturn(constructGKInfraDef());
 
     K8sV2WorkflowFactory k8sV2WorkflowFactory = mock(K8sV2WorkflowFactory.class);
     when(abstractWorkflowFactory.getWorkflowCreatorFactory(AbstractWorkflowFactory.Category.K8S_V2))
@@ -5203,7 +5207,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
     executionArgs.setArtifacts(asList(anArtifact()
                                           .withUuid("art1")
                                           .withArtifactStreamId(ARTIFACT_STREAM_ID)
-                                          .withMetadata(Collections.singletonMap("buildNo", "1"))
+                                          .withMetadata(new ArtifactMetadata(Collections.singletonMap("buildNo", "1")))
                                           .build(),
         anArtifact().withUuid("art2").build(), anArtifact().withUuid("art3").build()));
     WorkflowExecution workflowExecution = WorkflowExecution.builder().executionArgs(executionArgs).build();
@@ -5236,15 +5240,15 @@ public class WorkflowServiceTest extends WingsBaseTest {
     Query query = mock(Query.class);
     when(wingsPersistence.createQuery(Workflow.class)).thenReturn(query);
     when(wingsPersistence.createQuery(StateMachine.class)).thenReturn(query);
-    when(wingsPersistence.delete(eq(Workflow.class), anyString(), anyString())).thenReturn(true);
-    when(query.filter(anyString(), anyString())).thenReturn(query);
-    when(query.project(anyString(), anyBoolean())).thenReturn(query);
+    when(wingsPersistence.delete(eq(Workflow.class), any(), any())).thenReturn(true);
+    when(query.filter(any(), any())).thenReturn(query);
+    when(query.project(any(), anyBoolean())).thenReturn(query);
     Workflow workflow = aWorkflow().uuid(UUID).accountId(ACCOUNT_ID).appId(APP_ID).build();
     when(query.asList()).thenReturn(Collections.singletonList(workflow));
     workflowService.pruneByApplication(APP_ID);
     verify(auditServiceHelper).reportDeleteForAuditing(APP_ID, workflow);
     verify(harnessTagService).pruneTagLinks(ACCOUNT_ID, UUID);
-    verify(wingsPersistence).delete(eq(Workflow.class), anyString(), anyString());
+    verify(wingsPersistence).delete(eq(Workflow.class), any(), any());
     verify(wingsPersistence).delete(any(Query.class));
     verify(wingsPersistence).createQuery(StateMachine.class);
   }
@@ -5281,9 +5285,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpdateUserGroupsFromApprovalStep() {
     when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(DeploymentType.SSH);
-    doNothing()
-        .when(userGroupService)
-        .addParentsReference(anyString(), anyString(), anyString(), anyString(), anyString());
+    doNothing().when(userGroupService).addParentsReference(any(), any(), any(), any(), any());
     Workflow workflow1 = constructCanaryWithApprovalStep();
 
     Workflow workflow2 = workflowService.createWorkflow(workflow1);
@@ -5317,9 +5319,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpdateUserGroupsFromPhaseApprovalStep() {
     when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(DeploymentType.SSH);
-    doNothing()
-        .when(userGroupService)
-        .addParentsReference(anyString(), anyString(), anyString(), anyString(), anyString());
+    doNothing().when(userGroupService).addParentsReference(any(), any(), any(), any(), any());
     Workflow workflow1 = constructCanaryWithApprovalPhaseStep();
 
     Workflow workflow2 = workflowService.createWorkflow(workflow1);
@@ -5340,9 +5340,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldRemoveUserGroupsFromPhaseApprovalStep() {
     when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(DeploymentType.SSH);
-    doNothing()
-        .when(userGroupService)
-        .addParentsReference(anyString(), anyString(), anyString(), anyString(), anyString());
+    doNothing().when(userGroupService).addParentsReference(any(), any(), any(), any(), any());
     Workflow workflow1 = constructCanaryWithApprovalPhaseStep();
 
     Workflow workflow2 = workflowService.createWorkflow(workflow1);
@@ -5366,9 +5364,7 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldRemoveUserGroupsWhenWorkflowDeleted() {
     when(serviceResourceService.getDeploymentType(any(), any(), any())).thenReturn(DeploymentType.SSH);
-    doNothing()
-        .when(userGroupService)
-        .addParentsReference(anyString(), anyString(), anyString(), anyString(), anyString());
+    doNothing().when(userGroupService).addParentsReference(any(), any(), any(), any(), any());
     Workflow workflow1 = constructCanaryWithApprovalPhaseStep();
 
     Workflow workflow2 = workflowService.createWorkflow(workflow1);
@@ -5406,5 +5402,45 @@ public class WorkflowServiceTest extends WingsBaseTest {
         (BasicOrchestrationWorkflow) workflow2.getOrchestrationWorkflow();
     assertThat(orchestrationWorkflow.getFailureStrategies()).isEmpty();
     assertThat(orchestrationWorkflow.getNotificationRules()).isEmpty();
+  }
+
+  @Test
+  @Owner(developers = INDER)
+  @Category(UnitTests.class)
+  public void shouldAddArtifactInputToArtifactVariables() {
+    ArtifactVariable artifactVariable1 =
+        ArtifactVariable.builder()
+            .artifactStreamSummaries(singletonList(
+                ArtifactStreamSummary.builder()
+                    .defaultArtifact(
+                        ArtifactSummary.builder().buildNo(BUILD_NO).artifactStreamId(ARTIFACT_STREAM_ID).build())
+                    .build()))
+            .build();
+    ArtifactVariable artifactVariable2 =
+        ArtifactVariable.builder().name("docker").entityType(SERVICE).entityId(SERVICE_ID).build();
+
+    ArtifactVariable wfExecutionArtifactVariable =
+        ArtifactVariable.builder()
+            .name("docker")
+            .entityType(SERVICE)
+            .entityId(SERVICE_ID)
+            .artifactInput(
+                ArtifactInput.builder().buildNo(BUILD_NO + "1").artifactStreamId(ARTIFACT_STREAM_ID + "1").build())
+            .build();
+
+    WorkflowExecution workflowExecution =
+        WorkflowExecution.builder()
+            .executionArgs(ExecutionArgs.builder().artifactVariables(asList(wfExecutionArtifactVariable)).build())
+            .build();
+
+    WorkflowServiceImpl workflowServiceImpl = (WorkflowServiceImpl) workflowService;
+    workflowServiceImpl.addArtifactInputToArtifactVariables(
+        asList(artifactVariable1, artifactVariable2), workflowExecution);
+    assertThat(artifactVariable1.getArtifactInput()).isNotNull();
+    assertThat(artifactVariable1.getArtifactInput())
+        .isEqualTo(ArtifactInput.builder().buildNo(BUILD_NO).artifactStreamId(ARTIFACT_STREAM_ID).build());
+    assertThat(artifactVariable2.getArtifactInput()).isNotNull();
+    assertThat(artifactVariable2.getArtifactInput())
+        .isEqualTo(ArtifactInput.builder().buildNo(BUILD_NO + "1").artifactStreamId(ARTIFACT_STREAM_ID + "1").build());
   }
 }

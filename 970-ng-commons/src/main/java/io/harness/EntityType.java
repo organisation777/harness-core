@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 // todo(abhinav): refactor/adapt this according to needs later depending on how service registration comes in
 // one more enum might come in here for product types.
 public enum EntityType {
+  @JsonProperty(EntityTypeConstants.GITOPS_CREATE_PR)
+  GITOPS_CREATE_PR(
+      ModuleType.CD, EntityTypeConstants.GITOPS_CREATE_PR, IdentifierRef.class, EntityYamlRootNames.GITOPS_CREATE_PR),
   @JsonProperty(EntityTypeConstants.PROJECTS)
   PROJECTS(ModuleType.CORE, EntityTypeConstants.PROJECTS, IdentifierRef.class, EntityYamlRootNames.PROJECT),
   @JsonProperty(EntityTypeConstants.PIPELINES)
@@ -105,6 +108,8 @@ public enum EntityType {
   CONNECTORS(ModuleType.CORE, EntityTypeConstants.CONNECTORS, IdentifierRef.class, EntityYamlRootNames.CONNECTOR),
   @JsonProperty(EntityTypeConstants.SECRETS)
   SECRETS(ModuleType.CORE, EntityTypeConstants.SECRETS, IdentifierRef.class, EntityYamlRootNames.SECRET),
+  @JsonProperty(EntityTypeConstants.FILES)
+  FILES(ModuleType.CORE, EntityTypeConstants.FILES, IdentifierRef.class, EntityYamlRootNames.FILE),
   @JsonProperty(EntityTypeConstants.SERVICE)
   SERVICE(ModuleType.CORE, EntityTypeConstants.SERVICE, IdentifierRef.class, EntityYamlRootNames.SERVICE),
   @JsonProperty(EntityTypeConstants.ENVIRONMENT)
@@ -133,6 +138,12 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.INTEGRATION_STEPS)
   INTEGRATION_STEPS(
       ModuleType.CI, EntityTypeConstants.INTEGRATION_STEPS, IdentifierRef.class, EntityYamlRootNames.INTEGRATION_STEP),
+  @JsonProperty(EntityTypeConstants.SECURITY_STAGE)
+  SECURITY_STAGE(
+      ModuleType.STO, EntityTypeConstants.SECURITY_STAGE, IdentifierRef.class, EntityYamlRootNames.SECURITY_STAGE),
+  @JsonProperty(EntityTypeConstants.SECURITY_STEPS)
+  SECURITY_STEPS(
+      ModuleType.STO, EntityTypeConstants.SECURITY_STEPS, IdentifierRef.class, EntityYamlRootNames.SECURITY_STEP),
   @JsonProperty(EntityTypeConstants.CV_KUBERNETES_ACTIVITY_SOURCE)
   CV_KUBERNETES_ACTIVITY_SOURCE(ModuleType.CV, EntityTypeConstants.CV_KUBERNETES_ACTIVITY_SOURCE, IdentifierRef.class,
       EntityYamlRootNames.CV_KUBERNETES_ACTIVITY_SOURCE),
@@ -210,14 +221,39 @@ public enum EntityType {
       EntityYamlRootNames.BUILD_AND_PUSH_ECR),
   @JsonProperty(EntityTypeConstants.BUILD_AND_PUSH_DOCKER_REGISTRY)
   BUILD_AND_PUSH_DOCKER_REGISTRY(ModuleType.CI, EntityTypeConstants.BUILD_AND_PUSH_DOCKER_REGISTRY, IdentifierRef.class,
-      EntityYamlRootNames.BUILD_AND_PUSH_DOCKER_REGISTRY);
+      EntityYamlRootNames.BUILD_AND_PUSH_DOCKER_REGISTRY),
+  @JsonProperty(EntityTypeConstants.CLOUDFORMATION_CREATE_STACK_STEP)
+  CLOUDFORMATION_CREATE_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_CREATE_STACK_STEP,
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_CREATE_STACK_STEP),
+  @JsonProperty(EntityTypeConstants.CLOUDFORMATION_DELETE_STACK_STEP)
+  CLOUDFORMATION_DELETE_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_DELETE_STACK_STEP,
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_DELETE_STACK_STEP),
+  @JsonProperty(EntityTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY)
+  SERVERLESS_AWS_LAMBDA_DEPLOY_STEP(ModuleType.CD, EntityTypeConstants.SERVERLESS_AWS_LAMBDA_DEPLOY,
+      IdentifierRef.class, EntityYamlRootNames.SERVERLESS_AWS_LAMBDA_DEPLOY),
+  @JsonProperty(EntityTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK)
+  SERVERLESS_AWS_LAMBDA_ROLLBACK_STEP(ModuleType.CD, EntityTypeConstants.SERVERLESS_AWS_LAMBDA_ROLLBACK,
+      IdentifierRef.class, EntityYamlRootNames.SERVERLESS_AWS_LAMBDA_ROLLBACK),
+  @JsonProperty(EntityTypeConstants.CUSTOM_STAGE)
+  CUSTOM_STAGE(ModuleType.PMS, EntityTypeConstants.CUSTOM_STAGE, IdentifierRef.class, EntityYamlRootNames.CUSTOM_STAGE),
+  @JsonProperty(EntityTypeConstants.CLOUDFORMATION_ROLLBACK_STACK_STEP)
+  CLOUDFORMATION_ROLLBACK_STACK_STEP(ModuleType.CD, EntityTypeConstants.CLOUDFORMATION_ROLLBACK_STACK_STEP,
+      IdentifierRef.class, EntityYamlRootNames.CLOUDFORMATION_ROLLBACK_STACK_STEP),
+  @JsonProperty(EntityTypeConstants.INFRASTRUCTURE)
+  INFRASTRUCTURE(
+      ModuleType.CORE, EntityTypeConstants.INFRASTRUCTURE, IdentifierRef.class, EntityYamlRootNames.INFRASTRUCTURE),
+  @JsonProperty(EntityTypeConstants.COMMAND)
+  COMMAND_STEP(ModuleType.CD, EntityTypeConstants.COMMAND, IdentifierRef.class, EntityYamlRootNames.COMMAND),
+  @JsonProperty(EntityTypeConstants.STRATEGY_NODE)
+  STRATEGY_NODE(
+      ModuleType.PMS, EntityTypeConstants.STRATEGY_NODE, IdentifierRef.class, EntityYamlRootNames.STRATEGY_NODE);
 
   private final ModuleType moduleType;
   String yamlName;
   List<String> yamlRootElementString;
   Class<? extends EntityReference> entityReferenceClass;
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static EntityType fromString(@JsonProperty("type") String entityType) {
     for (EntityType entityTypeEnum : EntityType.values()) {
       if (entityTypeEnum.getYamlName().equalsIgnoreCase(entityType)) {

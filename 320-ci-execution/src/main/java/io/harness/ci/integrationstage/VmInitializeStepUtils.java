@@ -7,11 +7,12 @@
 
 package io.harness.ci.integrationstage;
 
+import static io.harness.beans.serializer.RunTimeInputHandler.resolveOSType;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
+import static io.harness.common.CIExecutionConstants.OSX_STEP_MOUNT_PATH;
 import static io.harness.common.CIExecutionConstants.SHARED_VOLUME_PREFIX;
 import static io.harness.common.CIExecutionConstants.STEP_MOUNT_PATH;
 import static io.harness.common.CIExecutionConstants.STEP_VOLUME;
-import static io.harness.common.CIExecutionConstants.STEP_WORK_DIR;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
@@ -30,6 +31,11 @@ import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
+import io.harness.beans.yaml.extended.infrastrucutre.OSType;
+import io.harness.beans.yaml.extended.infrastrucutre.VmInfraSpec;
+import io.harness.beans.yaml.extended.infrastrucutre.VmInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.VmPoolYaml;
 import io.harness.ci.utils.ValidationUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
@@ -38,7 +44,10 @@ import io.harness.plancreator.execution.ExecutionWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
 import io.harness.plancreator.steps.StepElementConfig;
+import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.stateutils.buildstate.PluginSettingUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -52,11 +61,13 @@ import org.apache.commons.lang3.StringUtils;
 @Singleton
 @Slf4j
 @OwnedBy(HarnessTeam.CI)
+@Deprecated
 public class VmInitializeStepUtils {
   @Inject CIFeatureFlagService featureFlagService;
 
   public BuildJobEnvInfo getInitializeStepInfoBuilder(StageElementConfig stageElementConfig,
-      CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps, String accountId) {
+      Infrastructure infrastructure, CIExecutionArgs ciExecutionArgs, List<ExecutionWrapperConfig> steps,
+      Ambiance ambiance) {
     ArrayList<String> connectorIdentifiers = new ArrayList<>();
     for (ExecutionWrapperConfig executionWrapper : steps) {
       if (executionWrapper.getStep() != null && !executionWrapper.getStep().isNull()) {
@@ -86,7 +97,7 @@ public class VmInitializeStepUtils {
       }
     }
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    validateStageConfig(integrationStageConfig, accountId);
+    validateStageConfig(integrationStageConfig, AmbianceUtils.getAccountId(ambiance));
     List<DependencyElement> serviceDependencies = null;
     if (integrationStageConfig.getServiceDependencies() != null
         && integrationStageConfig.getServiceDependencies().getValue() != null) {
@@ -94,15 +105,41 @@ public class VmInitializeStepUtils {
       ValidationUtils.validateVmInfraDependencies(serviceDependencies);
     }
 
-    Map<String, String> volumeToMountPath = getVolumeToMountPath(integrationStageConfig.getSharedPaths());
+    OSType os = getOS(infrastructure);
+    Map<String, String> volumeToMountPath = getVolumeToMountPath(integrationStageConfig.getSharedPaths(), os);
     return VmBuildJobInfo.builder()
         .ciExecutionArgs(ciExecutionArgs)
-        .workDir(STEP_WORK_DIR)
+        .workDir(getStepMountPath(os))
         .connectorRefs(connectorIdentifiers)
         .stageVars(stageElementConfig.getVariables())
         .volToMountPath(volumeToMountPath)
         .serviceDependencies(serviceDependencies)
         .build();
+  }
+
+  private String getStepMountPath(OSType os) {
+    if (os.equals(OSType.MacOS)) {
+      return OSX_STEP_MOUNT_PATH;
+    }
+    return STEP_MOUNT_PATH;
+  }
+
+  private OSType getOS(Infrastructure infrastructure) {
+    if (infrastructure.getType() != Infrastructure.Type.VM) {
+      throw new CIStageExecutionException(format("Invalid infrastructure type: %s", infrastructure.getType()));
+    }
+
+    VmInfraYaml vmInfraYaml = (VmInfraYaml) infrastructure;
+    if (vmInfraYaml.getSpec() == null) {
+      throw new CIStageExecutionException("Infrastructure spec should not be empty");
+    }
+
+    if (vmInfraYaml.getSpec().getType() != VmInfraSpec.Type.POOL) {
+      throw new CIStageExecutionException(format("Invalid VM type: %s", vmInfraYaml.getSpec().getType()));
+    }
+
+    VmPoolYaml vmPoolYaml = (VmPoolYaml) vmInfraYaml.getSpec();
+    return resolveOSType(vmPoolYaml.getSpec().getOs());
   }
 
   private void validateStageConfig(IntegrationStageConfig integrationStageConfig, String accountId) {
@@ -120,6 +157,9 @@ public class VmInitializeStepUtils {
           break;
         case RUN_TESTS:
           validateRunTestsStepConnector((RunTestsStepInfo) ciStepInfo);
+          break;
+        case ECR:
+          validatePluginStepConnector((PluginCompatibleStep) ciStepInfo);
           break;
         default:
           return;
@@ -142,6 +182,13 @@ public class VmInitializeStepUtils {
     }
     if (runStepInfo.getImage() == null && runStepInfo.getConnectorRef() != null) {
       throw new CIStageExecutionException("image can't be empty if connector ref is provided");
+    }
+  }
+
+  private void validatePluginStepConnector(PluginCompatibleStep pluginStepInfo) {
+    List<String> baseImageConnectorRefs = PluginSettingUtils.getBaseImageConnectorRefs(pluginStepInfo);
+    if (baseImageConnectorRefs != null) {
+      throw new CIStageExecutionException("Base image connector is not allowed for VM Infrastructure.");
     }
   }
 
@@ -187,9 +234,11 @@ public class VmInitializeStepUtils {
     return null;
   }
 
-  private Map<String, String> getVolumeToMountPath(ParameterField<List<String>> parameterSharedPaths) {
+  private Map<String, String> getVolumeToMountPath(ParameterField<List<String>> parameterSharedPaths, OSType os) {
     Map<String, String> volumeToMountPath = new HashMap<>();
-    volumeToMountPath.put(STEP_VOLUME, STEP_MOUNT_PATH);
+    String stepMountPath = getStepMountPath(os);
+    volumeToMountPath.put(STEP_VOLUME, stepMountPath);
+
     if (parameterSharedPaths == null) {
       return volumeToMountPath;
     }

@@ -92,6 +92,7 @@ public class GraphQLResource {
   private interface Constants {
     String QUERY = "query";
     String EMPTY_BRACKET = "{";
+    String MUTATION = "mutation";
   }
 
   @Inject
@@ -200,6 +201,9 @@ public class GraphQLResource {
         if (!(queryInLowerCase.startsWith(Constants.QUERY) || queryInLowerCase.startsWith(Constants.EMPTY_BRACKET))) {
           throw graphQLUtils.getUnauthorizedException();
         }
+        if (queryInLowerCase.contains(Constants.MUTATION)) {
+          throw graphQLUtils.getUnauthorizedExceptionForSupportUserWithMutation();
+        }
       }
       hasUserContext = true;
     } else if (isNotEmpty(apiKey)) {
@@ -240,6 +244,7 @@ public class GraphQLResource {
         if (apiKeyEntry == null) {
           throw graphQLUtils.getInvalidApiKeyException();
         } else {
+          log.info("Using api key {}", apiKeyEntry.getName());
           UserPermissionInfo apiKeyPermissions = apiKeyService.getApiKeyPermissions(apiKeyEntry, accountId);
           UserRestrictionInfo apiKeyRestrictions =
               apiKeyService.getApiKeyRestrictions(apiKeyEntry, apiKeyPermissions, accountId);

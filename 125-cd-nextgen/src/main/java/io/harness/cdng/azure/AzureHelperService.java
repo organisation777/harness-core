@@ -14,7 +14,6 @@ import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.DelegateTaskRequest;
 import io.harness.beans.IdentifierRef;
-import io.harness.cdng.artifact.resources.acr.dtos.AcrResponseDTO;
 import io.harness.cdng.artifact.resources.acr.mappers.AcrResourceMapper;
 import io.harness.cdng.common.beans.SetupAbstractionKeys;
 import io.harness.common.NGTaskType;
@@ -23,12 +22,13 @@ import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.ErrorNotifyResponseData;
+import io.harness.delegate.beans.azure.AcrResponseDTO;
+import io.harness.delegate.beans.azure.response.AzureDelegateTaskResponse;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureCredentialType;
 import io.harness.delegate.beans.connector.azureconnector.AzureManualDetailsDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureTaskParams;
-import io.harness.delegate.beans.connector.azureconnector.response.AzureDelegateTaskResponse;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.artifacts.ArtifactTaskType;
@@ -42,6 +42,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.NGAccess;
+import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.service.DelegateGrpcClientWrapper;
@@ -54,6 +55,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -66,7 +68,7 @@ public class AzureHelperService {
   @Inject @Named(DEFAULT_CONNECTOR_SERVICE) private ConnectorService connectorService;
   @Inject private SecretManagerClientService secretManagerClientService;
   @Inject private DelegateGrpcClientWrapper delegateGrpcClientWrapper;
-  @VisibleForTesting static final int timeoutInSecs = 30;
+  @VisibleForTesting static final int defaultTimeoutInSecs = 30;
 
   public AzureConnectorDTO getConnector(IdentifierRef azureConnectorRef) {
     Optional<ConnectorResponseDTO> connectorDTO =
@@ -114,8 +116,8 @@ public class AzureHelperService {
     return new ArrayList<>();
   }
 
-  public DelegateResponseData getResponseData(
-      BaseNGAccess ngAccess, ExecutionCapabilityDemander executionCapabilityDemander) {
+  public DelegateResponseData getResponseData(Ambiance ambiance, BaseNGAccess ngAccess,
+      ExecutionCapabilityDemander executionCapabilityDemander, Optional<Integer> customTimeoutInSec) {
     TaskParameters taskParameters = null;
     String taskType = null;
     Collection<? extends String> taskSelectors = null;
@@ -140,7 +142,7 @@ public class AzureHelperService {
     DelegateTaskRequest delegateTaskRequest =
         DelegateTaskRequest.builder()
             .accountId(ngAccess.getAccountIdentifier())
-            .executionTimeout(java.time.Duration.ofSeconds(timeoutInSecs))
+            .executionTimeout(java.time.Duration.ofSeconds(customTimeoutInSec.orElse(defaultTimeoutInSecs)))
             .taskSetupAbstraction(SetupAbstractionKeys.orgIdentifier, ngAccess.getOrgIdentifier())
             .taskSetupAbstraction(SetupAbstractionKeys.ng, "true")
             .taskSetupAbstraction(
@@ -149,6 +151,7 @@ public class AzureHelperService {
             .taskParameters(taskParameters)
             .taskType(taskType)
             .taskSelectors(taskSelectors)
+            .logStreamingAbstractions(createLogStreamingAbstractions(ngAccess, ambiance))
             .build();
 
     return delegateGrpcClientWrapper.executeSyncTask(delegateTaskRequest);
@@ -174,7 +177,18 @@ public class AzureHelperService {
 
   public DelegateResponseData executeSyncTask(
       ExecutionCapabilityDemander params, BaseNGAccess ngAccess, String ifFailedMessage) {
-    DelegateResponseData responseData = getResponseData(ngAccess, params);
+    DelegateResponseData responseData = getResponseData(null, ngAccess, params, Optional.empty());
+    return getTaskExecutionResponse(responseData, ifFailedMessage);
+  }
+  public DelegateResponseData executeSyncTask(
+      ExecutionCapabilityDemander params, BaseNGAccess ngAccess, String ifFailedMessage, Optional<Integer> timeout) {
+    DelegateResponseData responseData = getResponseData(null, ngAccess, params, timeout);
+    return getTaskExecutionResponse(responseData, ifFailedMessage);
+  }
+
+  public DelegateResponseData executeSyncTask(
+      Ambiance ambiance, ExecutionCapabilityDemander params, BaseNGAccess ngAccess, String ifFailedMessage) {
+    DelegateResponseData responseData = getResponseData(ambiance, ngAccess, params, Optional.empty());
     return getTaskExecutionResponse(responseData, ifFailedMessage);
   }
 
@@ -185,5 +199,22 @@ public class AzureHelperService {
             .map(delegateResponse -> (AcrArtifactDelegateResponse) delegateResponse)
             .collect(Collectors.toList());
     return AcrResourceMapper.toAcrResponse(acrArtifactDelegateResponses);
+  }
+
+  private LinkedHashMap<String, String> createLogStreamingAbstractions(BaseNGAccess ngAccess, Ambiance ambiance) {
+    LinkedHashMap<String, String> logStreamingAbstractions = new LinkedHashMap<>();
+    logStreamingAbstractions.put(SetupAbstractionKeys.accountId, ngAccess.getAccountIdentifier());
+    logStreamingAbstractions.put(SetupAbstractionKeys.orgIdentifier, ngAccess.getOrgIdentifier());
+    logStreamingAbstractions.put(SetupAbstractionKeys.projectIdentifier, ngAccess.getProjectIdentifier());
+    if (ambiance != null) {
+      logStreamingAbstractions.put(SetupAbstractionKeys.pipelineId, ambiance.getMetadata().getPipelineIdentifier());
+      logStreamingAbstractions.put(
+          SetupAbstractionKeys.runSequence, String.valueOf(ambiance.getMetadata().getRunSequence()));
+
+      for (int i = 0; i < ambiance.getLevelsList().size(); i++) {
+        logStreamingAbstractions.put("level" + i, ambiance.getLevels(i).getIdentifier());
+      }
+    }
+    return logStreamingAbstractions;
   }
 }

@@ -15,7 +15,6 @@ import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 import static io.harness.eraro.ErrorCode.SECRET_MANAGEMENT_ERROR;
 import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.secretmanagerclient.SecretType.SSHKey;
 import static io.harness.secretmanagerclient.SecretType.SecretFile;
 import static io.harness.secretmanagerclient.SecretType.SecretText;
 
@@ -33,7 +32,6 @@ import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.eventsframework.producer.Message;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SecretManagementException;
-import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.api.NGEncryptedDataService;
@@ -54,7 +52,6 @@ import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
 import io.harness.secretmanagerclient.dto.SecretManagerConfigDTO;
 import io.harness.stream.BoundedInputStream;
-import io.harness.utils.PageUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -66,7 +63,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.SneakyThrows;
@@ -155,14 +151,20 @@ public class SecretCrudServiceImpl implements SecretCrudService {
       throw new InvalidRequestException("Built-in Harness Secret Manager cannot be used to create Secret.");
     }
 
-    if (SecretText.equals(dto.getType())) {
-      NGEncryptedData encryptedData = encryptedDataService.createSecretText(accountIdentifier, dto);
-      if (Optional.ofNullable(encryptedData).isPresent()) {
+    switch (dto.getType()) {
+      case SecretText:
+        NGEncryptedData encryptedData = encryptedDataService.createSecretText(accountIdentifier, dto);
+        if (Optional.ofNullable(encryptedData).isPresent()) {
+          return createSecretInternal(accountIdentifier, dto, false);
+        }
+        break;
+      case SSHKey:
+      case WinRmCredentials:
         return createSecretInternal(accountIdentifier, dto, false);
-      }
-    } else if (SSHKey.equals(dto.getType())) {
-      return createSecretInternal(accountIdentifier, dto, false);
+      default:
+        throw new IllegalArgumentException("Invalid secret type provided: " + dto.getType());
     }
+
     throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unable to create secret remotely.", USER);
   }
 
@@ -193,19 +195,29 @@ public class SecretCrudServiceImpl implements SecretCrudService {
     if (message.isPresent()) {
       throw new InvalidRequestException(message.get(), USER);
     }
-    if (SecretText.equals(dto.getType())) {
-      NGEncryptedData encryptedData = encryptedDataService.createSecretText(accountIdentifier, dto);
-      if (Optional.ofNullable(encryptedData).isPresent()) {
+
+    NGEncryptedData encryptedData;
+
+    switch (dto.getType()) {
+      case SecretText:
+        encryptedData = encryptedDataService.createSecretText(accountIdentifier, dto);
+        if (Optional.ofNullable(encryptedData).isPresent()) {
+          return createSecretInternal(accountIdentifier, dto, true);
+        }
+        break;
+      case SecretFile:
+        encryptedData = encryptedDataService.createSecretFile(accountIdentifier, dto, null);
+        if (Optional.ofNullable(encryptedData).isPresent()) {
+          return createSecretInternal(accountIdentifier, dto, true);
+        }
+        break;
+      case SSHKey:
+      case WinRmCredentials:
         return createSecretInternal(accountIdentifier, dto, true);
-      }
-    } else if (SecretFile.equals(dto.getType())) {
-      NGEncryptedData encryptedData = encryptedDataService.createSecretFile(accountIdentifier, dto, null);
-      if (Optional.ofNullable(encryptedData).isPresent()) {
-        return createSecretInternal(accountIdentifier, dto, true);
-      }
-    } else if (SSHKey.equals(dto.getType())) {
-      return createSecretInternal(accountIdentifier, dto, true);
+      default:
+        throw new IllegalArgumentException("Invalid secret type provided: " + dto.getType());
     }
+
     throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unable to create secret remotely.", USER);
   }
 
@@ -218,10 +230,9 @@ public class SecretCrudServiceImpl implements SecretCrudService {
   }
 
   @Override
-  public PageResponse<SecretResponseWrapper> list(String accountIdentifier, String orgIdentifier,
-      String projectIdentifier, List<String> identifiers, List<SecretType> secretTypes,
-      boolean includeSecretsFromEverySubScope, String searchTerm, int page, int size,
-      ConnectorCategory sourceCategory) {
+  public Page<SecretResponseWrapper> list(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      List<String> identifiers, List<SecretType> secretTypes, boolean includeSecretsFromEverySubScope,
+      String searchTerm, int page, int size, ConnectorCategory sourceCategory) {
     Criteria criteria = Criteria.where(SecretKeys.accountIdentifier).is(accountIdentifier);
     if (!includeSecretsFromEverySubScope) {
       criteria.and(SecretKeys.orgIdentifier).is(orgIdentifier).and(SecretKeys.projectIdentifier).is(projectIdentifier);
@@ -254,8 +265,7 @@ public class SecretCrudServiceImpl implements SecretCrudService {
     }
 
     Page<Secret> secrets = ngSecretService.list(criteria, page, size);
-    return PageUtils.getNGPageResponse(
-        secrets, secrets.getContent().stream().map(this::getResponseWrapper).collect(Collectors.toList()));
+    return secrets.map(this::getResponseWrapper);
   }
 
   @Override
@@ -293,6 +303,26 @@ public class SecretCrudServiceImpl implements SecretCrudService {
       throw new InvalidRequestException("Unable to delete secret remotely.", USER);
     } else {
       throw new InvalidRequestException("Unable to delete secret locally, data might be inconsistent", USER);
+    }
+  }
+
+  public void deleteBatch(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, List<String> secretIdentifiersList) {
+    for (String identifier : secretIdentifiersList) {
+      Optional<SecretResponseWrapper> optionalSecret =
+          get(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+      if (optionalSecret.isPresent()) {
+        boolean deletionSuccess =
+            ngSecretService.delete(accountIdentifier, orgIdentifier, projectIdentifier, identifier);
+        if (deletionSuccess) {
+          secretEntityReferenceHelper.deleteSecretEntityReferenceWhenSecretGetsDeleted(accountIdentifier, orgIdentifier,
+              projectIdentifier, identifier, getSecretManagerIdentifier(optionalSecret.get().getSecret()));
+          publishEvent(accountIdentifier, orgIdentifier, projectIdentifier, identifier,
+              EventsFrameworkMetadataConstants.DELETE_ACTION);
+        } else {
+          log.error("Unable to delete secret {} locally, data might be inconsistent", identifier);
+        }
+      }
     }
   }
 

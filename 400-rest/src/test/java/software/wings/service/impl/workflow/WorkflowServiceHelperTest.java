@@ -15,6 +15,7 @@ import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.BOJANA;
 import static io.harness.rule.OwnerRule.DEEPAK_PUTHRAYA;
+import static io.harness.rule.OwnerRule.FERNANDOD;
 import static io.harness.rule.OwnerRule.GARVIT;
 import static io.harness.rule.OwnerRule.HARSH;
 import static io.harness.rule.OwnerRule.INDER;
@@ -1252,7 +1253,6 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
 
     // webapp non-container tests
     when(mockFeatureFlagService.isEnabled(FeatureName.AZURE_WEBAPP, ACCOUNT_ID)).thenReturn(true);
-    when(mockFeatureFlagService.isEnabled(FeatureName.AZURE_WEBAPP_NON_CONTAINER, ACCOUNT_ID)).thenReturn(true);
 
     Service warService = Service.builder().artifactType(ArtifactType.WAR).uuid(SERVICE_ID).build();
     when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(warService);
@@ -1293,27 +1293,35 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
 
     // webapp-non container FF
     when(mockFeatureFlagService.isEnabled(FeatureName.AZURE_WEBAPP, ACCOUNT_ID)).thenReturn(true);
-    when(mockFeatureFlagService.isEnabled(FeatureName.AZURE_WEBAPP_NON_CONTAINER, ACCOUNT_ID)).thenReturn(false);
 
     when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(warService);
-    assertThatThrownBy(()
-                           -> workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
-                               APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false))
-        .isInstanceOf(InvalidRequestException.class);
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
 
     Service nugetService = Service.builder().artifactType(ArtifactType.NUGET).uuid(SERVICE_ID).build();
     when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(nugetService);
-    assertThatThrownBy(()
-                           -> workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
-                               APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false))
-        .isInstanceOf(InvalidRequestException.class);
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
 
     Service zipService = Service.builder().artifactType(ArtifactType.ZIP).uuid(SERVICE_ID).build();
     when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(zipService);
-    assertThatThrownBy(()
-                           -> workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
-                               APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false))
-        .isInstanceOf(InvalidRequestException.class);
+    workflowServiceHelper.generateNewWorkflowPhaseStepsForAzureWebApp(
+        APP_ID, ACCOUNT_ID, workflowPhase, OrchestrationWorkflowType.CANARY, true, false);
+    phaseStepTypes =
+        workflowPhase.getPhaseSteps().stream().map(PhaseStep::getPhaseStepType).collect(Collectors.toList());
+    assertThat(phaseStepTypes)
+        .containsExactly(PROVISION_INFRASTRUCTURE, AZURE_WEBAPP_SLOT_TRAFFIC_SHIFT, AZURE_WEBAPP_SLOT_SWAP, WRAP_UP);
+    workflowPhase.getPhaseSteps().clear();
   }
 
   @Test
@@ -1934,5 +1942,22 @@ public class WorkflowServiceHelperTest extends WingsBaseTest {
     assertThatThrownBy(() -> workflowServiceHelper.validateWaitInterval(workflow))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Wait Interval cannot be more than one day.");
+  }
+
+  @Test
+  @Owner(developers = FERNANDOD)
+  @Category(UnitTests.class)
+  public void shouldUnsetInfraDefinitionsDetailsWhenEnvChanged() {
+    Workflow workflow = WorkflowServiceTestHelper.constructCanaryWorkflowWithTwoPhases();
+    CanaryOrchestrationWorkflow orchestrationWorkflow =
+        (CanaryOrchestrationWorkflow) workflowServiceHelper.propagateWorkflowDataToPhases(
+            workflow.getOrchestrationWorkflow(), Collections.emptyList(), APP_ID, null, null, true, false, false);
+
+    assertThat(orchestrationWorkflow.getWorkflowPhases()).hasSize(2);
+    orchestrationWorkflow.getWorkflowPhases().forEach(phase -> {
+      assertThat(phase.getComputeProviderId()).isNull();
+      assertThat(phase.getInfraDefinitionId()).isNull();
+      assertThat(phase.getInfraDefinitionName()).isNull();
+    });
   }
 }

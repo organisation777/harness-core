@@ -13,11 +13,13 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(PL)
 public interface EntityTypeConstants {
+  String GITOPS_CREATE_PR = "CreatePR";
   String PROJECTS = "Projects";
   String PIPELINES = "Pipelines";
   String PIPELINE_STEPS = "PipelineSteps";
   String CONNECTORS = "Connectors";
   String SECRETS = "Secrets";
+  String FILES = "Files";
   String SERVICE = "Service";
   String ENVIRONMENT = "Environment";
   String INPUT_SETS = "InputSets";
@@ -31,6 +33,7 @@ public interface EntityTypeConstants {
   String DEPLOYMENT_STEPS = "DeploymentSteps";
   String DEPLOYMENT_STAGE = "DeploymentStage";
   String APPROVAL_STAGE = "ApprovalStage";
+  String CUSTOM_STAGE = "CustomStage";
   String FEATURE_FLAG_STAGE = "FeatureFlagStage";
   String TRIGGERS = "Triggers";
   String MONITORED_SERVICE = "MonitoredService";
@@ -58,6 +61,8 @@ public interface EntityTypeConstants {
   String SAVE_CACHE_GCS = "SaveCacheGCS";
   String SAVE_CACHE_S3 = "SaveCacheS3";
   String SECURITY = "Security";
+  String SECURITY_STAGE = "SecurityStage";
+  String SECURITY_STEPS = "SecuritySteps";
   String ARTIFACTORY_UPLOAD = "ArtifactoryUpload";
   String GCS_UPLOAD = "GCSUpload";
   String S3_UPLOAD = "S3Upload";
@@ -82,4 +87,13 @@ public interface EntityTypeConstants {
   String SERVICENOW_CREATE = "ServiceNowCreate";
   String SERVICENOW_UPDATE = "ServiceNowUpdate";
   String ENVIRONMENT_GROUP = "EnvironmentGroup";
+  String NG_FILE = "NgFile";
+  String CLOUDFORMATION_CREATE_STACK_STEP = "CreateStack";
+  String CLOUDFORMATION_DELETE_STACK_STEP = "DeleteStack";
+  String SERVERLESS_AWS_LAMBDA_DEPLOY = "ServerlessAwsLambdaDeploy";
+  String SERVERLESS_AWS_LAMBDA_ROLLBACK = "ServerlessAwsLambdaRollback";
+  String CLOUDFORMATION_ROLLBACK_STACK_STEP = "RollbackStack";
+  String INFRASTRUCTURE = "Infrastructure";
+  String COMMAND = "Command";
+  String STRATEGY_NODE = "StrategyNode";
 }

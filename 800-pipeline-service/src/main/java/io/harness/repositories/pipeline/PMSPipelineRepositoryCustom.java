@@ -24,23 +24,47 @@ public interface PMSPipelineRepositoryCustom {
   Page<PipelineEntity> findAll(Criteria criteria, Pageable pageable, String accountIdentifier, String orgIdentifier,
       String projectIdentifier, boolean getDistinctFromBranches);
 
-  PipelineEntity findFirstPipeline(Criteria criteria);
-
   Long countAllPipelines(Criteria criteria);
 
+  PipelineEntity saveForOldGitSync(PipelineEntity pipelineToSave);
+
+  /**
+   * this method is to be used for new git experience, and for all pipelines that are not git synced in both old and new
+   * flows
+   */
   PipelineEntity save(PipelineEntity pipelineToSave);
 
-  Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
+  Optional<PipelineEntity> findForOldGitSync(
       String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier, boolean notDeleted);
 
-  Optional<PipelineEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-      String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier);
+  /**
+   * this method is to be used for new git experience, and for all pipelines that are not git synced in both old and new
+   * flows
+   */
+  Optional<PipelineEntity> find(String accountId, String orgIdentifier, String projectIdentifier,
+      String pipelineIdentifier, boolean notDeleted, boolean getMetadataOnly);
 
-  PipelineEntity updatePipelineYaml(
+  PipelineEntity updatePipelineYamlForOldGitSync(
       PipelineEntity pipelineToUpdate, PipelineEntity oldPipelineEntity, ChangeType changeType);
+
+  /**
+   * this method is to be used for new git experience, and for all pipelines that are not git synced in both old and new
+   * flows
+   */
+  PipelineEntity updatePipelineYaml(PipelineEntity pipelineToUpdate);
 
   PipelineEntity updatePipelineMetadata(
       String accountId, String orgIdentifier, String projectIdentifier, Criteria criteria, Update update);
 
-  PipelineEntity deletePipeline(PipelineEntity pipelineToUpdate);
+  void deleteForOldGitSync(PipelineEntity pipelineToDelete);
+
+  /**
+   * this method is to be used for new git experience, and for all pipelines that are not git synced in both old and new
+   * flows
+   */
+  void delete(String accountId, String orgIdentifier, String projectIdentifier, String pipelineIdentifier);
+
+  boolean deleteAllPipelinesInAProject(String accountId, String orgIdentifier, String projectIdentifier);
+
+  String importPipelineFromRemote(String accountId, String orgIdentifier, String projectIdentifier);
 }

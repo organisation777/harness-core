@@ -14,6 +14,7 @@ import static io.harness.ngmigration.utils.NGMigrationConstants.VIZ_TEMP_DIR_PRE
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.network.Http;
 import io.harness.ng.core.utils.NGYamlUtils;
@@ -22,6 +23,7 @@ import io.harness.ngmigration.beans.DiscoverEntityInput;
 import io.harness.ngmigration.beans.DiscoveryInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.MigrationInputResult;
+import io.harness.ngmigration.beans.NGYamlFile;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
@@ -34,7 +36,7 @@ import software.wings.ngmigration.DiscoveryNode;
 import software.wings.ngmigration.DiscoveryResult;
 import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.ngmigration.NGMigrationEntityType;
-import software.wings.ngmigration.NGYamlFile;
+import software.wings.ngmigration.NGMigrationStatus;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -184,6 +186,23 @@ public class DiscoveryService {
     return DiscoveryResult.builder().entities(entities).links(graph).root(node.getEntityNode().getEntityId()).build();
   }
 
+  public NGMigrationStatus getMigrationStatus(DiscoveryResult discoveryResult) {
+    if (EmptyPredicate.isEmpty(discoveryResult.getEntities())) {
+      return NGMigrationStatus.builder().status(true).build();
+    }
+    boolean possible = true;
+    List<String> errors = new ArrayList<>();
+    for (CgEntityNode node : discoveryResult.getEntities().values()) {
+      NgMigrationService ngMigration = migrationFactory.getMethod(node.getType());
+      NGMigrationStatus migrationStatus = ngMigration.canMigrate(node.getEntity());
+      if (!migrationStatus.isStatus()) {
+        possible = false;
+        errors.addAll(migrationStatus.getReasons());
+      }
+    }
+    return NGMigrationStatus.builder().status(possible).reasons(errors).build();
+  }
+
   private void exportImg(
       Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, String filePath) {
     MutableGraph vizGraph = getGraphViz(entities, graph);
@@ -289,6 +308,10 @@ public class DiscoveryService {
     zipFile.getParentFile().mkdirs();
     try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile))) {
       for (NGYamlFile file : ngYamlFiles) {
+        if (file.isExists()) {
+          // TODO: @vaibhav.si Add the mapping to the response
+          continue;
+        }
         ZipEntry e = new ZipEntry(file.getFilename());
         out.putNextEntry(e);
         byte[] data = NGYamlUtils.getYamlString(file.getYaml()).getBytes();
@@ -339,7 +362,7 @@ public class DiscoveryService {
       List<CgEntityId> leafNodes = getLeafNodes(leafTracker);
       for (CgEntityId entry : leafNodes) {
         List<NGYamlFile> currentEntity =
-            migrationFactory.getMethod(entry.getType()).getYamls(inputDTO, entities, graph, entry, migratedEntities);
+            migrationFactory.getMethod(entry.getType()).getYaml(inputDTO, entities, graph, entry, migratedEntities);
         if (isNotEmpty(currentEntity)) {
           files.addAll(currentEntity);
         }

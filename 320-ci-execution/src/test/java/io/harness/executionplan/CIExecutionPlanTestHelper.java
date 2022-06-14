@@ -21,9 +21,9 @@ import static io.harness.common.CIExecutionConstants.PLUGIN_ENV_PREFIX;
 import static io.harness.common.CIExecutionConstants.PORT_PREFIX;
 import static io.harness.common.CIExecutionConstants.PORT_STARTING_RANGE;
 import static io.harness.common.CIExecutionConstants.SERVICE_ARG_COMMAND;
-import static io.harness.common.CIExecutionConstants.STEP_COMMAND;
 import static io.harness.common.CIExecutionConstants.STEP_REQUEST_MEMORY_MIB;
 import static io.harness.common.CIExecutionConstants.STEP_REQUEST_MILLI_CPU;
+import static io.harness.common.CIExecutionConstants.UNIX_STEP_COMMAND;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.PLUGIN;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.RUN;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.SERVICE;
@@ -54,6 +54,7 @@ import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.executionargs.CIExecutionArgs;
 import io.harness.beans.script.ScriptInfo;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageConfigImpl;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.yaml.extended.CustomSecretVariable;
 import io.harness.beans.yaml.extended.CustomTextVariable;
@@ -105,6 +106,11 @@ import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitHttpsA
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitHttpsCredentialsDTO;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitSecretKeyAccessKeyDTO;
 import io.harness.delegate.beans.connector.scm.awscodecommit.AwsCodeCommitUrlType;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoAuthenticationDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoConnectorDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpAuthenticationType;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoHttpCredentialsDTO;
+import io.harness.delegate.beans.connector.scm.azurerepo.AzureRepoUsernameTokenDTO;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitHTTPAuthenticationDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubAuthenticationDTO;
@@ -535,7 +541,7 @@ public class CIExecutionPlanTestHelper {
         .envVars(ImmutableMap.of("HARNESS_SERVICE_ENTRYPOINT", "redis", "HARNESS_SERVICE_ARGS", "start"))
         .containerType(SERVICE)
         .args(args)
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(SERVICE_LIMIT_CPU)
@@ -563,7 +569,7 @@ public class CIExecutionPlanTestHelper {
         .name(SERVICE_CTR_NAME)
         .containerType(SERVICE)
         .args(args)
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(SERVICE_LIMIT_CPU)
@@ -586,7 +592,7 @@ public class CIExecutionPlanTestHelper {
         .name("step-" + index.toString())
         .containerType(RUN)
         .args(Arrays.asList(PORT_PREFIX, port.toString()))
-        .commands(Arrays.asList(STEP_COMMAND))
+        .commands(Arrays.asList(UNIX_STEP_COMMAND))
         .ports(Arrays.asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -611,7 +617,7 @@ public class CIExecutionPlanTestHelper {
         .name(RUN_STEP_ID)
         .containerType(RUN)
         .args(asList(PORT_PREFIX, port.toString()))
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -636,7 +642,7 @@ public class CIExecutionPlanTestHelper {
         .name("step-" + index.toString())
         .containerType(PLUGIN)
         .args(Arrays.asList(PORT_PREFIX, port.toString()))
-        .commands(Arrays.asList(STEP_COMMAND))
+        .commands(Arrays.asList(UNIX_STEP_COMMAND))
         .ports(Arrays.asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -664,7 +670,7 @@ public class CIExecutionPlanTestHelper {
         .name("step-" + index.toString())
         .containerType(PLUGIN)
         .args(Arrays.asList(PORT_PREFIX, port.toString()))
-        .commands(Arrays.asList(STEP_COMMAND))
+        .commands(Arrays.asList(UNIX_STEP_COMMAND))
         .ports(Arrays.asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -696,7 +702,7 @@ public class CIExecutionPlanTestHelper {
         .name(CLONE_STEP_ID)
         .containerType(PLUGIN)
         .args(asList(PORT_PREFIX, port.toString()))
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -727,7 +733,7 @@ public class CIExecutionPlanTestHelper {
         .name(PLUGIN_STEP_ID)
         .containerType(PLUGIN)
         .args(asList(PORT_PREFIX, port.toString()))
-        .commands(asList(STEP_COMMAND))
+        .commands(asList(UNIX_STEP_COMMAND))
         .ports(asList(port))
         .containerResourceParams(ContainerResourceParams.builder()
                                      .resourceRequestMilliCpu(STEP_REQUEST_MILLI_CPU)
@@ -1151,6 +1157,40 @@ public class CIExecutionPlanTestHelper {
                 .build())
         .build();
   }
+
+  public ConnectorDTO getAzureRepoConnectorDTO() {
+    return ConnectorDTO.builder()
+        .connectorInfo(
+            ConnectorInfoDTO.builder()
+                .name("azureRepoConnector")
+                .identifier("azureRepoConnector")
+                .connectorType(ConnectorType.AZURE_REPO)
+                .connectorConfig(
+                    AzureRepoConnectorDTO.builder()
+                        .url("https://dev.azure.com/harness/project/repo")
+                        .connectionType(GitConnectionType.REPO)
+                        .authentication(
+                            AzureRepoAuthenticationDTO.builder()
+                                .authType(GitAuthType.HTTP)
+                                .credentials(
+                                    AzureRepoHttpCredentialsDTO.builder()
+                                        .type(AzureRepoHttpAuthenticationType.USERNAME_AND_TOKEN)
+                                        .httpCredentialsSpec(AzureRepoUsernameTokenDTO.builder()
+                                                                 .username("username")
+                                                                 .tokenRef(SecretRefData.builder()
+                                                                               .identifier("gitPassword")
+                                                                               .scope(Scope.ACCOUNT)
+                                                                               .decryptedValue("password".toCharArray())
+                                                                               .build())
+                                                                 .build())
+                                        .build())
+                                .build())
+
+                        .build())
+                .build())
+        .build();
+  }
+
   public ConnectorDTO getAwsCodeCommitConnectorDTO() {
     return ConnectorDTO.builder()
         .connectorInfo(
@@ -1275,8 +1315,9 @@ public class CIExecutionPlanTestHelper {
         .variables(getStageNGVariables())
         .build();
   }
+
   public IntegrationStageConfig getIntegrationStageConfig() {
-    return IntegrationStageConfig.builder()
+    return IntegrationStageConfigImpl.builder()
         .execution(getExecutionElementConfig())
         .infrastructure(getInfrastructureWithVolume())
         .sharedPaths(createValueField(newArrayList("share/")))

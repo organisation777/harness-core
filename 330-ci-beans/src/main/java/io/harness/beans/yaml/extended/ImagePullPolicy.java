@@ -14,10 +14,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ImagePullPolicy {
   @JsonProperty("Always") ALWAYS("Always"),
   @JsonProperty("Never") NEVER("Never"),
-  @JsonProperty("IfNotPresent") If_NOT_PRESENT("IfNotPresent");
+  @JsonProperty("IfNotPresent") IFNOTPRESENT("IfNotPresent");
   private final String yamlName;
 
-  @JsonCreator
+  @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static ImagePullPolicy getImagePullPolicy(@JsonProperty("pullPolicy") String yamlName) {
     for (ImagePullPolicy pullPolicy : ImagePullPolicy.values()) {
       if (pullPolicy.yamlName.equalsIgnoreCase(yamlName)) {

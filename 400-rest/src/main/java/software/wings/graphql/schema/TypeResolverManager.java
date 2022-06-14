@@ -62,6 +62,7 @@ import software.wings.graphql.schema.type.cloudProvider.QLGcpCloudProvider;
 import software.wings.graphql.schema.type.cloudProvider.QLKubernetesClusterCloudProvider;
 import software.wings.graphql.schema.type.cloudProvider.QLPcfCloudProvider;
 import software.wings.graphql.schema.type.cloudProvider.QLPhysicalDataCenterCloudProvider;
+import software.wings.graphql.schema.type.cloudProvider.QLRancherCloudProvider;
 import software.wings.graphql.schema.type.cloudProvider.QLSpotInstCloudProvider;
 import software.wings.graphql.schema.type.connector.QLAmazonS3Connector;
 import software.wings.graphql.schema.type.connector.QLAmazonS3HelmRepoConnector;
@@ -87,6 +88,7 @@ import software.wings.graphql.schema.type.connector.QLJiraConnector;
 import software.wings.graphql.schema.type.connector.QLLogzConnector;
 import software.wings.graphql.schema.type.connector.QLNewRelicConnector;
 import software.wings.graphql.schema.type.connector.QLNexusConnector;
+import software.wings.graphql.schema.type.connector.QLOciHelmRepoConnector;
 import software.wings.graphql.schema.type.connector.QLPrometheusConnector;
 import software.wings.graphql.schema.type.connector.QLSMBConnector;
 import software.wings.graphql.schema.type.connector.QLServiceNowConnector;
@@ -254,6 +256,7 @@ public class TypeResolverManager {
     public static final String SumoConnector = "SumoConnector";
     public static final String GCSHelmRepoConnector = "GCSHelmRepoConnector";
     public static final String HttpHelmRepoConnector = "HttpHelmRepoConnector";
+    public static final String ociHelmRepoConnector = "OciHelmRepoConnector";
     public static final String AmazonS3HelmRepoConnector = "AmazonS3HelmRepoConnector";
     public static final String UserChangeSet = "UserChangeSet";
     public static final String GitChangeSet = "GitChangeSet";
@@ -294,6 +297,8 @@ public class TypeResolverManager {
     public static final String JIRA_APPROVAL_DETAILS = "JiraApprovalDetails";
     public static final String SNOW_APPROVAL_DETAILS = "SNOWApprovalDetails";
     public static final String SHELL_SCRIPT_DETAILS = "ShellScriptDetails";
+
+    public static final String RancherCloudProvider = "RancherCloudProvider";
   }
 
   /**
@@ -322,6 +327,7 @@ public class TypeResolverManager {
                     .put(QLKubernetesClusterCloudProvider.class, TypeResolverManagerTypes.KubernetesCloudProvider)
                     .put(QLPcfCloudProvider.class, TypeResolverManagerTypes.PcfCloudProvider)
                     .put(QLSpotInstCloudProvider.class, TypeResolverManagerTypes.SpotInstCloudProvider)
+                    .put(QLRancherCloudProvider.class, TypeResolverManagerTypes.RancherCloudProvider)
                     .build()))
         .put(TypeResolverManagerUnifaces.Connector,
             getResultTypeResolver(
@@ -357,6 +363,7 @@ public class TypeResolverManager {
                     .put(QLInstanaConnector.class, TypeResolverManagerTypes.InstanaCollector)
                     .put(QLGCSHelmRepoConnector.class, TypeResolverManagerTypes.GCSHelmRepoConnector)
                     .put(QLHttpHelmRepoConnector.class, TypeResolverManagerTypes.HttpHelmRepoConnector)
+                    .put(QLOciHelmRepoConnector.class, TypeResolverManagerTypes.ociHelmRepoConnector)
                     .put(QLAmazonS3HelmRepoConnector.class, TypeResolverManagerTypes.AmazonS3HelmRepoConnector)
                     .build()))
         .put(TypeResolverManagerUnifaces.Execution,

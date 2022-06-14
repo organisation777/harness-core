@@ -28,6 +28,7 @@ import io.harness.delegate.beans.executioncapability.PcfAutoScalarCapability;
 import io.harness.delegate.beans.executioncapability.PcfInstallationCapability;
 import io.harness.delegate.beans.executioncapability.ProcessExecutorCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
+import io.harness.delegate.beans.executioncapability.ServerlessInstallationCapability;
 import io.harness.delegate.beans.executioncapability.SmbConnectionCapability;
 import io.harness.delegate.beans.executioncapability.SmtpCapability;
 import io.harness.delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability;
@@ -40,6 +41,8 @@ import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.docker.DockerArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateRequest;
 import io.harness.delegate.task.artifacts.gcr.GcrArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest;
+import io.harness.delegate.task.artifacts.jenkins.JenkinsArtifactDelegateResponse;
 import io.harness.delegate.task.artifacts.request.ArtifactTaskParameters;
 import io.harness.delegate.task.artifacts.response.ArtifactTaskResponse;
 import io.harness.delegate.task.gcp.request.GcpValidationRequest;
@@ -52,18 +55,46 @@ import io.harness.morphia.MorphiaRegistrarHelperPut;
 import io.harness.ng.core.models.Secret;
 
 import software.wings.beans.AwsConfig;
+import software.wings.beans.CustomArtifactServerConfig;
+import software.wings.beans.EcrConfig;
+import software.wings.beans.ElasticLoadBalancerConfig;
+import software.wings.beans.GcpConfig;
 import software.wings.beans.GitConfig;
 import software.wings.beans.JenkinsConfig;
+import software.wings.beans.PhysicalDataCenterConfig;
+import software.wings.beans.PrometheusConfig;
 import software.wings.beans.SettingAttribute;
+import software.wings.beans.SlackConfig;
+import software.wings.beans.SpotInstConfig;
+import software.wings.beans.StringValue;
+import software.wings.beans.ce.CEAwsConfig;
+import software.wings.beans.ce.CEAzureConfig;
+import software.wings.beans.ce.CEGcpConfig;
+import software.wings.beans.command.ContainerSetupCommandUnitExecutionData;
 import software.wings.beans.config.ArtifactSourceable;
+import software.wings.beans.infrastructure.instance.info.EcsContainerInfo;
+import software.wings.beans.infrastructure.instance.info.K8sPodInfo;
+import software.wings.beans.infrastructure.instance.info.KubernetesContainerInfo;
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.beans.yaml.GitCommandExecutionResponse;
 import software.wings.beans.yaml.GitCommitAndPushResult;
 import software.wings.beans.yaml.GitCommitRequest;
 import software.wings.beans.yaml.GitDiffRequest;
 import software.wings.beans.yaml.GitDiffResult;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCommandExecutionResponse;
+import software.wings.helpers.ext.cloudformation.response.CloudFormationCreateStackResponse;
+import software.wings.helpers.ext.ecs.request.EcsBGListenerUpdateRequest;
+import software.wings.helpers.ext.ecs.request.EcsRunTaskDeployRequest;
+import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
+import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
+import software.wings.helpers.ext.ecs.response.EcsListenerUpdateCommandResponse;
+import software.wings.helpers.ext.ecs.response.EcsRunTaskDeployResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
+import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
 import software.wings.helpers.ext.helm.response.HelmInstallCommandResponse;
 import software.wings.sm.states.JenkinsExecutionResponse;
+import software.wings.sm.states.KubernetesSteadyStateCheckResponse;
+import software.wings.sm.states.KubernetesSwapServiceSelectorsResponse;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
 import java.util.Set;
@@ -72,6 +103,8 @@ import java.util.Set;
 @BreakDependencyOn("io.harness.capability.CapabilityRequirement")
 @BreakDependencyOn("io.harness.capability.CapabilitySubjectPermission")
 public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
+  private String cf = "helpers.ext.cloudformation.";
+
   @Override
   public void registerClasses(Set<Class> set) {
     set.add(CapabilityRequirement.class);
@@ -107,6 +140,8 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
         SocketConnectivityExecutionCapability.class);
     h.put("delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability",
         SocketConnectivityBulkOrExecutionCapability.class);
+    h.put(
+        "delegate.beans.executioncapability.ServerlessInstallationCapability", ServerlessInstallationCapability.class);
     h.put("delegate.beans.executioncapability.SystemEnvCheckerCapability", SystemEnvCheckerCapability.class);
     h.put("delegate.beans.executioncapability.SelectorCapability", SelectorCapability.class);
     h.put("delegate.command.CommandExecutionResult", CommandExecutionResult.class);
@@ -115,9 +150,11 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     h.put("delegate.task.spotinst.request.SpotInstSwapRoutesTaskParameters", SpotInstSwapRoutesTaskParameters.class);
     h.put("waiter.ErrorNotifyResponseData", ErrorNotifyResponseData.class);
     h.put("delegate.task.artifacts.docker.DockerArtifactDelegateResponse", DockerArtifactDelegateResponse.class);
+    h.put("delegate.task.artifacts.jenkins.JenkinsArtifactDelegateResponse", JenkinsArtifactDelegateResponse.class);
     h.put("delegate.task.artifacts.response.ArtifactTaskResponse", ArtifactTaskResponse.class);
     h.put("delegate.task.artifacts.request.ArtifactTaskParameters", ArtifactTaskParameters.class);
     h.put("delegate.task.artifacts.docker.DockerArtifactDelegateRequest", DockerArtifactDelegateRequest.class);
+    h.put("delegate.task.artifacts.jenkins.JenkinsArtifactDelegateRequest", JenkinsArtifactDelegateRequest.class);
     h.put("delegate.task.artifacts.gcr.GcrArtifactDelegateRequest", GcrArtifactDelegateRequest.class);
     h.put("delegate.task.artifacts.gcr.GcrArtifactDelegateResponse", GcrArtifactDelegateResponse.class);
     h.put("delegate.task.gcp.request.GcpValidationRequest", GcpValidationRequest.class);
@@ -127,12 +164,40 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("beans.AwsConfig", AwsConfig.class);
     w.put("beans.GitConfig", GitConfig.class);
     w.put("beans.yaml.GitCommandExecutionResponse", GitCommandExecutionResponse.class);
+    w.put("beans.StringValue", StringValue.class);
+    w.put("beans.ElasticLoadBalancerConfig", ElasticLoadBalancerConfig.class);
+    w.put("beans.SlackConfig", SlackConfig.class);
     w.put("beans.yaml.GitCommitAndPushResult", GitCommitAndPushResult.class);
     w.put("beans.yaml.GitCommitRequest", GitCommitRequest.class);
     w.put("beans.yaml.GitDiffRequest", GitDiffRequest.class);
     w.put("beans.yaml.GitDiffResult", GitDiffResult.class);
+    w.put("beans.CustomArtifactServerConfig", CustomArtifactServerConfig.class);
+    w.put("beans.ce.CEAzureConfig", CEAzureConfig.class);
+    w.put("beans.ce.CEAwsConfig", CEAwsConfig.class);
+    w.put("beans.ce.CEGcpConfig", CEGcpConfig.class);
     w.put("beans.JenkinsConfig", JenkinsConfig.class);
+    w.put("beans.PhysicalDataCenterConfig", PhysicalDataCenterConfig.class);
+    w.put("beans.command.ContainerSetupCommandUnitExecutionData", ContainerSetupCommandUnitExecutionData.class);
     w.put("sm.states.JenkinsExecutionResponse", JenkinsExecutionResponse.class);
+    w.put("beans.settings.helm.HttpHelmRepoConfig", HttpHelmRepoConfig.class);
+    w.put("beans.GcpConfig", GcpConfig.class);
+    w.put("helpers.ext.ecs.response.EcsCommandExecutionResponse", EcsCommandExecutionResponse.class);
+    w.put("helpers.ext.ecs.response.EcsServiceSetupResponse", EcsServiceSetupResponse.class);
+    w.put("helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse", EcsBGRoute53ServiceSetupResponse.class);
+    w.put("beans.EcrConfig", EcrConfig.class);
+    w.put("beans.SpotInstConfig", SpotInstConfig.class);
+    w.put("beans.PrometheusConfig", PrometheusConfig.class);
+    w.put("sm.states.KubernetesSteadyStateCheckResponse", KubernetesSteadyStateCheckResponse.class);
+    w.put("sm.states.KubernetesSwapServiceSelectorsResponse", KubernetesSwapServiceSelectorsResponse.class);
+    w.put("beans.infrastructure.instance.info.EcsContainerInfo", EcsContainerInfo.class);
+    w.put("beans.infrastructure.instance.info.K8sPodInfo", K8sPodInfo.class);
+    w.put("beans.infrastructure.instance.info.KubernetesContainerInfo", KubernetesContainerInfo.class);
     h.put("waiter.ListNotifyResponseData", ListNotifyResponseData.class);
+    w.put(cf + "response.CloudFormationCommandExecutionResponse", CloudFormationCommandExecutionResponse.class);
+    w.put(cf + "response.CloudFormationCreateStackResponse", CloudFormationCreateStackResponse.class);
+    w.put("helpers.ext.ecs.response.EcsRunTaskDeployResponse", EcsRunTaskDeployResponse.class);
+    w.put("helpers.ext.ecs.response.EcsRunTaskDeployRequest", EcsRunTaskDeployRequest.class);
+    w.put("helpers.ext.ecs.request.EcsBGListenerUpdateRequest", EcsBGListenerUpdateRequest.class);
+    w.put("helpers.ext.ecs.response.EcsListenerUpdateCommandResponse", EcsListenerUpdateCommandResponse.class);
   }
 }

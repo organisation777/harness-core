@@ -19,6 +19,7 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoPool;
 import com.esotericsoftware.kryo.util.IntMap;
 import com.google.api.client.util.Base64;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.ByteArrayOutputStream;
@@ -56,6 +57,7 @@ public class KryoSerializer {
   }
 
   private final KryoPool pool;
+  private final boolean skipHarnessClassOriginRegistrarCheck;
 
   /**
    * Create an instance using injected {@link KryoPoolConfiguration}.
@@ -63,6 +65,7 @@ public class KryoSerializer {
   @Inject
   public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars, KryoPoolConfiguration kpConfig) {
     pool = new KryoPool.Builder(() -> kryo(registrars)).queue(createQueue(kpConfig)).softReferences().build();
+    skipHarnessClassOriginRegistrarCheck = false;
   }
 
   /**
@@ -71,7 +74,22 @@ public class KryoSerializer {
    * Useful to keep previous behavior.
    */
   public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars) {
-    this(registrars, KryoPoolConfiguration.builder().queueCapacity(0).build());
+    this(registrars, false);
+  }
+
+  /**
+   * Creates a new kryo serializer.
+   * @param registrars the set of registrars
+   * @param skipHarnessClassOriginRegistrarCheck if true, classes can be registered by registrars from other sources -
+   *     only meant for UTs.
+   */
+  @VisibleForTesting
+  public KryoSerializer(Set<Class<? extends KryoRegistrar>> registrars, boolean skipHarnessClassOriginRegistrarCheck) {
+    this.pool = new KryoPool.Builder(() -> kryo(registrars))
+                    .queue(createQueue(KryoPoolConfiguration.builder().queueCapacity(0).build()))
+                    .softReferences()
+                    .build();
+    this.skipHarnessClassOriginRegistrarCheck = skipHarnessClassOriginRegistrarCheck;
   }
 
   /**
@@ -89,7 +107,7 @@ public class KryoSerializer {
 
   private HKryo kryo(Collection<Class<? extends KryoRegistrar>> registrars) {
     final ClassResolver classResolver = new ClassResolver();
-    HKryo kryo = new HKryo(classResolver);
+    HKryo kryo = new HKryo(classResolver, this.skipHarnessClassOriginRegistrarCheck);
     try {
       for (Class<? extends KryoRegistrar> kryoRegistrarClass : registrars) {
         final IntMap<Registration> previousState = new IntMap<>(classResolver.getRegistrations());

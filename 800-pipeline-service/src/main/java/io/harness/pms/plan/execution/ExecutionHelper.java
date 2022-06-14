@@ -15,6 +15,7 @@ import static io.harness.pms.contracts.plan.TriggerType.MANUAL;
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.OrchestrationService;
 import io.harness.engine.executions.plan.PlanExecutionMetadataService;
@@ -25,16 +26,20 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidYamlException;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.gitsync.beans.StoreType;
 import io.harness.logging.AutoLogContext;
+import io.harness.ng.core.template.TemplateMergeResponseDTO;
 import io.harness.notification.bean.NotificationRules;
 import io.harness.plan.Plan;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
+import io.harness.pms.contracts.plan.PipelineStoreType;
 import io.harness.pms.contracts.plan.PlanCreationBlobResponse;
 import io.harness.pms.contracts.plan.RerunInfo;
 import io.harness.pms.contracts.plan.RetryExecutionInfo;
 import io.harness.pms.exception.PmsExceptionUtils;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
+import io.harness.pms.helpers.PmsFeatureFlagHelper;
 import io.harness.pms.helpers.PrincipalInfoHelper;
 import io.harness.pms.helpers.TriggeredByHelper;
 import io.harness.pms.merger.fqn.FQN;
@@ -44,9 +49,11 @@ import io.harness.pms.ngpipeline.inputset.helpers.InputSetErrorsHelper;
 import io.harness.pms.ngpipeline.inputset.helpers.InputSetSanitizer;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
+import io.harness.pms.pipeline.service.PMSPipelineServiceHelper;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.pipeline.service.PMSYamlSchemaService;
 import io.harness.pms.pipeline.service.PipelineEnforcementService;
+import io.harness.pms.pipeline.service.PipelineMetadataService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.creation.PlanCreatorMergeService;
 import io.harness.pms.plan.creation.PlanCreatorUtils;
@@ -82,6 +89,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ExecutionHelper {
   PMSPipelineService pmsPipelineService;
+  PipelineMetadataService pipelineMetadataService;
+  PMSPipelineServiceHelper pmsPipelineServiceHelper;
   TriggeredByHelper triggeredByHelper;
   PlanExecutionService planExecutionService;
   PrincipalInfoHelper principalInfoHelper;
@@ -96,6 +105,7 @@ public class ExecutionHelper {
   PlanExecutionMetadataService planExecutionMetadataService;
   PMSPipelineTemplateHelper pipelineTemplateHelper;
   PipelineEnforcementService pipelineEnforcementService;
+  PmsFeatureFlagHelper featureFlagService;
 
   public PipelineEntity fetchPipelineEntity(@NotNull String accountId, @NotNull String orgIdentifier,
       @NotNull String projectIdentifier, @NotNull String pipelineIdentifier) {
@@ -149,17 +159,28 @@ public class ExecutionHelper {
       boolean isRetry = retryExecutionParameters.isRetry();
       // RetryExecutionInfo
       RetryExecutionInfo retryExecutionInfo = buildRetryInfo(isRetry, originalExecutionId);
+      TemplateMergeResponseDTO templateMergeResponseDTO =
+          getPipelineYamlAndValidate(mergedRuntimeInputYaml, pipelineEntity);
+      String pipelineYaml = templateMergeResponseDTO.getMergedPipelineYaml();
+      String pipelineYamlWithTemplateRef = templateMergeResponseDTO.getMergedPipelineYamlWithTemplateRef();
 
-      String pipelineYaml = getPipelineYamlAndValidate(mergedRuntimeInputYaml, pipelineEntity);
+      BasicPipeline basicPipeline = YamlUtils.read(pipelineYaml, BasicPipeline.class);
       StagesExecutionInfo stagesExecutionInfo = StagesExecutionInfo.builder()
                                                     .isStagesExecution(false)
                                                     .pipelineYamlToRun(pipelineYaml)
-                                                    .allowStagesExecution(pipelineEntity.shouldAllowStageExecutions())
+                                                    .allowStagesExecution(basicPipeline.isAllowStageExecutions())
                                                     .build();
       if (EmptyPredicate.isNotEmpty(stagesToRun)) {
+        if (!basicPipeline.isAllowStageExecutions()) {
+          throw new InvalidRequestException(
+              String.format("Stage executions are not allowed for pipeline [%s]", basicPipeline.getIdentifier()));
+        }
+
         StagesExecutionHelper.throwErrorIfAllStagesAreDeleted(pipelineYaml, stagesToRun);
         pipelineYaml = StagesExpressionExtractor.replaceExpressions(pipelineYaml, expressionValues);
         stagesExecutionInfo = StagesExecutionHelper.getStagesExecutionInfo(pipelineYaml, stagesToRun, expressionValues);
+        pipelineYamlWithTemplateRef =
+            InputSetMergeHelper.removeNonRequiredStages(pipelineYamlWithTemplateRef, stagesToRun);
       }
 
       PlanExecutionMetadata.Builder planExecutionMetadataBuilder = obtainPlanExecutionMetadata(
@@ -170,12 +191,11 @@ public class ExecutionHelper {
       } else {
         pipelineEnforcementService.validateExecutionEnforcementsBasedOnStage(pipelineEntity);
       }
-      String expandedJson = pmsPipelineService.fetchExpandedPipelineJSONFromYaml(pipelineEntity.getAccountId(),
-          pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(),
-          stagesExecutionInfo.getPipelineYamlToRun());
+      String expandedJson = pmsPipelineServiceHelper.fetchExpandedPipelineJSONFromYaml(pipelineEntity.getAccountId(),
+          pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineYamlWithTemplateRef);
       planExecutionMetadataBuilder.expandedPipelineJson(expandedJson);
       PlanExecutionMetadata planExecutionMetadata = planExecutionMetadataBuilder.build();
-      BasicPipeline basicPipeline = YamlUtils.read(planExecutionMetadata.getYaml(), BasicPipeline.class);
+      basicPipeline = YamlUtils.read(planExecutionMetadata.getYaml(), BasicPipeline.class);
       ExecutionMetadata executionMetadata = buildExecutionMetadata(pipelineEntity.getIdentifier(), moduleType,
           triggerInfo, pipelineEntity, executionId, retryExecutionInfo, basicPipeline.getNotificationRules());
       return ExecArgs.builder().metadata(executionMetadata).planExecutionMetadata(planExecutionMetadata).build();
@@ -187,24 +207,33 @@ public class ExecutionHelper {
   private ExecutionMetadata buildExecutionMetadata(@NotNull String pipelineIdentifier, String moduleType,
       ExecutionTriggerInfo triggerInfo, PipelineEntity pipelineEntity, String executionId,
       RetryExecutionInfo retryExecutionInfo, List<NotificationRules> notificationRules) {
-    ExecutionMetadata.Builder builder = ExecutionMetadata.newBuilder()
-                                            .setExecutionUuid(executionId)
-                                            .setTriggerInfo(triggerInfo)
-                                            .setModuleType(moduleType)
-                                            .setRunSequence(pmsPipelineService.incrementRunSequence(pipelineEntity))
-                                            .setPipelineIdentifier(pipelineIdentifier)
-                                            .setRetryInfo(retryExecutionInfo)
-                                            .setPrincipalInfo(principalInfoHelper.getPrincipalInfoFromSecurityContext())
-                                            .setIsNotificationConfigured(EmptyPredicate.isNotEmpty(notificationRules));
-    ByteString gitSyncBranchContext = pmsGitSyncHelper.getGitSyncBranchContextBytesThreadLocal(pipelineEntity);
+    ExecutionMetadata.Builder builder =
+        ExecutionMetadata.newBuilder()
+            .setExecutionUuid(executionId)
+            .setTriggerInfo(triggerInfo)
+            .setModuleType(moduleType)
+            .setRunSequence(pipelineMetadataService.incrementRunSequence(pipelineEntity))
+            .setPipelineIdentifier(pipelineIdentifier)
+            .setRetryInfo(retryExecutionInfo)
+            .setPrincipalInfo(principalInfoHelper.getPrincipalInfoFromSecurityContext())
+            .setIsNotificationConfigured(EmptyPredicate.isNotEmpty(notificationRules));
+    ByteString gitSyncBranchContext = pmsGitSyncHelper.getGitSyncBranchContextBytesThreadLocal(
+        pipelineEntity, pipelineEntity.getStoreType(), pipelineEntity.getRepo());
     if (gitSyncBranchContext != null) {
       builder.setGitSyncBranchContext(gitSyncBranchContext);
+    }
+    PipelineStoreType pipelineStoreType = StoreTypeMapper.fromStoreType(pipelineEntity.getStoreType());
+    if (pipelineStoreType != null) {
+      builder.setPipelineStoreType(pipelineStoreType);
+    }
+    if (pipelineEntity.getConnectorRef() != null) {
+      builder.setPipelineConnectorRef(pipelineEntity.getConnectorRef());
     }
     return builder.build();
   }
 
   @VisibleForTesting
-  String getPipelineYamlAndValidate(String mergedRuntimeInputYaml, PipelineEntity pipelineEntity) {
+  TemplateMergeResponseDTO getPipelineYamlAndValidate(String mergedRuntimeInputYaml, PipelineEntity pipelineEntity) {
     String pipelineYaml;
     long start = System.currentTimeMillis();
     if (isEmpty(mergedRuntimeInputYaml)) {
@@ -214,9 +243,9 @@ public class ExecutionHelper {
           InputSetTemplateHelper.createTemplateFromPipeline(pipelineEntity.getYaml()), mergedRuntimeInputYaml);
       if (EmptyPredicate.isNotEmpty(invalidFQNsInInputSet)) {
         throw new InvalidRequestException("Some fields are not valid: "
-            + invalidFQNsInInputSet.keySet()
+            + invalidFQNsInInputSet.entrySet()
                   .stream()
-                  .map(FQN::getExpressionFqn)
+                  .map(o -> o.getKey().getExpressionFqn() + ": " + o.getValue())
                   .collect(Collectors.toList())
                   .toString());
       }
@@ -224,21 +253,34 @@ public class ExecutionHelper {
           InputSetMergeHelper.mergeInputSetIntoPipeline(pipelineEntity.getYaml(), mergedRuntimeInputYaml, true);
     }
     log.info("[PMS_EXECUTE] Pipeline input set merge total time took {}ms", System.currentTimeMillis() - start);
-
-    if (pipelineEntity.getTemplateReference() != null && pipelineEntity.getTemplateReference()) {
-      pipelineYaml =
-          pipelineTemplateHelper
-              .resolveTemplateRefsInPipeline(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
-                  pipelineEntity.getProjectIdentifier(), pipelineYaml, true)
-              .getMergedPipelineYaml();
+    String pipelineYamlWithTemplateRef = pipelineYaml;
+    if (Boolean.TRUE.equals(pipelineEntity.getTemplateReference())) {
+      TemplateMergeResponseDTO templateMergeResponseDTO =
+          pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity.getAccountId(),
+              pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineYaml, true,
+              featureFlagService.isEnabled(pipelineEntity.getAccountId(), FeatureName.OPA_PIPELINE_GOVERNANCE));
+      pipelineYaml = templateMergeResponseDTO.getMergedPipelineYaml();
+      pipelineYamlWithTemplateRef =
+          EmptyPredicate.isEmpty(templateMergeResponseDTO.getMergedPipelineYamlWithTemplateRef())
+          ? pipelineYaml
+          : templateMergeResponseDTO.getMergedPipelineYamlWithTemplateRef();
     }
     pipelineYaml = InputSetSanitizer.trimValues(pipelineYaml);
+    pipelineYamlWithTemplateRef = InputSetSanitizer.trimValues(pipelineYamlWithTemplateRef);
     pmsYamlSchemaService.validateYamlSchema(pipelineEntity.getAccountId(), pipelineEntity.getOrgIdentifier(),
         pipelineEntity.getProjectIdentifier(), pipelineYaml);
-    pipelineRbacServiceImpl.extractAndValidateStaticallyReferredEntities(pipelineEntity.getAccountId(),
-        pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier(),
-        pipelineYaml);
-    return pipelineYaml;
+    if (pipelineEntity.getStoreType() == null || pipelineEntity.getStoreType() == StoreType.INLINE) {
+      // For REMOTE Pipelines, entity setup usage framework cannot be relied upon. That is because the setup usages can
+      // be outdated wrt the YAML we find on Git during execution. This means the fail fast approach that we have for
+      // RBAC checks can't be provided for remote pipelines
+      pipelineRbacServiceImpl.extractAndValidateStaticallyReferredEntities(pipelineEntity.getAccountId(),
+          pipelineEntity.getOrgIdentifier(), pipelineEntity.getProjectIdentifier(), pipelineEntity.getIdentifier(),
+          pipelineYaml);
+    }
+    return TemplateMergeResponseDTO.builder()
+        .mergedPipelineYaml(pipelineYaml)
+        .mergedPipelineYamlWithTemplateRef(pipelineYamlWithTemplateRef)
+        .build();
   }
 
   private PlanExecutionMetadata.Builder obtainPlanExecutionMetadata(String mergedRuntimeInputYaml, String executionId,

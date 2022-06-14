@@ -94,7 +94,6 @@ import io.harness.pms.migration.PipelineCoreMigrationProvider;
 import io.harness.pms.ngpipeline.inputset.beans.entity.InputSetEntity;
 import io.harness.pms.ngpipeline.inputset.observers.InputSetPipelineObserver;
 import io.harness.pms.notification.orchestration.handlers.NotificationInformHandler;
-import io.harness.pms.notification.orchestration.handlers.PipelineStartNotificationHandler;
 import io.harness.pms.notification.orchestration.handlers.StageStartNotificationHandler;
 import io.harness.pms.notification.orchestration.handlers.StageStatusUpdateNotificationEventHandler;
 import io.harness.pms.outbox.PipelineOutboxEventHandler;
@@ -147,7 +146,7 @@ import io.harness.steps.barriers.event.BarrierDropper;
 import io.harness.steps.barriers.event.BarrierPositionHelperEventHandler;
 import io.harness.steps.barriers.service.BarrierServiceImpl;
 import io.harness.steps.resourcerestraint.ResourceRestraintInitializer;
-import io.harness.steps.resourcerestraint.ResourceRestraintOrchestrationEndObserver;
+import io.harness.steps.resourcerestraint.ResourceRestraintObserver;
 import io.harness.steps.resourcerestraint.service.ResourceRestraintPersistenceMonitor;
 import io.harness.telemetry.TelemetryReporter;
 import io.harness.telemetry.filter.APIAuthTelemetryFilter;
@@ -194,17 +193,8 @@ import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
-import io.swagger.v3.oas.integration.SwaggerConfiguration;
-import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.servers.Server;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -255,6 +245,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     initializeLogging();
     bootstrap.addCommand(new InspectCommand<>(this));
     bootstrap.addCommand(new ScanClasspathMetadataCommand());
+    bootstrap.addCommand(new GenerateOpenApiSpecCommand());
 
     // Enable variable substitution with environment variables
     bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
@@ -396,7 +387,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
 
   private void registerOasResource(PipelineServiceConfiguration appConfig, Environment environment, Injector injector) {
     OpenApiResource openApiResource = injector.getInstance(OpenApiResource.class);
-    openApiResource.setOpenApiConfiguration(getOasConfig(appConfig));
+    openApiResource.setOpenApiConfiguration(appConfig.getOasConfig());
     environment.jersey().register(openApiResource);
   }
 
@@ -405,34 +396,6 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     if (isNotEmpty(configuration.getMongoConfig().getUri())) {
       persistence.register(Store.builder().name(DbAliases.PMS).build(), configuration.getMongoConfig().getUri());
     }
-  }
-
-  private OpenAPIConfiguration getOasConfig(PipelineServiceConfiguration appConfig) {
-    OpenAPI oas = new OpenAPI();
-    Info info =
-        new Info()
-            .title("Pipeline Service API Reference")
-            .description(
-                "This is the Open Api Spec 3 for the Pipeline Service. This is under active development. Beware of the breaking change with respect to the generated code stub")
-            .termsOfService("https://harness.io/terms-of-use/")
-            .version("3.0")
-            .contact(new Contact().email("contact@harness.io"));
-    oas.info(info);
-    URL baseurl = null;
-    try {
-      baseurl = new URL("https", appConfig.getHostname(), appConfig.getBasePathPrefix());
-      Server server = new Server();
-      server.setUrl(baseurl.toString());
-      oas.servers(Collections.singletonList(server));
-    } catch (MalformedURLException e) {
-      log.error("failed to set baseurl for server, {}/{}", appConfig.hostname, appConfig.getBasePathPrefix());
-    }
-    Set<String> resourceClasses = PipelineServiceConfiguration.getOpenApiResources();
-    return new SwaggerConfiguration()
-        .openAPI(oas)
-        .prettyPrint(true)
-        .resourceClasses(resourceClasses)
-        .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
   }
 
   private static void registerObservers(PipelineServiceConfiguration appConfig, Injector injector) {
@@ -464,6 +427,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     nodeExecutionService.getStepStatusUpdateSubject().register(injector.getInstance(Key.get(BarrierDropper.class)));
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(NodeExecutionStatusUpdateEventHandler.class)));
+    nodeExecutionService.getStepStatusUpdateSubject().register(
+        injector.getInstance(Key.get(ResourceRestraintObserver.class)));
 
     nodeExecutionService.getStepStatusUpdateSubject().register(
         injector.getInstance(Key.get(TimeoutInstanceRemover.class)));
@@ -499,8 +464,6 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     PlanExecutionStrategy planExecutionStrategy = injector.getInstance(Key.get(PlanExecutionStrategy.class));
     // StartObservers
     planExecutionStrategy.getOrchestrationStartSubject().register(
-        injector.getInstance(Key.get(PipelineStartNotificationHandler.class)));
-    planExecutionStrategy.getOrchestrationStartSubject().register(
         injector.getInstance(Key.get(BarrierInitializer.class)));
     planExecutionStrategy.getOrchestrationStartSubject().register(
         injector.getInstance(Key.get(ResourceRestraintInitializer.class)));
@@ -522,7 +485,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     planExecutionStrategy.getOrchestrationEndSubject().register(
         injector.getInstance(Key.get(PipelineStatusUpdateEventHandler.class)));
     planExecutionStrategy.getOrchestrationEndSubject().register(
-        injector.getInstance(Key.get(ResourceRestraintOrchestrationEndObserver.class)));
+        injector.getInstance(Key.get(ResourceRestraintObserver.class)));
 
     HMongoTemplate mongoTemplate = (HMongoTemplate) injector.getInstance(MongoTemplate.class);
     mongoTemplate.getTracerSubject().register(injector.getInstance(MongoRedisTracer.class));

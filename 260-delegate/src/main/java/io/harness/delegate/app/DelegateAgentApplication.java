@@ -12,6 +12,7 @@ import static io.harness.logging.LoggingInitializer.initializeLogging;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import io.harness.configuration.DeployMode;
 import io.harness.delegate.app.modules.DelegateAgentModule;
 import io.harness.delegate.app.resource.HealthResource;
 import io.harness.delegate.configuration.DelegateConfiguration;
@@ -31,7 +32,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.ning.http.client.AsyncHttpClient;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -43,12 +43,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 @Slf4j
 public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
+  private static final String DEPLOY_MODE = System.getenv(DeployMode.DEPLOY_MODE);
   // TODO: Two config classes only needed while we have two entrypoints. Get rid of one when removing
   // DelegateApplication.
   private final DelegateConfiguration configuration;
@@ -92,9 +94,10 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
     registerHealthChecks(environment, injector);
     registerResources(environment, injector);
     initializeMetrics(environment, injector);
+
     injector.getInstance(PingPongClient.class).startAsync();
 
-    log.info("Starting Delegate");
+    log.info("Starting Delegate in {} mode", DEPLOY_MODE);
     log.info("Process: {}", ManagementFactory.getRuntimeMXBean().getName());
 
     injector.getInstance(DelegateAgentService.class).run(false, true);
@@ -131,13 +134,10 @@ public class DelegateAgentApplication extends Application<DelegateAgentConfig> {
       injector.getInstance(EventPublisher.class).shutdown();
       log.info("Executor services have been shut down.");
 
-      final PingPongClient pingPongClient = injector.getInstance(PingPongClient.class);
-      if (pingPongClient != null) {
-        pingPongClient.stopAsync();
-        log.info("PingPong client have been shut down.");
-      }
+      injector.getInstance(PingPongClient.class).stopAsync();
+      log.info("PingPong client have been shut down.");
 
-      injector.getInstance(AsyncHttpClient.class).close();
+      injector.getInstance(DefaultAsyncHttpClient.class).close();
       log.info("Async HTTP client has been closed.");
 
       final ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();

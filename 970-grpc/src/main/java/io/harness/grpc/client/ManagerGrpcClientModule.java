@@ -25,6 +25,7 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import javax.net.ssl.SSLException;
 import lombok.Builder;
+import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,14 +46,13 @@ public class ManagerGrpcClientModule extends ProviderModule {
 
   @Provides
   @Singleton
-  CallCredentials callCredentials(Config config, @Named("Application") String application) {
+  CallCredentials callCredentials(
+      Config config, @Named("Application") String application, TokenGenerator tokenGenerator) {
     boolean isSsl = isSsl(config, application);
     if (!isSsl) {
-      return new DelegateAuthCallCredentials(
-          new TokenGenerator(config.accountId, config.accountSecret), config.accountId, false);
+      return new DelegateAuthCallCredentials(tokenGenerator, config.accountId, false);
     }
-    return new DelegateAuthCallCredentials(
-        new TokenGenerator(config.accountId, config.accountSecret), config.accountId, true);
+    return new DelegateAuthCallCredentials(tokenGenerator, config.accountId, true);
   }
 
   @Named("manager-channel")
@@ -75,11 +75,8 @@ public class ManagerGrpcClientModule extends ProviderModule {
   }
 
   private boolean isSsl(Config config, @Named("Application") String application) {
-    if ("ONPREM".equals(deployMode) || "KUBERNETES_ONPREM".equals(deployMode)) {
-      if (("Delegate".equalsIgnoreCase(application)) && ("https".equalsIgnoreCase(config.scheme))) {
-        return true;
-      }
-      return false;
+    if ("KUBERNETES_ONPREM".equals(deployMode)) {
+      return ("Delegate".equalsIgnoreCase(application)) && ("https".equalsIgnoreCase(config.scheme));
     }
     return true;
   }
@@ -114,7 +111,7 @@ public class ManagerGrpcClientModule extends ProviderModule {
     String target;
     String authority;
     String accountId;
-    String accountSecret;
+    @ToString.Exclude String accountSecret;
     String scheme;
   }
 }

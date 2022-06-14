@@ -7,6 +7,7 @@
 
 package io.harness.cdng.creator.variables;
 
+import io.harness.cdng.creator.plan.stage.DeploymentStageNode;
 import io.harness.cdng.visitor.YamlTypes;
 import io.harness.pms.sdk.core.variables.AbstractStageVariableCreator;
 import io.harness.pms.sdk.core.variables.VariableCreatorHelper;
@@ -22,7 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class DeploymentStageVariableCreator extends AbstractStageVariableCreator {
+public class DeploymentStageVariableCreator extends AbstractStageVariableCreator<DeploymentStageNode> {
   @Override
   public LinkedHashMap<String, VariableCreationResponse> createVariablesForChildrenNodes(
       VariableCreationContext ctx, YamlField config) {
@@ -56,7 +57,56 @@ public class DeploymentStageVariableCreator extends AbstractStageVariableCreator
   }
 
   @Override
+  public LinkedHashMap<String, VariableCreationResponse> createVariablesForChildrenNodesV2(
+      VariableCreationContext ctx, DeploymentStageNode config) {
+    YamlField currentField = ctx.getCurrentField();
+    LinkedHashMap<String, VariableCreationResponse> responseMap = new LinkedHashMap<>();
+
+    // add dependencies for provision node
+    YamlField infraField = currentField.getNode()
+                               .getField(YAMLFieldNameConstants.SPEC)
+                               .getNode()
+                               .getField(YamlTypes.PIPELINE_INFRASTRUCTURE);
+
+    if (VariableCreatorHelper.isNotYamlFieldEmpty(infraField)) {
+      Map<String, YamlField> infraDependencyMap = new LinkedHashMap<>();
+      YamlField infraDefNode = infraField.getNode().getField(YamlTypes.INFRASTRUCTURE_DEF);
+      if (VariableCreatorHelper.isNotYamlFieldEmpty(infraDefNode)
+          && VariableCreatorHelper.isNotYamlFieldEmpty(infraDefNode.getNode().getField(YamlTypes.SPEC))) {
+        YamlField provisionerField = infraDefNode.getNode().getField(YAMLFieldNameConstants.PROVISIONER);
+        if (provisionerField != null) {
+          infraDependencyMap.putAll(InfraVariableCreator.addDependencyForProvisionerSteps(provisionerField));
+        }
+      }
+      responseMap.put(infraField.getNode().getUuid(),
+          VariableCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(infraDependencyMap))
+              .build());
+    }
+
+    // add dependencies for execution node
+    YamlField executionField = currentField.getNode()
+                                   .getField(YAMLFieldNameConstants.SPEC)
+                                   .getNode()
+                                   .getField(YAMLFieldNameConstants.EXECUTION);
+    if (VariableCreatorHelper.isNotYamlFieldEmpty(executionField)) {
+      Map<String, YamlField> executionDependencyMap = new HashMap<>();
+      executionDependencyMap.put(executionField.getNode().getUuid(), executionField);
+      responseMap.put(executionField.getNode().getUuid(),
+          VariableCreationResponse.builder()
+              .dependencies(DependenciesUtils.toDependenciesProto(executionDependencyMap))
+              .build());
+    }
+    return responseMap;
+  }
+
+  @Override
   public Map<String, Set<String>> getSupportedTypes() {
     return Collections.singletonMap(YAMLFieldNameConstants.STAGE, Collections.singleton("Deployment"));
+  }
+
+  @Override
+  public Class<DeploymentStageNode> getFieldClass() {
+    return DeploymentStageNode.class;
   }
 }

@@ -38,7 +38,6 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 import static software.wings.app.ManagerCacheRegistrar.SECRET_TOKEN_CACHE;
 import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.NO_ELIGIBLE_DELEGATES;
 
-import static java.lang.String.join;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -191,6 +190,7 @@ import javax.cache.Cache;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.atmosphere.cpr.BroadcasterFactory;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -403,8 +403,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
   @Override
   public <T extends DelegateResponseData> T executeTask(DelegateTask task) {
     scheduleSyncTask(task);
-    return delegateSyncService.waitForTask(
-        task.getUuid(), task.calcDescription(), Duration.ofMillis(task.getData().getTimeout()));
+    return delegateSyncService.waitForTask(task.getUuid(), task.calcDescription(),
+        Duration.ofMillis(task.getData().getTimeout()), task.getExecutionCapabilities());
   }
 
   @VisibleForTesting
@@ -453,7 +453,14 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         Collections.shuffle(eligibleListOfDelegates);
         task.setBroadcastToDelegateIds(
             Lists.newArrayList(getDelegateIdForFirstBroadcast(task, eligibleListOfDelegates)));
-        delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(Sets.newHashSet(eligibleListOfDelegates), task);
+        if (isNotEmpty(task.getEligibleToExecuteDelegateIds())) {
+          // case when caller send eligibleDelegateIds where we skip assignment process, different selection log message
+          delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(
+              Sets.newHashSet(eligibleListOfDelegates), task, true);
+        } else {
+          delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(
+              Sets.newHashSet(eligibleListOfDelegates), task, false);
+        }
         // save eligible delegate ids as part of task (will be used for rebroadcasting)
         task.setEligibleToExecuteDelegateIds(new LinkedList<>(eligibleListOfDelegates));
         log.info("Assignable/eligible delegates to execute task {} are {}.", task.getUuid(),
@@ -508,7 +515,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
 
   private String getDelegateIdForFirstBroadcast(DelegateTask delegateTask, List<String> eligibleListOfDelegates) {
     for (String delegateId : eligibleListOfDelegates) {
-      if (assignDelegateService.isWhitelisted(delegateTask, delegateId)) {
+      if (assignDelegateService.isDelegateGroupWhitelisted(delegateTask, delegateId)
+          || assignDelegateService.isWhitelisted(delegateTask, delegateId)) {
         return delegateId;
       }
     }
@@ -1147,7 +1155,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
     }
 
     log.debug("Dispatched delegateTaskIds: {}",
-        join(",", delegateTaskEvents.stream().map(DelegateTaskEvent::getDelegateTaskId).collect(toList())));
+        StringUtils.join(
+            ",", delegateTaskEvents.stream().map(DelegateTaskEvent::getDelegateTaskId).collect(Collectors.toList())));
 
     return delegateTaskEvents;
   }
@@ -1263,9 +1272,11 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
     final List<DelegateTask> delegateTasks = persistence.createQuery(DelegateTask.class)
                                                  .filter(DelegateTaskKeys.accountId, accountId)
                                                  .filter(DelegateTaskKeys.delegateId, delegateId)
-                                                 .field(DelegateTaskKeys.status)
-                                                 .in(runningStatuses())
+                                                 .filter(DelegateTaskKeys.status, STARTED)
                                                  .asList();
+    if (isEmpty(delegateTasks)) {
+      return;
+    }
     log.info("Marking delegate tasks {} failed since delegate went down before completion.",
         delegateTasks.stream().map(DelegateTask::getUuid).collect(Collectors.toList()));
     final String errorMessage = "Delegate disconnected while executing the task";

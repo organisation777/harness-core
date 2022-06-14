@@ -324,7 +324,8 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
   @VisibleForTesting
   protected boolean canAssignDelegateProfileScopes(
       Delegate delegate, Map<String, String> taskSetupAbstractions, String taskId) {
-    DelegateProfile delegateProfile = persistence.get(DelegateProfile.class, delegate.getDelegateProfileId());
+    DelegateProfile delegateProfile =
+        delegateCache.getDelegateProfile(delegate.getAccountId(), delegate.getDelegateProfileId());
     if (delegateProfile == null) {
       // ng delegates dont have delegateProfile, so no need of logging a warning.
       return true;
@@ -449,7 +450,8 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
     return true;
   }
 
-  private boolean canAssignSelectors(Delegate delegate, List<ExecutionCapability> executionCapabilities) {
+  @VisibleForTesting
+  protected boolean canAssignSelectors(Delegate delegate, List<ExecutionCapability> executionCapabilities) {
     if (isEmpty(executionCapabilities)) {
       return true;
     }
@@ -465,7 +467,7 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
       return true;
     }
 
-    Set<String> delegateSelectors = trimmedLowercaseSet(delegateService.retrieveDelegateSelectors(delegate));
+    Set<String> delegateSelectors = trimmedLowercaseSet(delegateService.retrieveDelegateSelectors(delegate, true));
     if (isEmpty(delegateSelectors)) {
       return false;
     }
@@ -601,6 +603,29 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
       return matching;
     } catch (Exception e) {
       log.error("Error checking whether delegate is whitelisted for task {}", task.getUuid(), e);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isDelegateGroupWhitelisted(DelegateTask task, String delegateId) {
+    if (!task.isNGTask(task.getSetupAbstractions())) {
+      return false;
+    }
+
+    Delegate delegate = delegateCache.get(task.getAccountId(), delegateId, false);
+    if (delegate == null) {
+      return false;
+    }
+    List<Delegate> delegatesFromSameGroup =
+        delegateCache.getDelegatesForGroup(task.getAccountId(), delegate.getDelegateGroupId());
+    if (isEmpty(delegatesFromSameGroup)) {
+      return false;
+    }
+    for (Delegate del : delegatesFromSameGroup) {
+      if (isWhitelisted(task, del.getUuid())) {
+        return true;
+      }
     }
     return false;
   }
@@ -830,6 +855,12 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
 
   @Override
   public List<String> getEligibleDelegatesToExecuteTask(DelegateTask task) {
+    // if task comes with eligibleToExecuteDelegateIds then no need to do assignment logic
+    if (isNotEmpty(task.getEligibleToExecuteDelegateIds())) {
+      log.info(
+          "Task {} has eligibleToExecuteDelegateIds:  {} ", task.getUuid(), task.getEligibleToExecuteDelegateIds());
+      return task.getEligibleToExecuteDelegateIds();
+    }
     List<String> eligibleDelegateIds = new ArrayList<>();
     task.setNonAssignableDelegates(new HashMap<>());
     try {
@@ -1062,14 +1093,15 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
 
   private List<SelectorCapability> selectorCapabilitiesWithHierarchyApplied(
       List<SelectorCapability> selectorCapabilities) {
-    List<SelectorCapability> selectorsAtStepGroup =
+    List<SelectorCapability> selectors =
         selectorCapabilities.stream()
+            .filter(sel -> Objects.nonNull(sel.getSelectorOrigin()))
             .filter(c
                 -> c.getSelectorOrigin().equals(STEP) || c.getSelectorOrigin().equals(STEP_GROUP)
                     || c.getSelectorOrigin().equals(STAGE) || c.getSelectorOrigin().equals(PIPELINE))
             .collect(toList());
-    if (!Lists.isNullOrEmpty(selectorsAtStepGroup)) {
-      return selectorsAtStepGroup;
+    if (!Lists.isNullOrEmpty(selectors)) {
+      return selectors;
     }
     return selectorCapabilities;
   }

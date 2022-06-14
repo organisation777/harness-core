@@ -56,6 +56,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -141,6 +142,7 @@ public class GitWebhookTriggerRepoFilter implements TriggerFilter {
   private void evaluateWrapperForAccountLevelGitConnector(
       Set<String> urls, List<TriggerDetails> eligibleTriggers, TriggerGitConnectorWrapper wrapper) {
     String accUrl = wrapper.getUrl();
+    accUrl = sanitizeUrl(accUrl);
 
     for (TriggerDetails details : wrapper.getTriggers()) {
       try {
@@ -166,14 +168,30 @@ public class GitWebhookTriggerRepoFilter implements TriggerFilter {
   void evaluateWrapperForRepoLevelGitConnector(
       Set<String> urls, List<TriggerDetails> eligibleTriggers, TriggerGitConnectorWrapper wrapper) {
     String url = wrapper.getUrl();
-    // accomadate the '/' at the end of the provided repo URL
-    final String modifiedUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    final String modifiedUrl = sanitizeUrl(url);
 
     String finalUrl = urls.stream().filter(u -> u.equalsIgnoreCase(modifiedUrl)).findAny().orElse(null);
 
     if (!isBlank(finalUrl)) {
       eligibleTriggers.addAll(wrapper.getTriggers());
     }
+  }
+
+  /*
+  Since the url coming from scm response are in the form of
+    1. https://github.com/<something>.git
+    2. https://github.com/<something>
+    3. git@github.com:<something>.git
+    4. git@github.com:<something>
+  And we allow connector url as http://<something>, http://www.<something>, https://www.<something>
+  This method will do the required fix
+   */
+  String sanitizeUrl(String url) {
+    String modifiedUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    modifiedUrl = modifiedUrl.replaceFirst("http://", "https://");
+    modifiedUrl = modifiedUrl.replaceFirst("https://www.", "https://");
+
+    return modifiedUrl;
   }
 
   @VisibleForTesting
@@ -220,6 +238,14 @@ public class GitWebhookTriggerRepoFilter implements TriggerFilter {
     Map<String, ConnectorConfigDTO> connectorMap = new HashMap<>();
     List<ConnectorResponseDTO> connectors =
         ngTriggerService.fetchConnectorsByFQN(accountId, new ArrayList<>(triggerToConnectorMap.keySet()));
+    log.info("Trigger Connectors list count {} , received connectors counts from NG {}, triggerDetails count {} ",
+        triggerToConnectorMap.keySet().size(), connectors.size(), triggerDetails.size());
+    log.info("Eligible connectors list {}  ",
+        String.join(",",
+            connectors.stream()
+                .map(connectorResponseDTO -> connectorResponseDTO.getConnector().getIdentifier())
+                .sorted()
+                .collect(Collectors.toList())));
     connectors.forEach(connector
         -> connectorMap.put(
             FullyQualifiedIdentifierHelper.getFullyQualifiedIdentifier(accountId,

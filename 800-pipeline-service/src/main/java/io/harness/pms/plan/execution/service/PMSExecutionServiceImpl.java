@@ -28,11 +28,13 @@ import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.interrupts.Interrupt;
+import io.harness.ng.core.common.beans.NGTag;
 import io.harness.ng.core.common.beans.NGTag.NGTagKeys;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.IssuedBy;
 import io.harness.pms.contracts.interrupts.ManualIssuer;
 import io.harness.pms.execution.ExecutionStatus;
+import io.harness.pms.execution.TimeRange;
 import io.harness.pms.filter.utils.ModuleInfoFilterUtils;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.helpers.TriggeredByHelper;
@@ -56,6 +58,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.ByteString;
 import com.mongodb.client.result.UpdateResult;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -129,7 +132,8 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
       // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
       moduleCriteria.orOperator(Criteria.where(PlanExecutionSummaryKeys.modules).is(Collections.emptyList()),
           // This is here just for backward compatibility should be removed
-          Criteria.where(PlanExecutionSummaryKeys.modules).in(ModuleType.PMS.name().toLowerCase()),
+          Criteria.where(PlanExecutionSummaryKeys.modules)
+              .is(Collections.singletonList(ModuleType.PMS.name().toLowerCase())),
           Criteria.where(PlanExecutionSummaryKeys.modules).in(moduleName));
     }
 
@@ -189,6 +193,24 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
           where(PlanExecutionSummaryKeys.pipelineIdentifier)
               .regex(piplineFilter.getPipelineName(), NGResourceFilterConstants.CASE_INSENSITIVE_MONGO_OPTIONS));
     }
+    if (piplineFilter.getTimeRange() != null) {
+      TimeRange timeRange = piplineFilter.getTimeRange();
+      // Apply filter to criteria if StartTime and EndTime both are not null.
+      if (timeRange.getStartTime() != null && timeRange.getEndTime() != null) {
+        criteria.and(PlanExecutionSummaryKeys.createdAt).gte(timeRange.getStartTime()).lte(timeRange.getEndTime());
+
+      } else if ((timeRange.getStartTime() != null && timeRange.getEndTime() == null)
+          || (timeRange.getStartTime() == null && timeRange.getEndTime() != null)) {
+        // If any one of StartTime and EndTime is null. Throw exception.
+        throw new InvalidRequestException(
+            "startTime or endTime is not provided in TimeRange filter. Either add the missing field or remove the timeRange filter.");
+      }
+      // Ignore TimeRange filter if StartTime and EndTime both are null.
+    }
+
+    if (EmptyPredicate.isNotEmpty(piplineFilter.getPipelineTags())) {
+      addPipelineTagsCriteria(criteria, piplineFilter.getPipelineTags());
+    }
     if (EmptyPredicate.isNotEmpty(piplineFilter.getStatus())) {
       criteria.and(PlanExecutionSummaryKeys.status).in(piplineFilter.getStatus());
     }
@@ -196,6 +218,22 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
       ModuleInfoFilterUtils.processNode(
           JsonUtils.readTree(piplineFilter.getModuleProperties().toJson()), "moduleInfo", criteria);
     }
+  }
+
+  private void addPipelineTagsCriteria(Criteria criteria, List<NGTag> pipelineTags) {
+    List<String> tags = new ArrayList<>();
+    pipelineTags.forEach(o -> {
+      tags.add(o.getKey());
+      tags.add(o.getValue());
+    });
+    Criteria tagsCriteria = new Criteria();
+    tagsCriteria.orOperator(where(PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.tags + "."
+                                + "key")
+                                .in(tags),
+        where(PipelineExecutionSummaryEntity.PlanExecutionSummaryKeys.tags + "."
+            + "value")
+            .in(tags));
+    criteria.andOperator(tagsCriteria);
   }
 
   @Override
@@ -274,13 +312,14 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
   }
 
   @Override
-  public OrchestrationGraphDTO getOrchestrationGraph(String stageNodeId, String planExecutionId) {
+  public OrchestrationGraphDTO getOrchestrationGraph(
+      String stageNodeId, String planExecutionId, String stageNodeExecutionId) {
     if (EmptyPredicate.isEmpty(stageNodeId)) {
       return graphGenerationService.generateOrchestrationGraphV2(planExecutionId);
     }
-    return graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeId(stageNodeId, planExecutionId);
+    return graphGenerationService.generatePartialOrchestrationGraphFromSetupNodeIdAndExecutionId(
+        stageNodeId, planExecutionId, stageNodeExecutionId);
   }
-
   @Override
   public InterruptDTO registerInterrupt(
       PlanExecutionInterruptType executionInterruptType, String planExecutionId, String nodeExecutionId) {

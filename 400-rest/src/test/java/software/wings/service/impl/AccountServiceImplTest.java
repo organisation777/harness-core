@@ -23,6 +23,7 @@ import io.harness.authenticationservice.beans.AuthenticationInfo;
 import io.harness.cache.HarnessCacheManager;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.DelegateConfiguration;
+import io.harness.ff.FeatureFlagService;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.account.OauthProviderType;
 import io.harness.persistence.HQuery;
@@ -58,6 +59,7 @@ public class AccountServiceImplTest extends WingsBaseTest {
   @Mock protected AuthService authService;
   @Mock protected HarnessCacheManager harnessCacheManager;
   @Mock private LicenseService licenseService;
+  @Mock private FeatureFlagService featureFlagService;
   @Mock private GenericDbCache dbCache;
   @Mock private SSOSettingServiceImpl ssoSettingService;
   @Mock private SamlClientService samlClientService;
@@ -83,6 +85,7 @@ public class AccountServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void getDelegateConfigurationFromGlobalAccount() {
     when(licenseService.isAccountDeleted(any())).thenReturn(false);
+    when(featureFlagService.isEnabled(any(), any())).thenReturn(false);
 
     Account account = new Account();
     account.setUuid(INDIVIDUAL_ACCOUNT);
@@ -118,6 +121,7 @@ public class AccountServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void getDelegateConfigurationFromIndividualAccount() {
     when(licenseService.isAccountDeleted(any())).thenReturn(false);
+    when(featureFlagService.isEnabled(any(), any())).thenReturn(false);
 
     Account account = new Account();
     account.setUuid(INDIVIDUAL_ACCOUNT);
@@ -126,7 +130,7 @@ public class AccountServiceImplTest extends WingsBaseTest {
     List<String> delegateVersions = new ArrayList<>();
     delegateVersions.add(version);
     DelegateConfiguration individualConfiguration =
-        DelegateConfiguration.builder().delegateVersions(delegateVersions).accountVersion(true).build();
+        DelegateConfiguration.builder().delegateVersions(delegateVersions).build();
     account.setDelegateConfiguration(individualConfiguration);
 
     Account globalAccount = new Account();
@@ -247,6 +251,7 @@ public class AccountServiceImplTest extends WingsBaseTest {
     account.setAppId("testappid");
     wingsPersistence.save(account);
     when(dbCache.get(Account.class, ACCOUNT_ID)).thenReturn(account);
+    when(wingsPersistence.get(any(), any())).thenReturn(account);
     return account;
   }
 }

@@ -7,7 +7,6 @@
 
 package io.harness.cdng.envGroup.resource;
 
-import static io.harness.ng.core.utils.NGUtils.validate;
 import static io.harness.pms.rbac.NGResourceType.ENVIRONMENT;
 import static io.harness.utils.PageUtils.getNGPageResponse;
 
@@ -32,6 +31,7 @@ import io.harness.cdng.envGroup.beans.EnvironmentGroupEntity.EnvironmentGroupKey
 import io.harness.cdng.envGroup.beans.EnvironmentGroupFilterPropertiesDTO;
 import io.harness.cdng.envGroup.mappers.EnvironmentGroupMapper;
 import io.harness.cdng.envGroup.services.EnvironmentGroupService;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.filter.dto.FilterPropertiesDTO;
 import io.harness.gitsync.interceptor.GitEntityDeleteInfoDTO;
@@ -42,6 +42,7 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupDeleteResponse;
+import io.harness.ng.core.envGroup.dto.EnvironmentGroupRequestDTO;
 import io.harness.ng.core.envGroup.dto.EnvironmentGroupResponse;
 import io.harness.ng.core.environment.beans.Environment;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
@@ -52,6 +53,7 @@ import io.harness.rbac.CDNGRbacPermissions;
 import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.utils.PageUtils;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -64,6 +66,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
@@ -118,7 +121,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
           @Content(mediaType = NGCommonEntityConstants.APPLICATION_YAML_MEDIA_TYPE,
               schema = @Schema(implementation = ErrorDTO.class))
     })
-@OwnedBy(HarnessTeam.PIPELINE)
+@OwnedBy(HarnessTeam.CDC)
 @Slf4j
 public class EnvironmentGroupResource {
   private final EnvironmentGroupService environmentGroupService;
@@ -176,19 +179,11 @@ public class EnvironmentGroupResource {
   public ResponseDTO<EnvironmentGroupResponse>
   create(@NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
              description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
-      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier @Parameter(
-          description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
-      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
-          description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
-      @RequestBody(required = true,
-          description =
-              "Environment Group YAML to be created. The Account, Org,  and Project identifiers inside the YAML should match the query parameters.")
-      @NotNull String yaml,
+      @Parameter(description = "Details of the Environment Group to be created")
+      @Valid EnvironmentGroupRequestDTO environmentGroupRequestDTO,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     EnvironmentGroupEntity entity =
-        EnvironmentGroupMapper.toEnvironmentEntity(accountId, orgIdentifier, projectIdentifier, yaml);
-    // Validate the fields of the Entity
-    validate(entity);
+        EnvironmentGroupMapper.toEnvironmentGroupEntity(accountId, environmentGroupRequestDTO);
 
     // validate view permissions for each environment linked with environment group
     validatePermissionForEnvironment(entity);
@@ -202,7 +197,7 @@ public class EnvironmentGroupResource {
     return ResponseDTO.newResponse(EnvironmentGroupMapper.toResponseWrapper(savedEntity, envResponseList));
   }
 
-  @GET
+  @POST
   @Path("/list")
   @ApiOperation(value = "Gets Environment Group list", nickname = "getEnvironmentGroupList")
   @Operation(operationId = "getEnvironmentGroupList", summary = "Gets Environment Group list for a Project",
@@ -218,6 +213,7 @@ public class EnvironmentGroupResource {
           NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgIdentifier,
       @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.PROJECT_KEY) @ResourceIdentifier String projectIdentifier,
+      @QueryParam("envGroupIdentifiers") List<String> envGroupIds,
       @Parameter(description = "The word to be searched and included in the list response") @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
       @Parameter(description = NGCommonEntityConstants.PAGE_PARAM_MESSAGE) @QueryParam(
@@ -234,6 +230,9 @@ public class EnvironmentGroupResource {
     Criteria criteria = environmentGroupService.formCriteria(accountId, orgIdentifier, projectIdentifier, false,
         searchTerm, filterIdentifier, (EnvironmentGroupFilterPropertiesDTO) filterProperties);
 
+    if (EmptyPredicate.isNotEmpty(envGroupIds)) {
+      criteria.and(EnvironmentGroupKeys.identifier).in(envGroupIds);
+    }
     Pageable pageRequest =
         PageUtils.getPageRequest(page, size, sort, Sort.by(Sort.Direction.DESC, EnvironmentGroupKeys.lastModifiedAt));
 
@@ -290,21 +289,13 @@ public class EnvironmentGroupResource {
           NGCommonEntityConstants.ENVIRONMENT_GROUP_KEY) @ResourceIdentifier String envGroupId,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier @Parameter(
           description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountId,
-      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier @Parameter(
-          description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) String orgIdentifier,
-      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier @Parameter(
-          description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) String projectIdentifier,
-      @RequestBody(required = true,
-          description =
-              "Environment Group YAML to be updated. The Account, Org, and Project identifiers inside the YAML should match the query parameters.")
-      @NotNull String yaml,
-      @BeanParam GitEntityUpdateInfoDTO gitEntityInfo) {
+      @Parameter(description = "Details of the Environment Group to be updated")
+      @Valid EnvironmentGroupRequestDTO environmentGroupRequestDTO, @BeanParam GitEntityUpdateInfoDTO gitEntityInfo) {
     log.info(String.format("Updating Environment Group with identifier %s in project %s, org %s, account %s",
-        envGroupId, projectIdentifier, orgIdentifier, accountId));
+        envGroupId, environmentGroupRequestDTO.getProjectIdentifier(), environmentGroupRequestDTO.getOrgIdentifier(),
+        accountId));
     EnvironmentGroupEntity requestedEntity =
-        EnvironmentGroupMapper.toEnvironmentEntity(accountId, orgIdentifier, projectIdentifier, yaml);
-    // Validate the fields of the Entity
-    validate(requestedEntity);
+        EnvironmentGroupMapper.toEnvironmentGroupEntity(accountId, environmentGroupRequestDTO);
 
     // validate view permissions for each environment linked with environment group
     validatePermissionForEnvironment(requestedEntity);
@@ -326,7 +317,8 @@ public class EnvironmentGroupResource {
         EnvironmentGroupMapper.toResponseWrapper(updatedEntity, envResponseList));
   }
 
-  private List<EnvironmentResponse> getEnvironmentResponses(EnvironmentGroupEntity groupEntity) {
+  @VisibleForTesting
+  List<EnvironmentResponse> getEnvironmentResponses(EnvironmentGroupEntity groupEntity) {
     List<EnvironmentResponse> envResponseList = null;
 
     List<Environment> envList =
@@ -337,7 +329,8 @@ public class EnvironmentGroupResource {
     return envResponseList;
   }
 
-  private void validatePermissionForEnvironment(EnvironmentGroupEntity envGroup) {
+  @VisibleForTesting
+  void validatePermissionForEnvironment(EnvironmentGroupEntity envGroup) {
     String accountId = envGroup.getAccountId();
     String orgId = envGroup.getOrgIdentifier();
     String projectId = envGroup.getProjectIdentifier();

@@ -53,6 +53,7 @@ import software.wings.sm.StateMachine;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.time.Instant;
@@ -240,6 +241,12 @@ public class WorkflowExecution implements PersistentRegularIterable, AccountData
                  .field(WorkflowExecutionKeys.startTs)
                  .field(WorkflowExecutionKeys.serviceIds)
                  .build())
+        .add(SortCompoundMongoIndex.builder()
+                 .name("accountId_cdPageCandidate_createdAt")
+                 .field(WorkflowExecutionKeys.accountId)
+                 .field(WorkflowExecutionKeys.cdPageCandidate)
+                 .descSortField(WorkflowExecutionKeys.createdAt)
+                 .build())
         .build();
   }
 
@@ -351,7 +358,11 @@ public class WorkflowExecution implements PersistentRegularIterable, AccountData
   private boolean canOverrideFreeze;
 
   // Making this consistent with data retention default of 183 days instead of "6 months"
-  @Default @JsonIgnore @FdTtlIndex private Date validUntil = Date.from(OffsetDateTime.now().plusDays(183).toInstant());
+  @Default
+  @JsonIgnore
+  @FdTtlIndex
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  private Date validUntil = Date.from(OffsetDateTime.now().plusDays(183).toInstant());
 
   public String normalizedName() {
     if (isBlank(name)) {

@@ -48,6 +48,7 @@ import io.harness.serializer.PersistenceRegistrars;
 import io.harness.serializer.PrimaryVersionManagerRegistrars;
 import io.harness.serializer.YamlBeansModuleRegistrars;
 import io.harness.springdata.SpringPersistenceTestModule;
+import io.harness.sto.beans.entities.STOServiceConfig;
 import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.testlib.module.TestMongoModule;
 import io.harness.threading.CurrentThreadExecutor;
@@ -151,7 +152,15 @@ public class CIManagerRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
         CIManagerConfiguration.builder()
             .managerAuthority("localhost")
             .managerTarget("localhost:9880")
-            .accessControlClientConfiguration(AccessControlClientConfiguration.builder().build())
+            .accessControlClientConfiguration(AccessControlClientConfiguration.builder()
+                                                  .enableAccessControl(false)
+                                                  .accessControlServiceSecret("token")
+                                                  .accessControlServiceConfig(ServiceHttpClientConfig.builder()
+                                                                                  .baseUrl("http://localhost:9006/api/")
+                                                                                  .readTimeOutSeconds(15)
+                                                                                  .connectTimeOutSeconds(15)
+                                                                                  .build())
+                                                  .build())
             .ciExecutionServiceConfig(CIExecutionServiceConfig.builder()
                                           .addonImageTag("v1.4-alpha")
                                           .defaultCPULimit(200)
@@ -167,6 +176,8 @@ public class CIManagerRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
             .opaServerConfig(OpaServiceConfiguration.builder().baseUrl("http://localhost:3000").build())
             .tiServiceConfig(
                 TIServiceConfig.builder().baseUrl("http://localhost-inc:8078").globalToken("global-token").build())
+            .stoServiceConfig(
+                STOServiceConfig.builder().baseUrl("http://localhost-inc:4000").globalToken("global-token").build())
             .scmConnectionConfig(ScmConnectionConfig.builder().url("localhost:8181").build())
             .managerServiceSecret("IC04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM")
             .ngManagerClientConfig(ServiceHttpClientConfig.builder().baseUrl("http://localhost:7457/").build())

@@ -120,8 +120,11 @@ cgEventConfig {"name": "createdAt_1", "background": true} {"createdAt": 1}
 cgEventConfig {"name": "yaml", "unique": true} {"appId": 1, "name": 1}
 cloudFormationRollbackConfig {"name": "accountId_1", "background": true} {"accountId": 1}
 cloudFormationRollbackConfig {"name": "appId_1", "background": true} {"appId": 1}
+cloudFormationRollbackConfig {"name": "awsConfigId_1", "background": true} {"awsConfigId": 1}
+cloudFormationRollbackConfig {"name": "byAppAndEntityAndAwsConfig", "background": true} {"appId": 1, "entityId": 1, "awsConfigId": 1, "createdAt": 1}
 cloudFormationRollbackConfig {"name": "createdAt_1", "background": true} {"createdAt": 1}
 cloudFormationRollbackConfig {"name": "entityId_1", "background": true} {"entityId": 1}
+cloudformationConfig {"name": "accountId_orgId_projectId_provisionerIdentifier_stageExecutionId_createdAt", "background": true} {"accountId": 1, "orgId": 1, "projectId": 1, "provisionerIdentifier": 1, "stageExecutionId": 1, "createdAt": -1}
 clusterRecords {"name": "accountId_1", "background": true} {"accountId": 1}
 collectorQueue2 {"name": "earliestGet_1", "background": true, "expireAfterSeconds": 86400} {"earliestGet": 1}
 collectorQueue2 {"name": "next4", "background": true} {"topic": 1, "earliestGet": 1}
@@ -402,6 +405,8 @@ gitSyncSettings {"name": "account_org_project_index", "unique": true} {"accountI
 gitSyncWebhook {"name": "appId_1", "background": true} {"appId": 1}
 gitSyncWebhook {"name": "createdAt_1", "background": true} {"createdAt": 1}
 gitToHarnessProgress {"name": "yamlChangeSetId_1", "background": true} {"yamlChangeSetId": 1}
+gitopsClusters {"name": "accountId_orgId_projId_envRef_createdAt", "background": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "envRef": 1, "createdAt": 1}
+gitopsClusters {"name": "unique_accountId_orgId_projId_envRef_id", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "envRef": 1, "clusterRef": 1}
 gitopsproviders {"name": "unique_accIdentifier_orgIdentifier_projectIdentifier_gitOpsProvider_idx", "unique": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
 governanceConfig {"name": "accountId_1", "background": true} {"accountId": 1}
 governanceConfig {"name": "enableNextCloseIterations_nextCloseIterations", "background": true} {"enableNextCloseIterations": 1, "nextCloseIterations": 1}
@@ -451,6 +456,8 @@ infrastructureProvisioner {"name": "accountIdCreatedAtIdx", "background": true} 
 infrastructureProvisioner {"name": "accountId_1", "background": true} {"accountId": 1}
 infrastructureProvisioner {"name": "appId_1", "background": true} {"appId": 1}
 infrastructureProvisioner {"name": "createdAt_1", "background": true} {"createdAt": 1}
+infrastructures {"name": "accountId_organizationIdentifier_projectIdentifier_envIdentifier_createdAt", "background": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "envIdentifier": 1, "createdAt": 1}
+infrastructures {"name": "accountId_organizationIdentifier_projectIdentifier_envIdentifier_infraIdentifier", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "envIdentifier": 1, "identifier": 1}
 instance {"name": "accountId_computeProviderId_instanceInfoNamespace_instanceInfoPodName_createdAt", "background": true} {"accountId": 1, "computeProviderId": 1, "instanceInfo.namespace": 1, "instanceInfo.podName": 1, "createdAt": -1}
 instance {"name": "appId_1", "background": true} {"appId": 1}
 instance {"name": "createdAt_1", "background": true} {"createdAt": 1}
@@ -592,6 +599,9 @@ newRelicMetricRecords {"name": "workflowExIdx", "background": true} {"workflowEx
 ngApiKeys {"name": "list_keys_idx", "background": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "parentIdentifier": 1}
 ngApiKeys {"name": "unique_idx", "unique": true, "collation": {"locale": "en", "strength": 1}} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1, "parentIdentifier": 1, "apiKeyType": 1}
 ngEncryptedRecords {"name": "uniqueNGEncryptedDataIdx", "unique": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
+ngFiles {"name": "list_files_idx", "unique": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
+ngFiles {"name": "path_idx", "background": true} {"path": 1}
+ngFiles {"name": "unique_idx", "unique": true, "collation": {"locale": "en", "strength": 1}} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "parentIdentifier": 1, "name": 1}
 ngGcsFileMetadata {"name": "accountId_1", "background": true} {"accountId": 1}
 ngGcsFileMetadata {"name": "entityId_1", "background": true} {"entityId": 1}
 ngGcsFileMetadata {"name": "fileId_1", "background": true} {"fileId": 1}
@@ -722,6 +732,7 @@ serviceInstance {"name": "createdAt_1", "background": true} {"createdAt": 1}
 serviceInstance {"name": "hostId_1", "background": true} {"hostId": 1}
 serviceInstance {"name": "infraMappingId_1", "background": true} {"infraMappingId": 1}
 serviceInstance {"name": "publicDns_1", "background": true} {"publicDns": 1}
+serviceOverridesNG {"name": "unique_accountId_organizationIdentifier_projectIdentifier_environmentRef_serviceRef", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "environmentRef": 1, "serviceRef": 1}
 serviceSecrets {"name": "serviceType_1", "unique": true} {"serviceType": 1}
 serviceTemplates {"name": "accountId_1", "background": true} {"accountId": 1}
 serviceTemplates {"name": "appId_1", "background": true} {"appId": 1}
@@ -920,6 +931,8 @@ users {"name": "externalUserId_1", "background": true} {"externalUserId": 1}
 users {"name": "name_1", "background": true} {"name": 1}
 users {"name": "pendingAccountsIdx", "background": true} {"pendingAccounts": 1}
 users {"name": "userIdAccountIdx", "background": true} {"accounts": 1, "externalUserId": 1}
+variables {"name": "accountId_orgId_projectId_createdAt_decreasing_sort_Index", "background": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "createdAt": -1}
+variables {"name": "accountId_orgId_projectId_identifier_unique_idx", "unique": true} {"accountIdentifier": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
 verificationServiceConfigurations {"name": "accountId_1", "background": true} {"accountId": 1}
 verificationServiceConfigurations {"name": "appId_1", "background": true} {"appId": 1}
 verificationServiceConfigurations {"name": "createdAt_1", "background": true} {"createdAt": 1}
@@ -944,6 +957,7 @@ verificationServiceTask {"name": "timeSeriesAnalysisIteration_1", "background": 
 verificationServiceTask {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 verificationServiceTask {"name": "workflowDataCollectionIdx", "background": true} {"stateType": 1, "perMinCollectionFinished": 1}
 verificationServiceTask {"name": "workflowDataCollectionIteration_1", "background": true} {"workflowDataCollectionIteration": 1}
+versionOverride {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 versionedTemplate {"name": "appId_1", "background": true} {"appId": 1}
 versionedTemplate {"name": "createdAt_1", "background": true} {"createdAt": 1}
 versionedTemplate {"name": "referencedTemplates", "background": true} {"templateObject.referencedTemplateList.templateReference.templateUuid": 1}
@@ -965,6 +979,7 @@ workflowExecutions {"name": "accountId_appId_cdPageCandidate_pipelineSummary.pip
 workflowExecutions {"name": "accountId_appId_tags_createdAt", "background": true} {"accountId": 1, "appId": 1, "tags.name": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_cdPageCandidate_appId", "background": true} {"accountId": 1, "cdPageCandidate": 1, "appId": 1}
 workflowExecutions {"name": "accountId_cdPageCandidate_appId_createdAtDesc", "background": true} {"accountId": 1, "cdPageCandidate": 1, "appId": 1, "createdAt": -1}
+workflowExecutions {"name": "accountId_cdPageCandidate_createdAt", "background": true} {"accountId": 1, "cdPageCandidate": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_cdPageCandidate_keywords_createdAt", "background": true} {"accountId": 1, "cdPageCandidate": 1, "keywords": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_createdAt2", "background": true} {"accountId": 1, "createdAt": -1}
 workflowExecutions {"name": "accountId_endTs", "background": true} {"accountId": 1, "endTs": -1}

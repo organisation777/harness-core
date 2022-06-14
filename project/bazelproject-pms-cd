@@ -19,7 +19,7 @@ directories:
   490-ce-commons
   800-pipeline-service
   810-ng-triggers
-  820-platform-service
+  platform-service
   860-orchestration-steps
   860-orchestration-visualization
   865-cg-events
@@ -33,8 +33,6 @@ directories:
   882-pms-sdk-core
   884-pms-commons
   888-pms-client
-  889-yaml-commons
-  890-pms-contracts
   890-sm-core
   900-git-sync-sdk
   910-delegate-service-driver
@@ -49,13 +47,12 @@ directories:
   937-persistence-tracer
   940-cg-audit-service
   940-feature-flag
-  940-notification-client
   940-primary-version-manager
   940-secret-manager-client
   945-account-mgmt
-  945-ng-audit-client
   948-access-control-admin-client
   948-access-control-sdk
+  948-cv-nextgen-beans
   949-access-control-commons
   950-command-library-common
   950-delegate-tasks-beans
@@ -68,11 +65,12 @@ directories:
   950-opa-client
   950-telemetry
   950-wait-engine
-  950-walktree-visitor
   952-scm-java-client
   953-events-api
   953-git-sync-commons
+  953-yaml-commons
   954-connector-beans
+  954-pms-contracts
   955-alert-beans
   955-cg-yaml
   955-delegate-beans
@@ -95,6 +93,7 @@ directories:
   960-persistence
   960-yaml-sdk
   965-api-key-filter
+  967-walktree-visitor
   970-api-services-beans
   970-grpc
   970-ng-commons
