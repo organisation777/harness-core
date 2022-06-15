@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -32,17 +33,27 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class HttpConnectionExecutionCapabilityCheckTest {
   @InjectMocks HttpConnectionExecutionCapabilityCheck httpConnectionExecutionCapabilityCheck;
-  @Mock HttpConnectionExecutionCapability httpConnectionExecutionCapability;
   @Mock CapabilityParameters parameters;
+
+  HttpConnectionExecutionCapability httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectTrue;
+  HttpConnectionExecutionCapability httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectFalse;
+  HttpConnectionExecutionCapability httpConnectionExecutionCapability_Header;
+
+  @Before
+  public void setup() {
+    httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectTrue =
+        HttpConnectionExecutionCapability.builder().url("abc").ignoreRedirect(true).build();
+    httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectFalse =
+        HttpConnectionExecutionCapability.builder().url("abc").ignoreRedirect(false).build();
+    List<KeyValuePair> temp = new ArrayList<>();
+    httpConnectionExecutionCapability_Header =
+        HttpConnectionExecutionCapability.builder().url("abc").headers(temp).build();
+  }
 
   @Test
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_Null_IgnoreRedirect_Valid() {
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(null);
-    when(httpConnectionExecutionCapability.isIgnoreRedirect()).thenReturn(true);
-
     MockedStatic<StringUtils> mockStringUtils = mockStatic(StringUtils.class);
     mockStringUtils.when(() -> StringUtils.isNotBlank(anyString())).thenReturn(false);
 
@@ -50,11 +61,11 @@ public class HttpConnectionExecutionCapabilityCheckTest {
     mockHttp
         .when(()
                   -> Http.connectableHttpUrlWithoutFollowingRedirect(
-                      httpConnectionExecutionCapability.fetchConnectableUrl()))
+                      httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectTrue.fetchConnectableUrl()))
         .thenReturn(true);
 
-    CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+    CapabilityResponse response = httpConnectionExecutionCapabilityCheck.performCapabilityCheck(
+        httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectTrue);
 
     mockStringUtils.close();
     mockHttp.close();
@@ -66,10 +77,6 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_Null_IgnoreRedirect_NotValid() {
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(null);
-    when(httpConnectionExecutionCapability.isIgnoreRedirect()).thenReturn(true);
-
     MockedStatic<StringUtils> mockStringUtils = mockStatic(StringUtils.class);
     mockStringUtils.when(() -> StringUtils.isNotBlank(anyString())).thenReturn(false);
 
@@ -77,11 +84,11 @@ public class HttpConnectionExecutionCapabilityCheckTest {
     mockHttp
         .when(()
                   -> Http.connectableHttpUrlWithoutFollowingRedirect(
-                      httpConnectionExecutionCapability.fetchConnectableUrl()))
+                      httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectTrue.fetchConnectableUrl()))
         .thenReturn(false);
 
-    CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+    CapabilityResponse response = httpConnectionExecutionCapabilityCheck.performCapabilityCheck(
+        httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectTrue);
 
     mockStringUtils.close();
     mockHttp.close();
@@ -93,19 +100,18 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_Null_Redirect_Valid() {
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(null);
-    when(httpConnectionExecutionCapability.isIgnoreRedirect()).thenReturn(false);
-
     MockedStatic<StringUtils> mockStringUtils = mockStatic(StringUtils.class);
     mockStringUtils.when(() -> StringUtils.isNotBlank(anyString())).thenReturn(false);
 
     MockedStatic<Http> mockHttp = mockStatic(Http.class);
-    mockHttp.when(() -> Http.connectableHttpUrl(httpConnectionExecutionCapability.fetchConnectableUrl()))
+    mockHttp
+        .when(()
+                  -> Http.connectableHttpUrl(
+                      httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectFalse.fetchConnectableUrl()))
         .thenReturn(true);
 
-    CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+    CapabilityResponse response = httpConnectionExecutionCapabilityCheck.performCapabilityCheck(
+        httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectFalse);
 
     mockStringUtils.close();
     mockHttp.close();
@@ -117,19 +123,18 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_Null_Redirect_NotValid() {
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(null);
-    when(httpConnectionExecutionCapability.isIgnoreRedirect()).thenReturn(false);
-
     MockedStatic<StringUtils> mockStringUtils = mockStatic(StringUtils.class);
     mockStringUtils.when(() -> StringUtils.isNotBlank(anyString())).thenReturn(false);
 
     MockedStatic<Http> mockHttp = mockStatic(Http.class);
-    mockHttp.when(() -> Http.connectableHttpUrl(httpConnectionExecutionCapability.fetchConnectableUrl()))
+    mockHttp
+        .when(()
+                  -> Http.connectableHttpUrl(
+                      httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectFalse.fetchConnectableUrl()))
         .thenReturn(false);
 
-    CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+    CapabilityResponse response = httpConnectionExecutionCapabilityCheck.performCapabilityCheck(
+        httpConnectionExecutionCapability_HeaderNull_IgnoreRedirectFalse);
 
     mockStringUtils.close();
     mockHttp.close();
@@ -141,23 +146,18 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_Valid() {
-    List<KeyValuePair> temp = new ArrayList<>();
-
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
-
     MockedStatic<StringUtils> mockStringUtils = mockStatic(StringUtils.class);
     mockStringUtils.when(() -> StringUtils.isNotBlank(anyString())).thenReturn(false);
 
     MockedStatic<Http> mockHttp = mockStatic(Http.class);
     mockHttp
         .when(()
-                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability.fetchConnectableUrl(),
-                      httpConnectionExecutionCapability.getHeaders()))
+                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability_Header.fetchConnectableUrl(),
+                      httpConnectionExecutionCapability_Header.getHeaders()))
         .thenReturn(true);
 
     CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability_Header);
 
     mockStringUtils.close();
     mockHttp.close();
@@ -169,23 +169,18 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_False_Headers_NotValid() {
-    List<KeyValuePair> temp = new ArrayList<>();
-
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
-
     MockedStatic<StringUtils> mockStringUtils = mockStatic(StringUtils.class);
     mockStringUtils.when(() -> StringUtils.isNotBlank(anyString())).thenReturn(false);
 
     MockedStatic<Http> mockHttp = mockStatic(Http.class);
     mockHttp
         .when(()
-                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability.fetchConnectableUrl(),
-                      httpConnectionExecutionCapability.getHeaders()))
+                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability_Header.fetchConnectableUrl(),
+                      httpConnectionExecutionCapability_Header.getHeaders()))
         .thenReturn(false);
 
     CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability_Header);
 
     mockStringUtils.close();
     mockHttp.close();
@@ -197,25 +192,20 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_Headers_Valid() {
-    List<KeyValuePair> temp = new ArrayList<>();
-
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
-
     MockedStatic<Http> mockHttp = mockStatic(Http.class);
     mockHttp
         .when(()
-                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability.fetchConnectableUrl(),
-                      httpConnectionExecutionCapability.getHeaders()))
+                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability_Header.fetchConnectableUrl(),
+                      httpConnectionExecutionCapability_Header.getHeaders()))
         .thenReturn(true);
     mockHttp
         .when(()
                   -> Http.connectableHttpUrlWithoutFollowingRedirect(
-                      httpConnectionExecutionCapability.fetchConnectableUrl()))
+                      httpConnectionExecutionCapability_Header.fetchConnectableUrl()))
         .thenReturn(true);
 
     CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability_Header);
 
     mockHttp.close();
 
@@ -226,25 +216,20 @@ public class HttpConnectionExecutionCapabilityCheckTest {
   @Owner(developers = ABHISHEK)
   @Category(UnitTests.class)
   public void performCapabilityCheck_NG_Headers_NotValid() {
-    List<KeyValuePair> temp = new ArrayList<>();
-
-    when(httpConnectionExecutionCapability.fetchConnectableUrl()).thenReturn("abc");
-    when(httpConnectionExecutionCapability.getHeaders()).thenReturn(temp);
-
     MockedStatic<Http> mockHttp = mockStatic(Http.class);
     mockHttp
         .when(()
-                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability.fetchConnectableUrl(),
-                      httpConnectionExecutionCapability.getHeaders()))
+                  -> Http.connectableHttpUrlWithHeaders(httpConnectionExecutionCapability_Header.fetchConnectableUrl(),
+                      httpConnectionExecutionCapability_Header.getHeaders()))
         .thenReturn(false);
     mockHttp
         .when(()
                   -> Http.connectableHttpUrlWithoutFollowingRedirect(
-                      httpConnectionExecutionCapability.fetchConnectableUrl()))
+                      httpConnectionExecutionCapability_Header.fetchConnectableUrl()))
         .thenReturn(false);
 
     CapabilityResponse response =
-        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability);
+        httpConnectionExecutionCapabilityCheck.performCapabilityCheck(httpConnectionExecutionCapability_Header);
 
     mockHttp.close();
 
