@@ -11,7 +11,6 @@ import static io.harness.accesscontrol.permissions.PermissionStatus.EXPERIMENTAL
 import static io.harness.accesscontrol.permissions.PermissionStatus.INACTIVE;
 import static io.harness.accesscontrol.permissions.PermissionStatus.STAGING;
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.accesscontrol.acl.conditions.ACLExpressionEvaluator;
@@ -86,40 +85,30 @@ public class ACLServiceImpl implements ACLService {
   }
 
   private List<Boolean> checkAccessInternal(List<PermissionCheck> permissionChecks, List<List<ACL>> matchedACLs) {
-    List<Boolean> accessFromWithoutConditionACLs =
-        matchedACLs.stream()
-            .map(matchedACLsForPermission -> matchedACLsForPermission.stream().anyMatch(acl -> !acl.isConditional()))
-            .collect(Collectors.toList());
-
-    List<List<ACL>> conditionalACLs =
-        matchedACLs.stream()
-            .map(matchedACLsForPermission
-                -> matchedACLsForPermission.stream().filter(ACL::isConditional).collect(Collectors.toList()))
-            .collect(Collectors.toList());
-
     return IntStream.range(0, permissionChecks.size())
-        .mapToObj(i -> {
-          Boolean accessFromWithoutConditionACLsForPermission = accessFromWithoutConditionACLs.get(i);
-          List<ACL> conditionalACLsForPermission = conditionalACLs.get(i);
-          if (accessFromWithoutConditionACLsForPermission) {
-            return true;
-          }
-          if (isEmpty(conditionalACLsForPermission)) {
-            return false;
-          }
-          Map<String, String> attributes = getAttributes(permissionChecks.get(i));
-          return conditionalACLsForPermission.stream().anyMatch(conditionalACL -> {
-            ACLExpressionEvaluator engineExpressionEvaluator =
-                aclExpressionEvaluatorProvider.get(permissionChecks.get(i), attributes);
-            return engineExpressionEvaluator.evaluateExpression(conditionalACL.getJexlCondition());
-          });
-        })
+        .mapToObj(i -> evaluateAccessFromACLs(permissionChecks.get(i), matchedACLs.get(i)))
         .collect(Collectors.toList());
+  }
+
+  private boolean evaluateAccessFromACLs(PermissionCheck permissionCheck, List<ACL> matchedACLs) {
+    boolean hasAccess = matchedACLs.stream().anyMatch(acl -> !acl.isConditional());
+    if (hasAccess) {
+      return true;
+    }
+    return matchedACLs.stream()
+        .filter(ACL::isConditional)
+        .anyMatch(acl -> evaluateAccessFromConditionalACL(permissionCheck, acl));
+  }
+
+  private boolean evaluateAccessFromConditionalACL(PermissionCheck permissionCheck, ACL acl) {
+    Map<String, String> attributes = getAttributes(permissionCheck);
+    ACLExpressionEvaluator engineExpressionEvaluator = aclExpressionEvaluatorProvider.get(permissionCheck, attributes);
+    return engineExpressionEvaluator.evaluateExpression(acl.getJexlCondition());
   }
 
   private Map<String, String> getAttributes(PermissionCheck permissionCheck) {
     HashMap<String, String> attributes = new HashMap<>();
-    attributes.put("connectorType", "PRODUCTION");
+    attributes.put("type", "PRODUCTION");
     return attributes;
   }
 
